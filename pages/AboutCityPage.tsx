@@ -13,8 +13,8 @@ const AboutCityPage: React.FC = () => {
             </button>
             <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto">
                 <div className="text-center mb-8">
-                     <div className="inline-block p-4 bg-cyan-100 dark:bg-cyan-900/50 rounded-full">
-                        <BuildingLibraryIcon className="w-12 h-12 text-cyan-500" />
+                     <div className="inline-block p-4 bg-green-100 dark:bg-green-900/50 rounded-full">
+                        <BuildingLibraryIcon className="w-12 h-12 text-green-500" />
                      </div>
                     <h1 className="text-4xl font-bold text-gray-800 dark:text-white mt-4">
                         عن مدينة هليوبوليس الجديدة
@@ -26,11 +26,11 @@ const AboutCityPage: React.FC = () => {
                     <p>
                         تأسست مدينة هليوبوليس الجديدة كامتداد طبيعي لحي مصر الجديدة العريق، وهي تمثل رؤية مستقبلية لمجتمع سكني متكامل ومستدام. تقع المدينة في موقع استراتيجي شرق القاهرة، مما يوفر سهولة الوصول إلى العاصمة الإدارية الجديدة والقاهرة الجديدة ومطار القاهرة الدولي.
                     </p>
-                    <h2 className="text-cyan-600 dark:text-cyan-400">التخطيط العمراني</h2>
+                    <h2 className="text-green-600 dark:text-green-400">التخطيط العمراني</h2>
                     <p>
                         تم تصميم المدينة بعناية فائقة لتوفير أعلى مستويات جودة الحياة، حيث تتميز بشوارعها الواسعة، ومساحاتها الخضراء الشاسعة، وبحيراتها الصناعية التي تضفي لمسة جمالية فريدة. ينقسم التخطيط إلى أحياء سكنية متنوعة ما بين مناطق فيلات وعمارات، بالإضافة إلى مناطق خدمية وتجارية وترفيهية متكاملة.
                     </p>
-                    <h2 className="text-cyan-600 dark:text-cyan-400">المرافق والخدمات</h2>
+                    <h2 className="text-green-600 dark:text-green-400">المرافق والخدمات</h2>
                     <ul>
                         <li><strong>تعليمية:</strong> تضم المدينة مجموعة من المدارس الدولية والخاصة المرموقة التي تقدم مستويات تعليمية متميزة.</li>
                         <li><strong>صحية:</strong> تتوفر مراكز طبية مجهزة ومستشفيات تقدم رعاية صحية متكاملة للسكان على مدار الساعة.</li>

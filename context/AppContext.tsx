@@ -215,6 +215,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 title: guideData.title,
                 steps: guideData.steps,
                 documents: guideData.documents,
+                attachmentUrl: guideData.attachmentUrl,
+                attachmentType: guideData.attachmentType,
             };
             if (guideData.id) {
                 return prevGuides.map(g => g.id === guideData.id ? guideToSave : g);

@@ -116,6 +116,8 @@ export interface ServiceGuide {
   title: string;
   steps: string[];
   documents: string[];
+  attachmentUrl?: string;
+  attachmentType?: 'image' | 'pdf';
 }
 
 export type UserStatus = 'active' | 'pending' | 'banned';

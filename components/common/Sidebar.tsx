@@ -85,6 +85,22 @@ const Sidebar: React.FC = () => {
                 icon: <DocumentDuplicateIcon className="w-6 h-6 text-sky-400" />, 
                 to: "/city-services-guide" 
             },
+            {
+                name: "المدينة والشركة",
+                icon: <BuildingLibraryIcon className="w-6 h-6" />,
+                children: [
+                    {
+                        name: "التعريف بالمدينة",
+                        icon: <BuildingLibraryIcon className="w-5 h-5 text-green-400" />,
+                        to: "/about-city",
+                    },
+                    {
+                        name: "تعريف بشركة مصر الجديدة",
+                        icon: <BuildingOffice2Icon className="w-5 h-5 text-purple-400" />,
+                        to: "/about-company",
+                    },
+                ]
+            },
         ];
         
         if (serviceNavItems.length > 0) {
@@ -104,7 +120,7 @@ const Sidebar: React.FC = () => {
             { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users" },
             { name: "إدارة التقييمات", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/reviews" },
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/reports" },
-            { name: "حول", icon: <InformationCircleIcon className="w-6 h-6" />, to: "/about" },
+            { name: "حول التطبيق", icon: <InformationCircleIcon className="w-6 h-6" />, to: "/about" },
             { name: "الأسئلة الشائعة", icon: <QuestionMarkCircleIcon className="w-6 h-6" />, to: "/faq" },
             { name: "شروط الاستخدام", icon: <DocumentDuplicateIcon className="w-6 h-6" />, to: "/terms-of-use" },
             { name: "سياسة الخصوصية", icon: <BookOpenIcon className="w-6 h-6" />, to: "/privacy-policy" },
