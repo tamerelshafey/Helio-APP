@@ -5,7 +5,7 @@ import {
     ChevronDownIcon, DocumentDuplicateIcon 
 } from '../components/common/Icons';
 import type { ServiceGuide } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import AttachmentUploader from '../components/common/AttachmentUploader';
 
@@ -96,6 +96,7 @@ const GuideForm: React.FC<{
 const CityServicesGuidePage: React.FC = () => {
     const navigate = useNavigate();
     const { serviceGuides, handleSaveServiceGuide, handleDeleteServiceGuide } = useAppContext();
+    const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingGuide, setEditingGuide] = useState<ServiceGuide | null>(null);
     const [openGuideId, setOpenGuideId] = useState<number | null>(1);
@@ -127,10 +128,12 @@ const CityServicesGuidePage: React.FC = () => {
                         <DocumentDuplicateIcon className="w-8 h-8 text-cyan-500" />
                         دليل خدمات المدينة
                     </h1>
-                    <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                        <PlusIcon className="w-5 h-5" />
-                        <span>إضافة دليل جديد</span>
-                    </button>
+                    {canManage && (
+                        <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <PlusIcon className="w-5 h-5" />
+                            <span>إضافة دليل جديد</span>
+                        </button>
+                    )}
                 </div>
 
                 <div className="space-y-4">
@@ -139,8 +142,12 @@ const CityServicesGuidePage: React.FC = () => {
                             <button onClick={() => handleToggleGuide(guide.id)} className="w-full flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-right">
                                 <span className="font-semibold text-lg text-gray-800 dark:text-white">{guide.title}</span>
                                 <div className="flex items-center gap-2">
-                                     <button onClick={(e) => { e.stopPropagation(); handleEditClick(guide); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل الدليل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                     <button onClick={(e) => { e.stopPropagation(); handleDeleteServiceGuide(guide.id); }} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف الدليل"><TrashIcon className="w-5 h-5" /></button>
+                                     {canManage && (
+                                        <>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEditClick(guide); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل الدليل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteServiceGuide(guide.id); }} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف الدليل"><TrashIcon className="w-5 h-5" /></button>
+                                        </>
+                                     )}
                                     <ChevronDownIcon className={`w-6 h-6 transition-transform duration-300 ${openGuideId === guide.id ? 'rotate-180' : ''}`} />
                                 </div>
                             </button>

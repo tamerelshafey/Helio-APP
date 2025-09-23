@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from '../components/common/Icons';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useHasPermission } from '../context/AppContext';
 import type { AppUser, AdminUser, UserStatus } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
@@ -131,7 +131,7 @@ const AdminForm: React.FC<{
         });
     };
     
-    const adminRoles: AdminUser['role'][] = ['مسؤول العقارات', 'مسؤول الاخبار والاعلانات والاشعارات', 'مسؤول الباصات', 'مسؤول ادارة الخدمات'];
+    const adminRoles: AdminUser['role'][] = ['مسؤول العقارات', 'مسؤول الاخبار والاعلانات والاشعارات', 'مسؤول الباصات', 'مسؤول ادارة الخدمات', 'مدير عام'];
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -160,6 +160,7 @@ const AdminForm: React.FC<{
 
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
     const { users, handleDeleteUser } = useAppContext();
+    const canManage = useHasPermission(['مدير عام']);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
 
@@ -186,10 +187,12 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                         <option value="pending">معلق</option>
                         <option value="banned">محظور</option>
                     </select>
-                     <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                        <UserPlusIcon className="w-5 h-5" />
-                        <span>إضافة</span>
-                    </button>
+                     {canManage && (
+                        <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <UserPlusIcon className="w-5 h-5" />
+                            <span>إضافة</span>
+                        </button>
+                     )}
                 </div>
             </div>
              <div className="overflow-x-auto">
@@ -199,7 +202,7 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                             <th scope="col" className="px-6 py-3">المستخدم</th>
                             <th scope="col" className="px-6 py-3">الحالة</th>
                             <th scope="col" className="px-6 py-3">تاريخ الانضمام</th>
-                            <th scope="col" className="px-6 py-3">إجراءات</th>
+                            {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -216,12 +219,14 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                                 </td>
                                 <td className="px-6 py-4"><StatusBadge status={user.status} /></td>
                                 <td className="px-6 py-4">{user.joinDate}</td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => onEdit(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                        <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
-                                    </div>
-                                </td>
+                                {canManage && (
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => onEdit(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                        </div>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
@@ -234,21 +239,25 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
 
 const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) => void; }> = ({ onAdd, onEdit }) => {
     const { admins, handleDeleteAdmin } = useAppContext();
+    const canManage = useHasPermission(['مدير عام']);
+
     return (
         <div className="animate-fade-in">
-            <div className="flex justify-end mb-6">
-                <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                    <UserPlusIcon className="w-5 h-5" />
-                    <span>إضافة مدير</span>
-                </button>
-            </div>
+             {canManage && (
+                <div className="flex justify-end mb-6">
+                    <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                        <UserPlusIcon className="w-5 h-5" />
+                        <span>إضافة مدير</span>
+                    </button>
+                </div>
+             )}
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
                         <tr>
                             <th scope="col" className="px-6 py-3">المدير</th>
                             <th scope="col" className="px-6 py-3">الدور</th>
-                            <th scope="col" className="px-6 py-3">إجراءات</th>
+                            {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -266,12 +275,14 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
                                 <td className="px-6 py-4">
                                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{admin.role}</span>
                                 </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => onEdit(admin)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                        <button onClick={() => handleDeleteAdmin(admin.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
-                                    </div>
-                                </td>
+                                {canManage && (
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => onEdit(admin)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => handleDeleteAdmin(admin.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                        </div>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>

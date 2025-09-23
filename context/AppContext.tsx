@@ -14,8 +14,23 @@ import type {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+export const useHasPermission = (requiredRoles: AdminUser['role'][]) => {
+    const { currentUser } = useAppContext();
+    if (!currentUser) return false;
+    // Super admin can do anything
+    if (currentUser.role === 'مدير عام') return true;
+    return requiredRoles.includes(currentUser.role);
+};
+
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => sessionStorage.getItem('isAuthenticated') === 'true');
+    const [currentUser, setCurrentUser] = useState<AdminUser | null>(() => {
+        const storedUser = sessionStorage.getItem('currentUser');
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
+
+    const isAuthenticated = !!currentUser;
+
     const [categories, setCategories] = useState<Category[]>(mockCategories);
     const [services, setServices] = useState<Service[]>(mockServices);
     const [news, setNews] = useState<News[]>(mockNews);
@@ -50,14 +65,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIsDarkMode(prev => !prev);
     }, []);
 
-    const login = useCallback(() => {
-        sessionStorage.setItem('isAuthenticated', 'true');
-        setIsAuthenticated(true);
+    const login = useCallback((user: AdminUser) => {
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+        setCurrentUser(user);
     }, []);
 
     const logout = useCallback(() => {
-        sessionStorage.removeItem('isAuthenticated');
-        setIsAuthenticated(false);
+        sessionStorage.removeItem('currentUser');
+        setCurrentUser(null);
     }, []);
 
 
@@ -65,12 +80,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const newLog: AuditLog = {
             id: Date.now(),
             timestamp: new Date().toISOString(),
-            user: 'مدير النظام', // Static user for now
+            user: currentUser?.name || 'زائر',
             action,
             details,
         };
         setAuditLogs(prevLogs => [newLog, ...prevLogs]);
-    }, []);
+    }, [currentUser]);
 
     // Transportation State
     const [internalSupervisor, setInternalSupervisor] = useState<Supervisor>(mockInternalSupervisor);
@@ -419,7 +434,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 
     const value = useMemo(() => ({
-        isAuthenticated, login, logout,
+        isAuthenticated, login, logout, currentUser,
         categories, services, news, notifications, properties, emergencyContacts, serviceGuides, users, admins,
         transportation: { internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes },
         auditLogs, logActivity,
@@ -437,7 +452,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         handleSaveSchedule, handleSaveSupervisor,
         isDarkMode, toggleDarkMode,
     }), [
-        isAuthenticated, login, logout,
+        isAuthenticated, login, logout, currentUser,
         categories, services, news, notifications, properties, emergencyContacts, serviceGuides, users, admins,
         internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes,
         auditLogs, logActivity,

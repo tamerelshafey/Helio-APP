@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PhoneIcon, UserCircleIcon, BusIcon, CalendarDaysIcon, MapPinIcon, PencilSquareIcon, CheckCircleIcon, XMarkIcon, PlusIcon, TrashIcon } from '../components/common/Icons';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import { useAppContext } from '../context/AppContext';
-import type { Driver, ExternalRoute, WeeklyScheduleItem, Supervisor } from '../types';
+import { useAppContext, useHasPermission } from '../context/AppContext';
+import type { Driver, ExternalRoute, WeeklyScheduleItem, Supervisor, AdminUser } from '../types';
 
 // --- HELPER COMPONENTS ---
 const CallButton: React.FC<{ phone: string }> = ({ phone }) => (
@@ -82,6 +82,7 @@ const TransportationPage: React.FC = () => {
         transportation, handleSaveDriver, handleDeleteDriver, 
         handleSaveRoute, handleDeleteRoute, handleSaveSchedule, handleSaveSupervisor
     } = useAppContext();
+    const canManage = useHasPermission(['مسؤول الباصات']);
     
     const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
     
@@ -172,7 +173,10 @@ const TransportationPage: React.FC = () => {
                     {isEditing ? (
                         <><button onClick={handleSave} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-full"><CheckCircleIcon className="w-5 h-5"/></button><button onClick={handleCancel} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><XMarkIcon className="w-5 h-5"/></button></>
                     ) : (
-                        <><CallButton phone={supervisor.phone} /><button onClick={() => { setIsEditing(true); setEditedInfo(supervisor); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full"><PencilSquareIcon className="w-5 h-5"/></button></>
+                        <>
+                            <CallButton phone={supervisor.phone} />
+                            {canManage && <button onClick={() => { setIsEditing(true); setEditedInfo(supervisor); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full"><PencilSquareIcon className="w-5 h-5"/></button>}
+                        </>
                     )}
                 </div>
             </div>
@@ -192,7 +196,7 @@ const TransportationPage: React.FC = () => {
                         <SupervisorCard supervisor={transportation.internalSupervisor} onSave={(s) => handleSaveSupervisor('internal', s)} isEditing={isEditingInternal} setIsEditing={setIsEditingInternal} title="مشرف الباصات الداخلية" />
                         
                         <div>
-                            <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold">قائمة السائقين</h2><button onClick={() => { setEditingDriver(null); setIsDriverModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4" /><span>إضافة سائق</span></button></div>
+                            <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold">قائمة السائقين</h2>{canManage && <button onClick={() => { setEditingDriver(null); setIsDriverModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4" /><span>إضافة سائق</span></button>}</div>
                             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md overflow-x-auto">
                                 <table className="w-full text-right">
                                     <thead><tr><th className="p-3">السائق</th><th className="p-3">رقم الهاتف</th><th className="p-3">إجراءات</th></tr></thead>
@@ -201,7 +205,7 @@ const TransportationPage: React.FC = () => {
                                             <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
                                                 <td className="p-3"><div className="flex items-center gap-3"><img src={driver.avatar} alt={driver.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/><span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span></div></td>
                                                 <td className="p-3 text-gray-600 dark:text-gray-300 font-mono">{driver.phone}</td>
-                                                <td className="p-3"><div className="flex items-center gap-2"><CallButton phone={driver.phone} /><button onClick={() => { setEditingDriver(driver); setIsDriverModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5"/></button><button onClick={() => handleDeleteDriver(driver.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5"/></button></div></td>
+                                                <td className="p-3"><div className="flex items-center gap-2"><CallButton phone={driver.phone} />{canManage && <><button onClick={() => { setEditingDriver(driver); setIsDriverModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5"/></button><button onClick={() => handleDeleteDriver(driver.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5"/></button></>}</div></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -210,7 +214,7 @@ const TransportationPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold flex items-center gap-2"><CalendarDaysIcon className="w-6 h-6" />الجدول الأسبوعي</h2><div className="flex gap-2"><button onClick={handleEditScheduleToggle} className="flex items-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors text-sm"><PencilSquareIcon className="w-4 h-4" /><span>{isEditingSchedule ? 'حفظ' : 'تعديل'}</span></button>{isEditingSchedule && (<button onClick={handleCancelEditSchedule} className="bg-slate-200 text-slate-800 font-semibold px-4 py-2 rounded-lg hover:bg-slate-300 transition-colors text-sm">إلغاء</button>)}</div></div>
+                            <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold flex items-center gap-2"><CalendarDaysIcon className="w-6 h-6" />الجدول الأسبوعي</h2>{canManage && <div className="flex gap-2"><button onClick={handleEditScheduleToggle} className="flex items-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors text-sm"><PencilSquareIcon className="w-4 h-4" /><span>{isEditingSchedule ? 'حفظ' : 'تعديل'}</span></button>{isEditingSchedule && (<button onClick={handleCancelEditSchedule} className="bg-slate-200 text-slate-800 font-semibold px-4 py-2 rounded-lg hover:bg-slate-300 transition-colors text-sm">إلغاء</button>)}</div>}</div>
                             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md">
                                 <div className="text-center mb-4"><h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">{`الأسبوع: ${firstday} - ${lastday}`}</h3></div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2">
@@ -242,14 +246,14 @@ const TransportationPage: React.FC = () => {
                 {activeTab === 'external' && (
                     <div className="space-y-8">
                         <SupervisorCard supervisor={transportation.externalSupervisor} onSave={(s) => handleSaveSupervisor('external', s)} isEditing={isEditingExternal} setIsEditing={setIsEditingExternal} title="مشرف الباصات الخارجية" />
-                        <div className="flex justify-end"><button onClick={() => { setEditingRoute(null); setIsRouteModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4"/><span>إضافة مسار</span></button></div>
+                        {canManage && <div className="flex justify-end"><button onClick={() => { setEditingRoute(null); setIsRouteModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4"/><span>إضافة مسار</span></button></div>}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {transportation.externalRoutes.map(route => (
                                 <div key={route.id} className="group relative bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md flex flex-col gap-4">
-                                     <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                     {canManage && <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => { setEditingRoute(route); setIsRouteModalOpen(true); }} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50"><PencilSquareIcon className="w-4 h-4" /></button>
                                         <button onClick={() => handleDeleteRoute(route.id)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon className="w-4 h-4" /></button>
-                                    </div>
+                                    </div>}
                                     <h3 className="font-bold text-lg text-cyan-600 dark:text-cyan-400">{route.name}</h3>
                                     <div><h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">المواعيد:</h4><div className="flex flex-wrap gap-2">{route.timings.map(time => (<span key={time} className="bg-slate-200 dark:bg-slate-700 text-xs font-mono px-2 py-1 rounded">{time}</span>))}</div></div>
                                     <div><h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1"><MapPinIcon className="w-4 h-4"/>مكان الانتظار:</h4><p className="text-sm text-gray-600 dark:text-gray-400">{route.waitingPoint}</p></div>

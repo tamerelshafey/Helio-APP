@@ -13,9 +13,7 @@ const PublicFooter: React.FC = () => {
                     <div>
                         <h3 className="font-semibold text-gray-800 dark:text-white">روابط سريعة</h3>
                         <ul className="mt-4 space-y-2">
-                            <li><Link to="/about-city" className="text-gray-500 dark:text-gray-400 hover:text-cyan-500">التعريف بالمدينة</Link></li>
-                            <li><Link to="/about-company" className="text-gray-500 dark:text-gray-400 hover:text-cyan-500">عن الشركة</Link></li>
-                             <li><Link to="/about" className="text-gray-500 dark:text-gray-400 hover:text-cyan-500">حول التطبيق</Link></li>
+                            <li><Link to="/about" className="text-gray-500 dark:text-gray-400 hover:text-cyan-500">حول التطبيق</Link></li>
                             <li><Link to="/faq" className="text-gray-500 dark:text-gray-400 hover:text-cyan-500">الأسئلة الشائعة</Link></li>
                         </ul>
                     </div>

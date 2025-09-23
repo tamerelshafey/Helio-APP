@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, BellAlertIcon } from '../components/common/Icons';
 import type { Notification, Service } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 
@@ -120,6 +120,7 @@ const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDa
 const NotificationsPage: React.FC = () => {
     const navigate = useNavigate();
     const { notifications, services, handleSaveNotification, handleDeleteNotification } = useAppContext();
+    const canManage = useHasPermission(['مسؤول الاخبار والاعلانات والاشعارات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
 
@@ -145,10 +146,12 @@ const NotificationsPage: React.FC = () => {
                         <BellAlertIcon className="w-8 h-8"/>
                         إدارة الإشعارات
                     </h1>
-                    <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                        <PlusIcon className="w-5 h-5" />
-                        <span>إضافة إشعار جديد</span>
-                    </button>
+                    {canManage && (
+                        <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <PlusIcon className="w-5 h-5" />
+                            <span>إضافة إشعار جديد</span>
+                        </button>
+                    )}
                 </div>
                 
                 <div className="overflow-x-auto">
@@ -159,7 +162,7 @@ const NotificationsPage: React.FC = () => {
                                 <th scope="col" className="px-6 py-3">الحالة</th>
                                 <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
                                 <th scope="col" className="px-6 py-3">الخدمة المرتبطة</th>
-                                <th scope="col" className="px-6 py-3">إجراءات</th>
+                                {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -172,12 +175,14 @@ const NotificationsPage: React.FC = () => {
                                     <td className="px-6 py-4"><StatusBadge startDate={notification.startDate} endDate={notification.endDate} /></td>
                                     <td className="px-6 py-4 text-xs font-mono">{notification.startDate} <br/> {notification.endDate}</td>
                                     <td className="px-6 py-4">{notification.serviceId ? services.find(s => s.id === notification.serviceId)?.name : 'لا يوجد'}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => handleDeleteNotification(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
-                                        </div>
-                                    </td>
+                                    {canManage && (
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                <button onClick={() => handleDeleteNotification(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                            </div>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>

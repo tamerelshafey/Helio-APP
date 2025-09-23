@@ -5,7 +5,7 @@ import {
     MagnifyingGlassIcon, HomeModernIcon, MapPinIcon, PhoneIcon
 } from '../components/common/Icons';
 import type { Property } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 
@@ -100,37 +100,44 @@ const TextareaField: React.FC<{ label: string; value: string; onChange: (val: st
 );
 
 
-const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete: () => void; }> = ({ property, onEdit, onDelete }) => (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group">
-        <div className="relative">
-            <img src={property.images[0] || 'https://picsum.photos/600/400?random=30'} alt={property.title} className="w-full h-48 object-cover" loading="lazy" />
-            <div className={`absolute top-3 right-3 px-3 py-1 text-sm font-bold text-white rounded-full ${property.type === 'sale' ? 'bg-cyan-500' : 'bg-purple-500'}`}>
-                {property.type === 'sale' ? 'للبيع' : 'للإيجار'}
-            </div>
-             <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <button onClick={onEdit} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50" title="تعديل العقار"><PencilSquareIcon className="w-5 h-5" /></button>
-                <button onClick={onDelete} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="حذف العقار"><TrashIcon className="w-5 h-5" /></button>
-            </div>
-        </div>
-        <div className="p-4">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 truncate">{property.title}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1"><MapPinIcon className="w-4 h-4" /> {property.location.address}</p>
-            <p className="text-2xl font-extrabold text-cyan-600 dark:text-cyan-400 mb-4">{property.price.toLocaleString('ar-EG')} جنيه</p>
-            <div className="flex justify-between items-center text-sm border-t border-slate-200 dark:border-slate-700 pt-3">
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                    <PhoneIcon className="w-4 h-4"/>
-                    <span>{property.contact.name}</span>
+const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete: () => void; }> = ({ property, onEdit, onDelete }) => {
+    const canManage = useHasPermission(['مسؤول العقارات']);
+    return (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group">
+            <div className="relative">
+                <img src={property.images[0] || 'https://picsum.photos/600/400?random=30'} alt={property.title} className="w-full h-48 object-cover" loading="lazy" />
+                <div className={`absolute top-3 right-3 px-3 py-1 text-sm font-bold text-white rounded-full ${property.type === 'sale' ? 'bg-cyan-500' : 'bg-purple-500'}`}>
+                    {property.type === 'sale' ? 'للبيع' : 'للإيجار'}
                 </div>
-                <a href={`tel:${property.contact.phone}`} className="font-bold text-green-600 hover:underline">{property.contact.phone}</a>
+                 {canManage && (
+                    <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button onClick={onEdit} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50" title="تعديل العقار"><PencilSquareIcon className="w-5 h-5" /></button>
+                        <button onClick={onDelete} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="حذف العقار"><TrashIcon className="w-5 h-5" /></button>
+                    </div>
+                 )}
+            </div>
+            <div className="p-4">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 truncate">{property.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1"><MapPinIcon className="w-4 h-4" /> {property.location.address}</p>
+                <p className="text-2xl font-extrabold text-cyan-600 dark:text-cyan-400 mb-4">{property.price.toLocaleString('ar-EG')} جنيه</p>
+                <div className="flex justify-between items-center text-sm border-t border-slate-200 dark:border-slate-700 pt-3">
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                        <PhoneIcon className="w-4 h-4"/>
+                        <span>{property.contact.name}</span>
+                    </div>
+                    <a href={`tel:${property.contact.phone}`} className="font-bold text-green-600 hover:underline">{property.contact.phone}</a>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 
 const PropertiesPage: React.FC = () => {
     const navigate = useNavigate();
     const { properties, handleSaveProperty, handleDeleteProperty } = useAppContext();
+    const canManage = useHasPermission(['مسؤول العقارات']);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProperty, setEditingProperty] = useState<Property | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -164,10 +171,12 @@ const PropertiesPage: React.FC = () => {
              <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                     <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3"><HomeModernIcon className="w-8 h-8"/>إدارة العقارات</h1>
-                    <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                        <PlusIcon className="w-5 h-5" />
-                        <span>إضافة عقار جديد</span>
-                    </button>
+                    {canManage && (
+                        <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <PlusIcon className="w-5 h-5" />
+                            <span>إضافة عقار جديد</span>
+                        </button>
+                    )}
                 </div>
 
                 {/* Filters */}

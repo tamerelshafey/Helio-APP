@@ -395,6 +395,7 @@ export const mockAdmins: AdminUser[] = [
   { id: 2, name: 'مريم أحمد', email: 'mariam.ahmed@helio.com', avatar: 'https://picsum.photos/200/200?random=12', role: 'مسؤول الاخبار والاعلانات والاشعارات' },
   { id: 3, name: 'يوسف خالد', email: 'youssef.khaled@helio.com', avatar: 'https://picsum.photos/200/200?random=13', role: 'مسؤول الباصات' },
   { id: 4, name: 'هند سالم', email: 'hind.salem@helio.com', avatar: 'https://picsum.photos/200/200?random=14', role: 'مسؤول ادارة الخدمات' },
+  { id: 5, name: 'مدير عام', email: 'super@helio.com', avatar: 'https://picsum.photos/200/200?random=15', role: 'مدير عام' },
 ];
 
 

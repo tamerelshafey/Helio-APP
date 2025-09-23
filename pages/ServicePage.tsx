@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon } from '../components/common/Icons';
 import type { Service } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 
@@ -108,6 +108,8 @@ const ServicePage: React.FC = () => {
     const subCategoryId = Number(subCategoryIdStr);
     
     const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite } = useAppContext();
+    const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState<Service | null>(null);
     const [sortOrder, setSortOrder] = useState<'default' | 'favorite' | 'rating' | 'alpha'>('default');
@@ -158,10 +160,12 @@ const ServicePage: React.FC = () => {
                             <option value="rating">الأعلى تقييماً</option>
                             <option value="alpha">ترتيب أبجدي</option>
                         </select>
-                        <button onClick={handleAddService} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                            <PlusIcon className="w-5 h-5" />
-                            <span>إضافة خدمة</span>
-                        </button>
+                        {canManage && (
+                            <button onClick={handleAddService} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                                <PlusIcon className="w-5 h-5" />
+                                <span>إضافة خدمة</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -201,8 +205,12 @@ const ServicePage: React.FC = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <button onClick={() => navigate(`/services/detail/${service.id}`)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض التفاصيل"><EyeIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => handleEditService(service)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => handleDeleteService(service.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                            {canManage && (
+                                                <>
+                                                    <button onClick={() => handleEditService(service)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                    <button onClick={() => handleDeleteService(service.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

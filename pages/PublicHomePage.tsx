@@ -1,89 +1,58 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-    BuildingLibraryIcon, BuildingOffice2Icon, InformationCircleIcon, 
-    QuestionMarkCircleIcon, BookOpenIcon, DocumentDuplicateIcon, ArrowLeftIcon,
-    GooglePlayIcon, AppleIcon
+    InformationCircleIcon, 
+    QuestionMarkCircleIcon, 
+    BookOpenIcon, 
+    DocumentDuplicateIcon,
+    ArrowLeftIcon,
+    GooglePlayIcon, 
+    AppleIcon,
+    MagnifyingGlassIcon,
+    NewspaperIcon,
+    UserGroupIcon
 } from '../components/common/Icons';
 
-const InfoCard: React.FC<{ to: string; icon: React.ReactNode; title: string; description: string }> = ({ to, icon, title, description }) => (
-    <Link to={to} className="group block bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 ease-in-out">
-        <div className="flex items-center justify-center w-12 h-12 bg-cyan-100 dark:bg-cyan-900/50 rounded-full mb-4 group-hover:bg-cyan-200 dark:group-hover:bg-cyan-800 transition-colors">
+const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; description: string }> = ({ icon, title, description }) => (
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg text-center transform hover:-translate-y-2 transition-transform duration-300">
+        <div className="flex items-center justify-center w-16 h-16 bg-cyan-100 dark:bg-cyan-900/50 rounded-full mx-auto mb-4">
             {icon}
         </div>
         <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{title}</h3>
         <p className="text-gray-500 dark:text-gray-400">{description}</p>
-        <div className="flex items-center gap-2 mt-4 text-cyan-600 dark:text-cyan-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-            <span>اقرأ المزيد</span>
-            <ArrowLeftIcon className="w-4 h-4" />
-        </div>
-    </Link>
+    </div>
 );
 
+
 const PublicHomePage: React.FC = () => {
-    const cards = [
-        { to: "/about-city", icon: <BuildingLibraryIcon className="w-6 h-6 text-cyan-500" />, title: "التعريف بالمدينة", description: "اكتشف تاريخ ورؤية مدينة هليوبوليس الجديدة المتكاملة." },
-        { to: "/about-company", icon: <BuildingOffice2Icon className="w-6 h-6 text-cyan-500" />, title: "عن الشركة", description: "تعرف على شركة مصر الجديدة، المطور العقاري الرائد للمدينة." },
-        { to: "/about", icon: <InformationCircleIcon className="w-6 h-6 text-cyan-500" />, title: "حول التطبيق", description: "ما هو تطبيق Helio؟ تعرف على رؤيتنا ومهمتنا لخدمة السكان." },
-        { to: "/faq", icon: <QuestionMarkCircleIcon className="w-6 h-6 text-cyan-500" />, title: "الأسئلة الشائعة", description: "هل لديك سؤال؟ ابحث عن إجابات للأسئلة الأكثر شيوعًا هنا." },
-        { to: "/privacy-policy", icon: <BookOpenIcon className="w-6 h-6 text-cyan-500" />, title: "سياسة الخصوصية", description: "نحن نهتم ببياناتك. اطلع على كيفية حماية معلوماتك." },
-        { to: "/terms-of-use", icon: <DocumentDuplicateIcon className="w-6 h-6 text-cyan-500" />, title: "شروط الاستخدام", description: "القواعد واللوائح التي تحكم استخدامك لتطبيق Helio." }
-    ];
 
     return (
         <div className="animate-fade-in" dir="rtl">
             {/* Hero Section */}
-            <section className="text-center py-20 px-4">
-                <h1 className="text-5xl md:text-6xl font-extrabold text-gray-800 dark:text-white mb-4">
-                    مرحباً بك في <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Helio</span>
-                </h1>
-                <p className="max-w-3xl mx-auto text-lg text-gray-600 dark:text-gray-300 mb-8">
-                    بوابتك الرقمية الشاملة لمدينة هليوبوليس الجديدة. كل ما تحتاجه من خدمات ومعلومات وأخبار في مكان واحد لتسهيل حياتك اليومية.
-                </p>
-                <Link to="/login" className="inline-block px-8 py-3 bg-cyan-500 text-white font-bold rounded-lg shadow-lg hover:bg-cyan-600 transition-transform transform hover:scale-105">
-                    الدخول إلى لوحة التحكم
-                </Link>
-            </section>
-
-            {/* Info Cards Section */}
-            <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {cards.map(card => (
-                        <InfoCard key={card.to} {...card} />
-                    ))}
-                </div>
-            </section>
-            
-            {/* Download App Section */}
-            <section className="bg-slate-50 dark:bg-slate-800/50 py-20">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-white mb-4">حمل التطبيق الآن</h2>
-                    <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-300 mb-12">
-                        احصل على دليل هليوبوليس الجديدة الكامل في جيبك. تابع آخر الأخبار، اكتشف الخدمات، وتواصل مع مجتمعك بسهولة.
-                    </p>
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-12">
-                        <div className="text-center">
-                            <div className="bg-white p-4 rounded-lg shadow-lg inline-block">
-                                <img 
-                                    src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://play.google.com/store/apps/details?id=com.helio.company" 
-                                    alt="QR Code for Google Play"
-                                    width="160"
-                                    height="160"
-                                />
-                            </div>
-                            <p className="mt-4 font-semibold text-gray-700 dark:text-gray-200">امسح الكود للتحميل</p>
-                        </div>
-                        <div className="flex flex-col space-y-4 w-52 text-left">
-                            <a href="https://play.google.com/store/apps/details?id=com.helio.company" target="_blank" rel="noopener noreferrer" className="bg-black text-white rounded-lg px-4 py-3 flex items-center justify-center transition-transform hover:scale-105">
-                                <GooglePlayIcon className="w-8 h-8 mr-3" />
-                                <div className="rtl:text-right">
+            <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                    <div className="text-center md:text-right">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-800 dark:text-white mb-4 leading-tight">
+                            مدينتك...
+                            <br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+                                في تطبيق واحد
+                            </span>
+                        </h1>
+                        <p className="max-w-xl mx-auto md:mx-0 text-lg text-gray-600 dark:text-gray-300 mb-8">
+                            Helio هو دليلك الشامل لاستكشاف الخدمات، متابعة الأخبار، والتواصل مع مجتمع هليوبوليس الجديدة.
+                        </p>
+                        <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+                            <a href="https://play.google.com/store/apps/details?id=com.helio.company" target="_blank" rel="noopener noreferrer" className="bg-black text-white rounded-lg px-4 py-3 flex items-center justify-center gap-3 transition-transform hover:scale-105 w-full sm:w-auto">
+                                <GooglePlayIcon className="w-8 h-8" />
+                                <div className="text-right">
                                     <p className="text-xs">GET IT ON</p>
                                     <p className="text-xl font-semibold leading-tight">Google Play</p>
                                 </div>
                             </a>
-                            <div className="bg-black text-white rounded-lg px-4 py-3 flex items-center justify-center cursor-not-allowed opacity-60">
-                                <AppleIcon className="w-8 h-8 mr-3" />
-                                <div className="rtl:text-right">
+                            <div className="bg-black text-white rounded-lg px-4 py-3 flex items-center justify-center gap-3 cursor-not-allowed opacity-60 w-full sm:w-auto">
+                                <AppleIcon className="w-8 h-8" />
+                                <div className="text-right">
                                     <p className="text-xs">Download on the</p>
                                     <p className="text-xl font-semibold leading-tight">App Store</p>
                                     <p className="text-xs -mt-1 font-sans">(قريباً)</p>
@@ -91,6 +60,80 @@ const PublicHomePage: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                    <div className="hidden md:flex justify-center items-center">
+                         <div className="relative w-72 h-[34rem] bg-slate-900 rounded-[3rem] border-8 border-slate-700 shadow-2xl overflow-hidden">
+                            <div className="absolute top-0 inset-x-0 h-8 bg-slate-900 z-10 flex justify-center items-end">
+                                <div className="w-24 h-4 bg-slate-800 rounded-b-lg"></div>
+                            </div>
+                             {/* Mock app screen */}
+                             <div className="bg-slate-100 dark:bg-slate-900 h-full w-full p-4 space-y-4 overflow-y-auto">
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow"><div className="w-3/4 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-cyan-200 dark:bg-cyan-700"></div><div className="w-1/2 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-purple-200 dark:bg-purple-700"></div><div className="w-2/3 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-amber-200 dark:bg-amber-700"></div><div className="w-1/2 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-lime-200 dark:bg-lime-700"></div><div className="w-3/4 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                                <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-rose-200 dark:bg-rose-700"></div><div className="w-1/3 h-4 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="bg-slate-50 dark:bg-slate-900/50 py-16 md:py-24">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                     <div className="text-center max-w-2xl mx-auto mb-12">
+                        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-white mb-4">كل ما تحتاجه في هليوبوليس الجديدة</h2>
+                        <p className="text-lg text-gray-600 dark:text-gray-300">
+                            استكشف، تواصل، وكن على اطلاع دائم. Helio مصمم ليكون رفيقك اليومي في المدينة.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <FeatureCard 
+                            icon={<MagnifyingGlassIcon className="w-8 h-8 text-cyan-500"/>} 
+                            title="دليل شامل" 
+                            description="كل الخدمات والمحلات والمرافق بين يديك، مع تقييمات حقيقية من السكان."
+                        />
+                        <FeatureCard 
+                            icon={<NewspaperIcon className="w-8 h-8 text-cyan-500"/>} 
+                            title="أخبار وتنبيهات" 
+                            description="لا تفوت أي جديد! كن على اطلاع بآخر مستجدات وأخبار المدينة أولاً بأول."
+                        />
+                        <FeatureCard 
+                            icon={<UserGroupIcon className="w-8 h-8 text-cyan-500"/>} 
+                            title="مجتمع متصل" 
+                            description="شارك برأيك وتقييماتك للخدمات وكن جزءًا من مجتمع فعال ومتعاون."
+                        />
+                    </div>
+                </div>
+            </section>
+
+             {/* Info Links Section */}
+            <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+                 <div className="text-center max-w-2xl mx-auto mb-12">
+                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-white mb-4">معلومات تهمك</h2>
+                </div>
+                <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
+                     <Link to="/about" className="group flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <InformationCircleIcon className="w-8 h-8 text-cyan-500"/>
+                        <div><h4 className="font-semibold text-gray-800 dark:text-white">حول التطبيق</h4><p className="text-sm text-gray-500 dark:text-gray-400">اعرف المزيد عن رؤيتنا.</p></div>
+                        <ArrowLeftIcon className="w-5 h-5 mr-auto text-gray-400 group-hover:text-cyan-500 transition-colors" />
+                    </Link>
+                     <Link to="/faq" className="group flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <QuestionMarkCircleIcon className="w-8 h-8 text-cyan-500"/>
+                        <div><h4 className="font-semibold text-gray-800 dark:text-white">الأسئلة الشائعة</h4><p className="text-sm text-gray-500 dark:text-gray-400">إجابات على أسئلتك.</p></div>
+                        <ArrowLeftIcon className="w-5 h-5 mr-auto text-gray-400 group-hover:text-cyan-500 transition-colors" />
+                    </Link>
+                     <Link to="/privacy-policy" className="group flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <BookOpenIcon className="w-8 h-8 text-cyan-500"/>
+                        <div><h4 className="font-semibold text-gray-800 dark:text-white">سياسة الخصوصية</h4><p className="text-sm text-gray-500 dark:text-gray-400">كيف نحمي بياناتك.</p></div>
+                        <ArrowLeftIcon className="w-5 h-5 mr-auto text-gray-400 group-hover:text-cyan-500 transition-colors" />
+                    </Link>
+                    <Link to="/terms-of-use" className="group flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        <DocumentDuplicateIcon className="w-8 h-8 text-cyan-500"/>
+                        <div><h4 className="font-semibold text-gray-800 dark:text-white">شروط الاستخدام</h4><p className="text-sm text-gray-500 dark:text-gray-400">قواعد استخدام التطبيق.</p></div>
+                        <ArrowLeftIcon className="w-5 h-5 mr-auto text-gray-400 group-hover:text-cyan-500 transition-colors" />
+                    </Link>
                 </div>
             </section>
         </div>

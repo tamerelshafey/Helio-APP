@@ -2,33 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PhoneIcon, PencilSquareIcon, TrashIcon, PlusIcon } from '../components/common/Icons';
 import type { EmergencyContact } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 
-const EmergencyCard: React.FC<{ contact: EmergencyContact; onEdit: (contact: EmergencyContact) => void; onDelete: (id: number) => void; }> = ({ contact, onEdit, onDelete }) => (
-    <div className="group relative bg-white dark:bg-slate-800 rounded-xl p-6 text-center shadow-lg border border-transparent dark:border-slate-700 transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
-        {contact.type === 'city' && (
-            <span className="absolute top-2 right-2 text-xs bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300 px-2 py-1 rounded-full font-semibold">خدمة خاصة بالمدينة</span>
-        )}
-        <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={() => onEdit(contact)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50">
-                <PencilSquareIcon className="w-4 h-4" />
-            </button>
-            <button onClick={() => onDelete(contact.id)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50">
-                <TrashIcon className="w-4 h-4" />
-            </button>
+const EmergencyCard: React.FC<{ contact: EmergencyContact; onEdit: (contact: EmergencyContact) => void; onDelete: (id: number) => void; }> = ({ contact, onEdit, onDelete }) => {
+    const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
+    return (
+        <div className="group relative bg-white dark:bg-slate-800 rounded-xl p-6 text-center shadow-lg border border-transparent dark:border-slate-700 transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
+            {contact.type === 'city' && (
+                <span className="absolute top-2 right-2 text-xs bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300 px-2 py-1 rounded-full font-semibold">خدمة خاصة بالمدينة</span>
+            )}
+            {canManage && (
+                <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => onEdit(contact)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50" title="تعديل الرقم">
+                        <PencilSquareIcon className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => onDelete(contact.id)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="حذف الرقم">
+                        <TrashIcon className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+            
+            <div className="mb-2">
+                <PhoneIcon className="w-10 h-10 text-cyan-400 mx-auto"/>
+            </div>
+            <h3 className="text-base font-bold mb-2 h-12 flex items-center justify-center text-gray-800 dark:text-white">{contact.title}</h3>
+            <p className="text-2xl font-mono tracking-widest text-gray-700 dark:text-gray-300">{contact.number}</p>
+            <a href={`tel:${contact.number}`} className="mt-4 inline-block w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors">
+                اتصال مباشر
+            </a>
         </div>
-        
-        <div className="mb-2">
-            <PhoneIcon className="w-10 h-10 text-cyan-400 mx-auto"/>
-        </div>
-        <h3 className="text-base font-bold mb-2 h-12 flex items-center justify-center text-gray-800 dark:text-white">{contact.title}</h3>
-        <p className="text-2xl font-mono tracking-widest text-gray-700 dark:text-gray-300">{contact.number}</p>
-        <a href={`tel:${contact.number}`} className="mt-4 inline-block w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors">
-            اتصال مباشر
-        </a>
-    </div>
-);
+    );
+};
 
 
 const EmergencyForm: React.FC<{
@@ -94,6 +99,7 @@ const EmergencyForm: React.FC<{
 const EmergencyPage: React.FC = () => {
     const navigate = useNavigate();
     const { emergencyContacts, handleSaveEmergencyContact, handleDeleteEmergencyContact } = useAppContext();
+    const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
 
@@ -118,10 +124,12 @@ const EmergencyPage: React.FC = () => {
                     <h1 className="text-3xl font-extrabold text-gray-800 dark:text-white tracking-tight">
                         إدارة أرقام الطوارئ
                     </h1>
-                    <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                        <PlusIcon className="w-5 h-5" />
-                        <span>إضافة رقم جديد</span>
-                    </button>
+                    {canManage && (
+                        <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <PlusIcon className="w-5 h-5" />
+                            <span>إضافة رقم جديد</span>
+                        </button>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

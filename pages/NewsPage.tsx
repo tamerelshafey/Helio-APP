@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '../components/common/Icons';
 import type { News } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 
@@ -73,14 +73,17 @@ const NewsForm: React.FC<{
 };
 
 const NewsCard: React.FC<{ newsItem: News; onEdit: () => void; onDelete: () => void; }> = ({ newsItem, onEdit, onDelete }) => {
+    const canManage = useHasPermission(['مسؤول الاخبار والاعلانات والاشعارات']);
     return (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group">
             <div className="relative">
                 <img src={newsItem.imageUrl} alt={newsItem.title} className="w-full h-48 object-cover" loading="lazy" />
-                <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button onClick={onEdit} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50"><PencilSquareIcon className="w-5 h-5" /></button>
-                    <button onClick={onDelete} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon className="w-5 h-5" /></button>
-                </div>
+                {canManage && (
+                    <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button onClick={onEdit} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50" title="تعديل الخبر"><PencilSquareIcon className="w-5 h-5" /></button>
+                        <button onClick={onDelete} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="حذف الخبر"><TrashIcon className="w-5 h-5" /></button>
+                    </div>
+                )}
             </div>
             <div className="p-6">
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{new Date(newsItem.date).toLocaleDateString('ar-EG')} • {newsItem.author}</p>
@@ -99,6 +102,7 @@ const NewsCard: React.FC<{ newsItem: News; onEdit: () => void; onDelete: () => v
 const NewsPage: React.FC = () => {
     const navigate = useNavigate();
     const { news, handleSaveNews, handleDeleteNews } = useAppContext();
+    const canManage = useHasPermission(['مسؤول الاخبار والاعلانات والاشعارات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNews, setEditingNews] = useState<News | null>(null);
 
@@ -120,10 +124,12 @@ const NewsPage: React.FC = () => {
             </button>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white">إدارة أخبار المدينة</h1>
-                <button onClick={handleAddClick} className="flex items-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                    <PlusIcon className="w-5 h-5" />
-                    <span>إضافة خبر جديد</span>
-                </button>
+                {canManage && (
+                    <button onClick={handleAddClick} className="flex items-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                        <PlusIcon className="w-5 h-5" />
+                        <span>إضافة خبر جديد</span>
+                    </button>
+                )}
             </div>
             {news.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

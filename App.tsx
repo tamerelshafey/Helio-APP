@@ -26,8 +26,6 @@ const ServicesOverviewPage = lazy(() => import('./pages/ServicesOverviewPage'));
 const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
 const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'));
-const AboutCityPage = lazy(() => import('./pages/AboutCityPage'));
-const AboutCompanyPage = lazy(() => import('./pages/AboutCompanyPage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 
 // New Public/Auth Pages
@@ -48,8 +46,6 @@ const App: React.FC = () => {
               <Route path="/" element={<PublicHomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/about" element={<AboutPage />} />
-              <Route path="/about-city" element={<AboutCityPage />} />
-              <Route path="/about-company" element={<AboutCompanyPage />} />
               <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
               <Route path="/faq" element={<FaqPage />} />
               <Route path="/terms-of-use" element={<TermsOfUsePage />} />
@@ -88,8 +84,6 @@ const App: React.FC = () => {
                 <Route path="/audit-log" element={<AuditLogPage />} />
                 {/* Redirect old public paths to dashboard home if logged in */}
                 <Route path="/about" element={<Navigate to="/" />} />
-                <Route path="/about-city" element={<Navigate to="/" />} />
-                <Route path="/about-company" element={<Navigate to="/" />} />
                 <Route path="/privacy-policy" element={<Navigate to="/" />} />
                 <Route path="/faq" element={<Navigate to="/" />} />
                 <Route path="/terms-of-use" element={<Navigate to="/" />} />

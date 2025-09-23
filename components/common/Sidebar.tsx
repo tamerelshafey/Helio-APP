@@ -19,6 +19,7 @@ import {
     ClipboardDocumentListIcon
 } from './Icons';
 import { useAppContext } from '../../context/AppContext';
+import type { AdminUser } from '../../types';
 
 const iconComponents: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
     BuildingLibraryIcon, InformationCircleIcon, DocumentDuplicateIcon, TruckIcon,
@@ -39,9 +40,10 @@ interface NavItemData {
     icon: React.ReactNode;
     to?: string;
     children?: NavItemData[];
+    roles?: (AdminUser['role'])[];
 }
 
-const filterNavItems = (items: NavItemData[], query: string): NavItemData[] => {
+const filterNavItemsBySearch = (items: NavItemData[], query: string): NavItemData[] => {
     if (!query.trim()) return items;
     const lowerCaseQuery = query.toLowerCase();
 
@@ -51,7 +53,7 @@ const filterNavItems = (items: NavItemData[], query: string): NavItemData[] => {
             return acc;
         }
         if (item.children) {
-            const filteredChildren = filterNavItems(item.children, query);
+            const filteredChildren = filterNavItemsBySearch(item.children, query);
             if (filteredChildren.length > 0) acc.push({ ...item, children: filteredChildren });
         }
         return acc;
@@ -59,7 +61,7 @@ const filterNavItems = (items: NavItemData[], query: string): NavItemData[] => {
 };
 
 const Sidebar: React.FC = () => {
-    const { categories, logout } = useAppContext();
+    const { categories, logout, currentUser } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true });
     const [searchQuery, setSearchQuery] = useState('');
@@ -77,35 +79,34 @@ const Sidebar: React.FC = () => {
                 to: `/services/subcategory/${sub.id}`,
             }))
         }));
+        
+        const serviceManagerRoles: AdminUser['role'][] = ['مدير عام', 'مسؤول ادارة الخدمات'];
 
         const constructedNavItems: NavItemData[] = [
             { name: "نظرة عامة", icon: <HomeIcon className="w-6 h-6" />, to: "/" },
-            { name: "هيكل الخدمات", icon: <RectangleGroupIcon className="w-6 h-6" />, to: "/services-overview" },
-            { 
-                name: "دليل خدمات جهاز المدينة", 
-                icon: <DocumentDuplicateIcon className="w-6 h-6 text-sky-400" />, 
-                to: "/city-services-guide" 
-            },
+            { name: "هيكل الخدمات", icon: <RectangleGroupIcon className="w-6 h-6" />, to: "/services-overview", roles: serviceManagerRoles },
+            { name: "دليل خدمات جهاز المدينة", icon: <DocumentDuplicateIcon className="w-6 h-6 text-sky-400" />, to: "/city-services-guide", roles: serviceManagerRoles },
         ];
         
         if (serviceNavItems.length > 0) {
             constructedNavItems.push({
                 name: "الخدمات الرئيسية",
                 icon: <WrenchScrewdriverIcon className="w-6 h-6" />,
-                children: serviceNavItems
+                children: serviceNavItems,
+                roles: serviceManagerRoles
             });
         }
 
         constructedNavItems.push(
-            { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/properties" },
-            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/transportation" },
-            { name: "إدارة الطوارئ", icon: <ShieldExclamationIcon className="w-6 h-6" />, to: "/emergency" },
-            { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news" },
-            { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications" },
-            { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users" },
-            { name: "إدارة التقييمات", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/reviews" },
+            { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/properties", roles: ['مدير عام', 'مسؤول العقارات'] },
+            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/transportation", roles: ['مدير عام', 'مسؤول الباصات'] },
+            { name: "إدارة الطوارئ", icon: <ShieldExclamationIcon className="w-6 h-6" />, to: "/emergency", roles: serviceManagerRoles },
+            { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
+            { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
+            { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users", roles: ['مدير عام'] },
+            { name: "إدارة التقييمات", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/reviews", roles: serviceManagerRoles },
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/reports" },
-            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/audit-log" }
+            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/audit-log", roles: ['مدير عام'] }
         );
         return constructedNavItems;
     }, [categories]);
@@ -114,7 +115,27 @@ const Sidebar: React.FC = () => {
         if (isOpen) setIsOpen(false);
     }, [location.pathname]);
 
-    const filteredNavItems = useMemo(() => filterNavItems(navItems, searchQuery), [navItems, searchQuery]);
+    const visibleNavItems = useMemo(() => {
+        if (!currentUser) return [];
+
+        const filterByRole = (items: NavItemData[]): NavItemData[] => {
+            const userRole = currentUser.role;
+            if (userRole === 'مدير عام') return items;
+            
+            return items
+                .filter(item => !item.roles || item.roles.includes(userRole))
+                .map(item => ({
+                    ...item,
+                    children: item.children ? filterByRole(item.children) : undefined
+                }))
+                .filter(item => item.to || (item.children && item.children.length > 0));
+        };
+
+        const roleFilteredItems = filterByRole(navItems);
+        return filterNavItemsBySearch(roleFilteredItems, searchQuery);
+
+    }, [navItems, currentUser, searchQuery]);
+
 
     const handleMenuToggle = (name: string) => {
         if (searchQuery) return;
@@ -137,7 +158,6 @@ const Sidebar: React.FC = () => {
 
         useEffect(() => {
             if (isActive) {
-                // Small delay to allow parent menu to open smoothly
                 const timer = setTimeout(() => {
                     linkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300);
@@ -180,14 +200,16 @@ const Sidebar: React.FC = () => {
                 <div className="relative"><span className="absolute inset-y-0 right-3 flex items-center pl-3"><MagnifyingGlassIcon className="w-5 h-5 text-gray-400" /></span><input type="text" placeholder="بحث..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-slate-800 text-white rounded-lg py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"/></div>
             </div>
             <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
-                 {filteredNavItems.map((item) => <NavItem key={item.name} item={item} level={0} />)}
-                 {filteredNavItems.length === 0 && searchQuery && <p className="text-center text-gray-400 p-4">لا توجد نتائج بحث.</p>}
+                 {visibleNavItems.map((item) => <NavItem key={item.name} item={item} level={0} />)}
+                 {visibleNavItems.length === 0 && searchQuery && <p className="text-center text-gray-400 p-4">لا توجد نتائج بحث.</p>}
             </nav>
             <div className="p-4 border-t border-slate-800">
-                <div className="flex items-center space-x-4 rtl:space-x-reverse">
-                    <img className="w-12 h-12 rounded-full object-cover" src="https://picsum.photos/100" alt="Admin" loading="lazy" />
-                    <div><p className="font-semibold text-white">مدير النظام</p><p className="text-sm text-gray-400">admin@helio.com</p></div>
-                </div>
+                {currentUser && (
+                    <div className="flex items-center space-x-4 rtl:space-x-reverse">
+                        <img className="w-12 h-12 rounded-full object-cover" src={currentUser.avatar} alt={currentUser.name} loading="lazy" />
+                        <div><p className="font-semibold text-white">{currentUser.name}</p><p className="text-sm text-gray-400">{currentUser.email}</p></div>
+                    </div>
+                )}
                  <button
                     onClick={logout}
                     className="w-full mt-4 flex items-center justify-center gap-2 bg-cyan-500/10 text-cyan-400 font-semibold px-4 py-2 rounded-lg hover:bg-cyan-500/20 transition-colors"

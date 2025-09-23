@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Review } from '../types';
 import { ArrowLeftIcon, StarIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon } from '../components/common/Icons';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 
 const Rating: React.FC<{ rating: number; size?: string }> = ({ rating, size = 'w-5 h-5' }) => (
@@ -49,6 +49,7 @@ const ServiceDetailPage: React.FC = () => {
     const serviceId = Number(serviceIdStr);
     
     const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview } = useAppContext();
+    const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const service = services.find(s => s.id === serviceId);
 
     const [isReplyModalOpen, setReplyModalOpen] = useState(false);
@@ -104,11 +105,13 @@ const ServiceDetailPage: React.FC = () => {
                                             <Rating rating={review.rating} />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 self-end sm:self-center">
-                                        <button onClick={() => handleOpenReplyModal(review)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-900/50 rounded-md" title="الرد على التقييم"><ChatBubbleLeftRightIcon className="w-5 h-5" /></button>
-                                        <button onClick={() => handleOpenEditModal(review)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل التقييم"><PencilSquareIcon className="w-5 h-5" /></button>
-                                        <button onClick={() => handleDeleteReview(service.id, review.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف التقييم"><TrashIcon className="w-5 h-5" /></button>
-                                    </div>
+                                    {canManage && (
+                                        <div className="flex items-center gap-1 self-end sm:self-center">
+                                            <button onClick={() => handleOpenReplyModal(review)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-900/50 rounded-md" title="الرد على التقييم"><ChatBubbleLeftRightIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => handleOpenEditModal(review)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل التقييم"><PencilSquareIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => handleDeleteReview(service.id, review.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف التقييم"><TrashIcon className="w-5 h-5" /></button>
+                                        </div>
+                                    )}
                                 </div>
                                 <p className="mt-4 text-gray-700 dark:text-gray-300">{review.comment}</p>
                                 {review.adminReply && (

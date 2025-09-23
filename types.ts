@@ -136,7 +136,7 @@ export interface AdminUser {
   name: string;
   email: string;
   avatar: string;
-  role: 'مسؤول العقارات' | 'مسؤول الاخبار والاعلانات والاشعارات' | 'مسؤول الباصات' | 'مسؤول ادارة الخدمات';
+  role: 'مسؤول العقارات' | 'مسؤول الاخبار والاعلانات والاشعارات' | 'مسؤول الباصات' | 'مسؤول ادارة الخدمات' | 'مدير عام';
 }
 
 // Transportation Types
@@ -174,8 +174,9 @@ export interface AuditLog {
 }
 
 export interface AppContextType {
+  currentUser: AdminUser | null;
   isAuthenticated: boolean;
-  login: () => void;
+  login: (user: AdminUser) => void;
   logout: () => void;
   categories: Category[];
   services: Service[];
