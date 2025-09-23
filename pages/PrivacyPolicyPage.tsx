@@ -1,14 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, BookOpenIcon } from '../components/common/Icons';
+import { useAppContext } from '../context/AppContext';
 
 const PrivacyPolicyPage: React.FC = () => {
     const navigate = useNavigate();
+    const { publicPagesContent } = useAppContext();
+    const content = publicPagesContent.privacy;
 
     return (
         <div className="animate-fade-in py-12 px-4" dir="rtl">
             <div className="max-w-4xl mx-auto">
-                 <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
+                <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
                     <ArrowLeftIcon className="w-5 h-5" />
                     <span>العودة</span>
                 </button>
@@ -17,52 +20,28 @@ const PrivacyPolicyPage: React.FC = () => {
                         <div className="inline-block p-4 bg-cyan-100 dark:bg-cyan-900/50 rounded-full">
                             <BookOpenIcon className="w-12 h-12 text-cyan-500" />
                         </div>
-                        <h1 className="text-4xl font-bold text-gray-800 dark:text-white mt-4">سياسة الخصوصية</h1>
-                        <p className="text-gray-500 dark:text-gray-400 mt-2">آخر تحديث: 25 يوليو 2024</p>
+                        <h1 className="text-4xl font-bold text-gray-800 dark:text-white mt-4">{content.title}</h1>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2">آخر تحديث: {content.lastUpdated}</p>
                     </div>
 
                     <div className="prose dark:prose-invert max-w-none text-right leading-relaxed">
-                        <p>نحن في "هليو آب Helio APP" (المشار إليه فيما بعد بـ "التطبيق" أو "نحن") نولي أهمية قصوى لخصوصية زوارنا ومستخدمينا الكرام. توضح سياسة الخصوصية هذه كيفية جمعنا واستخدامنا وحمايتنا للمعلومات الشخصية التي تقدمونها لنا عند استخدامكم لموقعنا والخدمات المرتبطة به.</p>
-                        <p>باستخدامك للتطبيق، فإنك توافق على جمع واستخدام المعلومات وفقًا لهذه السياسة.</p>
-
-                        <h2>1. المعلومات التي نجمعها:</h2>
-                        <h3>المعلومات الشخصية:</h3>
-                        <p>قد نطلب منك تقديم معلومات شخصية معينة يمكن استخدامها للاتصال بك أو التعرف عليك عند التسجيل في التطبيق، أو عند إضافة بيانات عملك إلى الدليل، أو عند التواصل معنا. قد تشمل هذه المعلومات، على سبيل المثال لا الحصر: الاسم، عنوان البريد الإلكتروني، رقم الهاتف، اسم النشاط التجاري وتفاصيله.</p>
-                        <h3>بيانات الاستخدام:</h3>
-                        <p>نقوم بجمع معلومات حول كيفية الوصول إلى التطبيق واستخدامه ("بيانات الاستخدام"). قد تتضمن بيانات الاستخدام هذه معلومات مثل عنوان بروتوكول الإنترنت الخاص بجهاز الكمبيوتر (IP Address)، نوع المتصفح، الصفحات التي تزورها، وقت وتاريخ زيارتك، والبيانات التشخيصية الأخرى.</p>
-                        
-                        <h2>2. كيف نستخدم معلوماتك:</h2>
-                        <p>نستخدم البيانات التي نجمعها لأغراض مختلفة:</p>
-                        <ul>
-                            <li>لتوفير وصيانة تطبيقنا وخدماتنا.</li>
-                            <li>لإخطارك بالتغييرات التي تطرأ على خدمتنا.</li>
-                            <li>للسماح لك بالمشاركة في الميزات التفاعلية لتطبيقنا عندما تختار القيام بذلك (مثل التقييمات والتعليقات).</li>
-                            <li>لتوفير دعم العملاء.</li>
-                            <li>لجمع التحليلات أو المعلومات القيمة حتى نتمكن من تحسين تطبيقنا.</li>
-                            <li>لمراقبة استخدام تطبيقنا والكشف عن المشكلات الفنية ومنعها ومعالجتها.</li>
-                        </ul>
-
-                        <h2>3. مشاركة البيانات والكشف عنها:</h2>
-                         <p>نحن لا نبيع أو نتاجر أو نؤجر معلومات التعريف الشخصية للمستخدمين للآخرين. قد نشارك معلومات ديموغرافية مجمعة عامة لا ترتبط بأي معلومات تعريف شخصية تتعلق بالزوار والمستخدمين مع شركائنا التجاريين والشركات التابعة الموثوقة والمعلنين للأغراض الموضحة أعلاه.</p>
-                        <h3>المتطلبات القانونية:</h3>
-                        <p>قد نكشف عن معلوماتك الشخصية بحسن نية إذا كان هذا الإجراء ضروريًا لـ: الامتثال لالتزام قانوني، حماية والدفاع عن حقوق أو ممتلكات "هليو آب Helio APP"، منع أو التحقيق في أي مخالفات محتملة تتعلق بالخدمة، حماية السلامة الشخصية لمستخدمي الخدمة أو الجمهور، أو الحماية من المسؤولية القانونية.</p>
-
-                        <h2>4. أمن البيانات:</h2>
-                        <p>أمن بياناتك مهم بالنسبة لنا، ولكن تذكر أنه لا توجد وسيلة نقل عبر الإنترنت أو طريقة تخزين إلكتروني آمنة 100%. بينما نسعى جاهدين لاستخدام وسائل مقبولة تجاريًا لحماية معلوماتك الشخصية، لا يمكننا ضمان أمنها المطلق.</p>
-
-                        <h2>5. حقوقك:</h2>
-                        <p>لديك الحق في الوصول إلى معلوماتك الشخصية التي نحتفظ بها وتحديثها أو طلب حذفها. إذا كنت ترغب في ممارسة هذه الحقوق، يرجى الاتصال بنا.</p>
-
-                        <h2>6. خصوصية الأطفال:</h2>
-                        <p>خدمتنا لا تستهدف أي شخص دون سن 13 عامًا. نحن لا نجمع عن قصد معلومات تعريف شخصية من أي شخص دون سن 13 عامًا. إذا كنت والدًا أو وصيًا وتعلم أن أطفالك قد زودونا بمعلومات شخصية، فيرجى الاتصال بنا.</p>
-
-                        <h2>7. التغييرات على سياسة الخصوصية هذه:</h2>
-                        <p>قد نقوم بتحديث سياسة الخصوصية الخاصة بنا من وقت لآخر. سنقوم بإعلامك بأي تغييرات عن طريق نشر سياسة الخصوصية الجديدة على هذه الصفحة. يُنصح بمراجعة سياسة الخصوصية هذه بشكل دوري لأي تغييرات.</p>
-
-                        <h2>8. اتصل بنا:</h2>
-                        <p>إذا كان لديك أي أسئلة حول سياسة الخصوصية هذه، يرجى الاتصال بنا:</p>
-                        <p>عبر البريد الإلكتروني: <a href="mailto:support@helio.app" className="text-cyan-500 hover:underline">support@helio.app</a></p>
-                        <p>عبر واتساب: <a href="https://wa.me/201234567890" target="_blank" rel="noopener noreferrer" className="text-cyan-500 hover:underline">+201234567890</a></p>
+                        {content.sections.map((section, index) => (
+                            <React.Fragment key={index}>
+                                <h2>{section.title}</h2>
+                                {section.content.map((item, itemIndex) => {
+                                    if (typeof item === 'string') {
+                                        return <p key={itemIndex}>{item}</p>;
+                                    } else if (item.list) {
+                                        return (
+                                            <ul key={itemIndex}>
+                                                {item.list.map((li, liIndex) => <li key={liIndex}>{li}</li>)}
+                                            </ul>
+                                        );
+                                    }
+                                    return null;
+                                })}
+                            </React.Fragment>
+                        ))}
                     </div>
                 </div>
             </div>

@@ -3,13 +3,15 @@ import {
     mockCategories, mockServices, mockNews, mockNotifications, 
     mockProperties, mockEmergencyContacts, mockServiceGuides,
     mockUsers, mockAdmins,
-    mockInternalSupervisor, mockExternalSupervisor, mockInternalDrivers, mockWeeklySchedule, mockExternalRoutes
+    mockInternalSupervisor, mockExternalSupervisor, mockInternalDrivers, mockWeeklySchedule, mockExternalRoutes,
+    mockPublicPagesContent
 } from '../data/mock-data';
+// FIX: Add missing 'ExternalRoute' type import to resolve compilation errors.
 import type { 
     Category, Service, Review, News, Notification, Property, 
     EmergencyContact, ServiceGuide, AppContextType, AppUser, AdminUser,
-    Driver, WeeklyScheduleItem, ExternalRoute, Supervisor,
-    AuditLog
+    Driver, WeeklyScheduleItem, Supervisor, ExternalRoute,
+    AuditLog, PublicPagesContent, ToastMessage
 } from '../types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -41,6 +43,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [users, setUsers] = useState<AppUser[]>(mockUsers);
     const [admins, setAdmins] = useState<AdminUser[]>(mockAdmins);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+    const [publicPagesContent, setPublicPagesContent] = useState<PublicPagesContent>(mockPublicPagesContent);
+    const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
 
     const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
         const storedTheme = localStorage.getItem('theme');
@@ -73,6 +78,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const logout = useCallback(() => {
         sessionStorage.removeItem('currentUser');
         setCurrentUser(null);
+    }, []);
+
+    const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+    }, []);
+
+    const dismissToast = useCallback((id: number) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
     }, []);
 
 
@@ -110,7 +124,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             return s;
         }));
         logActivity('تعديل تقييم', `تعديل تقييم المستخدم "${reviewUser}" على خدمة "${serviceName}"`);
-    }, [logActivity]);
+        showToast('تم تعديل التقييم بنجاح!');
+    }, [logActivity, showToast]);
 
     const handleDeleteReview = useCallback((serviceId: number, reviewId: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا التقييم؟')) {
@@ -126,8 +141,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 return s;
             }));
             logActivity('حذف تقييم', `حذف تقييم المستخدم "${reviewUser}" على خدمة "${serviceName}"`);
+            showToast('تم حذف التقييم بنجاح!');
         }
-    }, [logActivity]);
+    }, [logActivity, showToast]);
 
     const handleReplyToReview = useCallback((serviceId: number, reviewId: number, reply: string) => {
         let serviceName = '';
@@ -142,7 +158,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             return s;
         }));
         logActivity('إضافة رد على تقييم', `إضافة رد على تقييم المستخدم "${reviewUser}" على خدمة "${serviceName}"`);
-    }, [logActivity]);
+        showToast('تم إضافة الرد بنجاح!');
+    }, [logActivity, showToast]);
 
     const handleSaveService = useCallback((serviceData: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => {
         const isNew = !serviceData.id;
@@ -168,15 +185,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إنشاء خدمة جديدة' : 'تعديل الخدمة';
         logActivity(action, `حفظ الخدمة: "${serviceData.name}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تمت إضافة الخدمة بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
 
     const handleDeleteService = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذه الخدمة؟')) {
             const serviceName = services.find(s => s.id === id)?.name || `ID: ${id}`;
             setServices(prevServices => prevServices.filter(s => s.id !== id));
             logActivity('حذف الخدمة', `حذف الخدمة: "${serviceName}"`);
+            showToast('تم حذف الخدمة بنجاح!');
         }
-    }, [services, logActivity]);
+    }, [services, logActivity, showToast]);
 
     const handleToggleFavorite = useCallback((serviceId: number) => {
         setServices(prevServices => prevServices.map(s => 
@@ -202,15 +221,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إنشاء خبر جديد' : 'تعديل خبر';
         logActivity(action, `حفظ الخبر: "${newsItem.title}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم نشر الخبر بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
 
     const handleDeleteNews = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا الخبر؟')) {
             const newsTitle = news.find(n => n.id === id)?.title || `ID: ${id}`;
             setNews(prevNews => prevNews.filter(n => n.id !== id));
             logActivity('حذف خبر', `حذف الخبر: "${newsTitle}"`);
+            showToast('تم حذف الخبر بنجاح!');
         }
-    }, [news, logActivity]);
+    }, [news, logActivity, showToast]);
     
     const handleSaveNotification = useCallback((notification: Omit<Notification, 'id'> & { id?: number }) => {
         const isNew = !notification.id;
@@ -227,15 +248,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إنشاء إشعار جديد' : 'تعديل إشعار';
         logActivity(action, `حفظ الإشعار: "${notification.title}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم إضافة الإشعار بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
 
     const handleDeleteNotification = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
             const notifTitle = notifications.find(n => n.id === id)?.title || `ID: ${id}`;
             setNotifications(prevNotifications => prevNotifications.filter(n => n.id !== id));
             logActivity('حذف إشعار', `حذف الإشعار: "${notifTitle}"`);
+            showToast('تم حذف الإشعار بنجاح!');
         }
-    }, [notifications, logActivity]);
+    }, [notifications, logActivity, showToast]);
 
     const handleSaveProperty = useCallback((property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => {
         const isNew = !property.id;
@@ -254,15 +277,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إنشاء عقار جديد' : 'تعديل عقار';
         logActivity(action, `حفظ العقار: "${property.title}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم إضافة العقار بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
 
     const handleDeleteProperty = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا العقار؟')) {
             const propTitle = properties.find(p => p.id === id)?.title || `ID: ${id}`;
             setProperties(prevProperties => prevProperties.filter(p => p.id !== id));
             logActivity('حذف عقار', `حذف العقار: "${propTitle}"`);
+            showToast('تم حذف العقار بنجاح!');
         }
-    }, [properties, logActivity]);
+    }, [properties, logActivity, showToast]);
     
     const handleSaveEmergencyContact = useCallback((contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }) => {
         const isNew = !contactData.id;
@@ -281,15 +306,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إضافة رقم طوارئ' : 'تعديل رقم طوارئ';
         logActivity(action, `حفظ رقم الطوارئ: "${contactData.title}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم إضافة الرقم بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
     
     const handleDeleteEmergencyContact = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا الرقم؟')) {
             const contactTitle = emergencyContacts.find(c => c.id === id)?.title || `ID: ${id}`;
             setEmergencyContacts(prevContacts => prevContacts.filter(c => c.id !== id));
             logActivity('حذف رقم طوارئ', `حذف رقم الطوارئ: "${contactTitle}"`);
+            showToast('تم حذف الرقم بنجاح!');
         }
-    }, [emergencyContacts, logActivity]);
+    }, [emergencyContacts, logActivity, showToast]);
     
     const handleSaveServiceGuide = useCallback((guideData: Omit<ServiceGuide, 'id'> & { id?: number }) => {
         const isNew = !guideData.id;
@@ -310,15 +337,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إضافة دليل خدمة' : 'تعديل دليل خدمة';
         logActivity(action, `حفظ دليل الخدمة: "${guideData.title}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم إضافة الدليل بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
     
     const handleDeleteServiceGuide = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا الدليل؟')) {
             const guideTitle = serviceGuides.find(g => g.id === id)?.title || `ID: ${id}`;
             setServiceGuides(prevGuides => prevGuides.filter(g => g.id !== id));
             logActivity('حذف دليل خدمة', `حذف دليل الخدمة: "${guideTitle}"`);
+            showToast('تم حذف الدليل بنجاح!');
         }
-    }, [serviceGuides, logActivity]);
+    }, [serviceGuides, logActivity, showToast]);
 
     const handleSaveUser = useCallback((userData: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => {
         const isNew = !userData.id;
@@ -336,15 +365,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إضافة مستخدم جديد' : 'تعديل بيانات مستخدم';
         logActivity(action, `حفظ بيانات المستخدم: "${userData.name}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم إضافة المستخدم بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
 
     const handleDeleteUser = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
             const userName = users.find(u => u.id === id)?.name || `ID: ${id}`;
             setUsers(prev => prev.filter(u => u.id !== id));
             logActivity('حذف مستخدم', `حذف المستخدم: "${userName}"`);
+            showToast('تم حذف المستخدم بنجاح!');
         }
-    }, [users, logActivity]);
+    }, [users, logActivity, showToast]);
 
     const handleSaveAdmin = useCallback((adminData: Omit<AdminUser, 'id'> & { id?: number }) => {
         const isNew = !adminData.id;
@@ -361,15 +392,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إضافة مدير جديد' : 'تعديل بيانات مدير';
         logActivity(action, `حفظ بيانات المدير: "${adminData.name}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم إضافة المدير بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
 
     const handleDeleteAdmin = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا المدير؟')) {
             const adminName = admins.find(a => a.id === id)?.name || `ID: ${id}`;
             setAdmins(prev => prev.filter(a => a.id !== id));
             logActivity('حذف مدير', `حذف المدير: "${adminName}"`);
+            showToast('تم حذف المدير بنجاح!');
         }
-    }, [admins, logActivity]);
+    }, [admins, logActivity, showToast]);
 
     // Transportation Handlers
     const handleSaveDriver = useCallback((driverData: Omit<Driver, 'id'> & { id?: number }) => {
@@ -388,7 +421,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إضافة سائق جديد' : 'تعديل بيانات سائق';
         logActivity(action, `حفظ بيانات السائق: "${driverData.name}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم إضافة السائق بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
     const handleDeleteDriver = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا السائق؟ سيتم إزالته من جميع الجداول.')) {
             const driverName = internalDrivers.find(d => d.id === id)?.name || `ID: ${id}`;
@@ -397,8 +431,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             }
             setInternalDrivers(prev => prev.filter(d => d.id !== id));
             logActivity('حذف سائق', `حذف السائق: "${driverName}"`);
+            showToast('تم حذف السائق بنجاح!');
         }
-    }, [internalDrivers, logActivity]);
+    }, [internalDrivers, logActivity, showToast]);
      const handleSaveRoute = useCallback((routeData: Omit<ExternalRoute, 'id'> & { id?: number }) => {
         const isNew = !routeData.id;
         setExternalRoutes(prev => {
@@ -410,18 +445,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
         const action = isNew ? 'إضافة مسار جديد' : 'تعديل مسار';
         logActivity(action, `حفظ المسار: "${routeData.name}"`);
-    }, [logActivity]);
+        showToast(isNew ? 'تم إضافة المسار بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
     const handleDeleteRoute = useCallback((id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا المسار؟')) {
             const routeName = externalRoutes.find(r => r.id === id)?.name || `ID: ${id}`;
             setExternalRoutes(prev => prev.filter(r => r.id !== id));
             logActivity('حذف مسار', `حذف المسار: "${routeName}"`);
+            showToast('تم حذف المسار بنجاح!');
         }
-    }, [externalRoutes, logActivity]);
+    }, [externalRoutes, logActivity, showToast]);
     const handleSaveSchedule = useCallback((schedule: WeeklyScheduleItem[]) => {
         setWeeklySchedule(schedule);
         logActivity('تعديل جدول الباصات', 'تم تحديث الجدول الأسبوعي للباصات الداخلية');
-    }, [logActivity]);
+        showToast('تم حفظ جدول المناوبات بنجاح!');
+    }, [logActivity, showToast]);
      const handleSaveSupervisor = useCallback((type: 'internal' | 'external', supervisor: Supervisor) => {
         if (type === 'internal') {
             setInternalSupervisor(supervisor);
@@ -430,7 +468,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         const supervisorType = type === 'internal' ? 'الداخلي' : 'الخارجي';
         logActivity('تعديل بيانات مشرف', `تم تحديث بيانات المشرف ${supervisorType}: "${supervisor.name}"`);
-    }, [logActivity]);
+        showToast('تم حفظ بيانات المشرف بنجاح!');
+    }, [logActivity, showToast]);
+
+    const handleUpdatePublicPageContent = useCallback(<K extends keyof PublicPagesContent>(page: K, newContent: PublicPagesContent[K]) => {
+        setPublicPagesContent(prev => ({
+            ...prev,
+            [page]: newContent
+        }));
+        logActivity('تحديث محتوى الموقع العام', `تم تحديث محتوى صفحة "${page}"`);
+        showToast(`تم حفظ محتوى صفحة "${page}" بنجاح!`);
+    }, [logActivity, showToast]);
 
 
     const value = useMemo(() => ({
@@ -451,6 +499,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         handleSaveRoute, handleDeleteRoute,
         handleSaveSchedule, handleSaveSupervisor,
         isDarkMode, toggleDarkMode,
+        publicPagesContent, handleUpdatePublicPageContent,
+        toasts, showToast, dismissToast
     }), [
         isAuthenticated, login, logout, currentUser,
         categories, services, news, notifications, properties, emergencyContacts, serviceGuides, users, admins,
@@ -468,7 +518,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         handleSaveDriver, handleDeleteDriver,
         handleSaveRoute, handleDeleteRoute,
         handleSaveSchedule, handleSaveSupervisor,
-        isDarkMode, toggleDarkMode
+        isDarkMode, toggleDarkMode,
+        publicPagesContent, handleUpdatePublicPageContent,
+        toasts, showToast, dismissToast
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

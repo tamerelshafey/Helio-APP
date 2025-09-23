@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { ArrowLeftIcon, StarIcon, EyeIcon, ChatBubbleOvalLeftIcon, WrenchScrewdriverIcon, ChartPieIcon, ChartBarIcon, HomeModernIcon, NewspaperIcon, MagnifyingGlassIcon, StarIconOutline } from '../components/common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import type { Service, Property, News } from '../types';
+import type { Service, Property, News, Category } from '../types';
 
 const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 rtl:space-x-reverse">
@@ -29,26 +29,33 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; children: Reac
     </button>
 );
 
-const ServiceReports: React.FC<{ data: Service[] }> = ({ data }) => {
+const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({ data, categories }) => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState<number>(0); // 0 for 'All'
     
-    const kpiData = useMemo(() => {
-        if (data.length === 0) return { total: 0, avgRating: 'N/A', totalReviews: 0, topFav: 'N/A' };
-        const total = data.length;
-        const servicesWithReviews = data.filter(s => s.reviews.length > 0);
-        const avgRating = servicesWithReviews.length > 0 ? (servicesWithReviews.reduce((acc, s) => acc + s.rating, 0) / servicesWithReviews.length).toFixed(1) : '0.0';
-        const totalReviews = data.reduce((acc, s) => acc + s.reviews.length, 0);
-        const topFav = [...data].filter(s => s.isFavorite).sort((a,b) => b.rating - a.rating)[0]?.name || 'لا يوجد';
-        return { total, avgRating, totalReviews, topFav };
-    }, [data]);
+    const filteredData = useMemo(() => {
+        if (categoryFilter === 0) return data;
+        const subCategoryIds = categories.find(c => c.id === categoryFilter)?.subCategories.map(sc => sc.id) || [];
+        return data.filter(s => subCategoryIds.includes(s.subCategoryId));
+    }, [data, categoryFilter, categories]);
 
-    const topRated = useMemo(() => [...data].sort((a, b) => b.rating - a.rating).slice(0, 5).map(s => ({ name: s.name, التقييم: s.rating })), [data]);
-    const mostViewed = useMemo(() => [...data].sort((a, b) => b.views - a.views).slice(0, 5).map(s => ({ name: s.name, المشاهدات: s.views })), [data]);
+    const kpiData = useMemo(() => {
+        if (filteredData.length === 0) return { total: 0, avgRating: 'N/A', totalReviews: 0, topFav: 'N/A' };
+        const total = filteredData.length;
+        const servicesWithReviews = filteredData.filter(s => s.reviews.length > 0);
+        const avgRating = servicesWithReviews.length > 0 ? (servicesWithReviews.reduce((acc, s) => acc + s.rating, 0) / servicesWithReviews.length).toFixed(1) : '0.0';
+        const totalReviews = filteredData.reduce((acc, s) => acc + s.reviews.length, 0);
+        const topFav = [...filteredData].filter(s => s.isFavorite).sort((a,b) => b.rating - a.rating)[0]?.name || 'لا يوجد';
+        return { total, avgRating, totalReviews, topFav };
+    }, [filteredData]);
+
+    const topRated = useMemo(() => [...filteredData].sort((a, b) => b.rating - a.rating).slice(0, 5).map(s => ({ name: s.name, التقييم: s.rating })), [filteredData]);
+    const mostViewed = useMemo(() => [...filteredData].sort((a, b) => b.views - a.views).slice(0, 5).map(s => ({ name: s.name, المشاهدات: s.views })), [filteredData]);
 
     const searchedData = useMemo(() => {
-        if (!searchTerm) return data;
-        return data.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [data, searchTerm]);
+        if (!searchTerm) return filteredData;
+        return filteredData.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }, [filteredData, searchTerm]);
 
     const Rating: React.FC<{ rating: number }> = ({ rating }) => (
         <div className="flex items-center">
@@ -95,9 +102,15 @@ const ServiceReports: React.FC<{ data: Service[] }> = ({ data }) => {
             <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                     <h3 className="font-semibold text-gray-700 dark:text-gray-300">بيانات الخدمات التفصيلية</h3>
-                    <div className="relative w-full sm:w-auto">
-                        <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2" />
-                        <input type="text" placeholder="بحث في الخدمات..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-64 bg-slate-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 rounded-lg py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"/>
+                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <select value={categoryFilter} onChange={e => setCategoryFilter(Number(e.target.value))} className="w-full sm:w-48 bg-slate-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 rounded-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                            <option value="0">كل الفئات</option>
+                            {categories.filter(c => c.name !== "المدينة والجهاز").map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                        </select>
+                        <div className="relative w-full sm:w-auto">
+                            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2" />
+                            <input type="text" placeholder="بحث في الخدمات..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:w-64 bg-slate-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 rounded-lg py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"/>
+                        </div>
                     </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -286,7 +299,7 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
 
 const ReportsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { services, properties, news } = useAppContext();
+    const { services, properties, news, categories } = useAppContext();
     const [activeTab, setActiveTab] = useState<'services' | 'properties' | 'news'>('services');
     
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -305,7 +318,7 @@ const ReportsPage: React.FC = () => {
 
     const renderContent = () => {
         switch (activeTab) {
-            case 'services': return <ServiceReports data={filteredServices} />;
+            case 'services': return <ServiceReports data={filteredServices} categories={categories} />;
             case 'properties': return <PropertyReports data={filteredProperties} />;
             case 'news': return <NewsReports data={filteredNews} />;
             default: return null;

@@ -5,6 +5,7 @@ import { useAppContext, useHasPermission } from '../context/AppContext';
 import type { AppUser, AdminUser, UserStatus } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
+import EmptyState from '../components/common/EmptyState';
 
 const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
     const statusMap = {
@@ -251,43 +252,58 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
                     </button>
                 </div>
              )}
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">المدير</th>
-                            <th scope="col" className="px-6 py-3">الدور</th>
-                            {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {admins.map(admin => (
-                            <tr key={admin.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <img src={admin.avatar} alt={admin.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
-                                        <div>
-                                            <div className="font-semibold text-gray-900 dark:text-white">{admin.name}</div>
-                                            <div className="text-xs">{admin.email}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{admin.role}</span>
-                                </td>
-                                {canManage && (
+             {admins.length > 0 ? (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" className="px-6 py-3">المدير</th>
+                                <th scope="col" className="px-6 py-3">الدور</th>
+                                {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {admins.map(admin => (
+                                <tr key={admin.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => onEdit(admin)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => handleDeleteAdmin(admin.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                        <div className="flex items-center gap-3">
+                                            <img src={admin.avatar} alt={admin.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
+                                            <div>
+                                                <div className="font-semibold text-gray-900 dark:text-white">{admin.name}</div>
+                                                <div className="text-xs">{admin.email}</div>
+                                            </div>
                                         </div>
                                     </td>
-                                )}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                                    <td className="px-6 py-4">
+                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{admin.role}</span>
+                                    </td>
+                                    {canManage && (
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => onEdit(admin)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                <button onClick={() => handleDeleteAdmin(admin.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                            </div>
+                                        </td>
+                                    )}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+             ) : (
+                <EmptyState
+                    icon={<UserCircleIcon className="w-16 h-16 text-slate-400" />}
+                    title="لا يوجد مديرون مضافون"
+                    message="ابدأ بإضافة حسابات للمديرين والمشرفين للوصول إلى لوحة التحكم."
+                >
+                    {canManage && (
+                        <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <UserPlusIcon className="w-5 h-5" />
+                            <span>إضافة مدير جديد</span>
+                        </button>
+                    )}
+                </EmptyState>
+             )}
         </div>
     );
 };

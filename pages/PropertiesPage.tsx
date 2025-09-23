@@ -8,6 +8,7 @@ import type { Property } from '../types';
 import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
+import EmptyState from '../components/common/EmptyState';
 
 const PropertyForm: React.FC<{
     onSave: (property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => void;
@@ -205,10 +206,18 @@ const PropertiesPage: React.FC = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                        <h3 className="text-xl font-semibold">لا توجد عقارات تطابق بحثك</h3>
-                        <p className="mt-2">حاول تغيير الفلاتر أو أضف عقاراً جديداً.</p>
-                    </div>
+                    <EmptyState
+                      icon={<HomeModernIcon className="w-16 h-16 text-slate-400" />}
+                      title={properties.length === 0 ? "لا توجد عقارات مضافة بعد" : "لا توجد عقارات تطابق بحثك"}
+                      message={properties.length === 0 ? "ابدأ بإضافة أول عقار لعرضه للمستخدمين في المدينة." : "حاول تغيير الفلاتر أو توسيع نطاق البحث."}
+                    >
+                      {canManage && properties.length === 0 && (
+                        <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <PlusIcon className="w-5 h-5" />
+                            <span>إضافة عقار جديد</span>
+                        </button>
+                      )}
+                    </EmptyState>
                 )}
             </div>
             

@@ -5,6 +5,7 @@ import type { Notification, Service } from '../types';
 import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
+import EmptyState from '../components/common/EmptyState';
 
 const NotificationForm: React.FC<{
     onSave: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
@@ -155,42 +156,52 @@ const NotificationsPage: React.FC = () => {
                 </div>
                 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">الإشعار</th>
-                                <th scope="col" className="px-6 py-3">الحالة</th>
-                                <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
-                                <th scope="col" className="px-6 py-3">الخدمة المرتبطة</th>
-                                {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {notifications.map(notification => (
-                                <tr key={notification.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-6 py-4 max-w-sm">
-                                        <div className="font-semibold text-gray-900 dark:text-white truncate">{notification.title}</div>
-                                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{notification.content}</div>
-                                    </td>
-                                    <td className="px-6 py-4"><StatusBadge startDate={notification.startDate} endDate={notification.endDate} /></td>
-                                    <td className="px-6 py-4 text-xs font-mono">{notification.startDate} <br/> {notification.endDate}</td>
-                                    <td className="px-6 py-4">{notification.serviceId ? services.find(s => s.id === notification.serviceId)?.name : 'لا يوجد'}</td>
-                                    {canManage && (
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                <button onClick={() => handleDeleteNotification(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
-                                            </div>
-                                        </td>
-                                    )}
+                    {notifications.length > 0 ? (
+                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">الإشعار</th>
+                                    <th scope="col" className="px-6 py-3">الحالة</th>
+                                    <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
+                                    <th scope="col" className="px-6 py-3">الخدمة المرتبطة</th>
+                                    {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                     {notifications.length === 0 && (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            لا توجد إشعارات مضافة حتى الآن.
-                        </div>
+                            </thead>
+                            <tbody>
+                                {notifications.map(notification => (
+                                    <tr key={notification.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="px-6 py-4 max-w-sm">
+                                            <div className="font-semibold text-gray-900 dark:text-white truncate">{notification.title}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{notification.content}</div>
+                                        </td>
+                                        <td className="px-6 py-4"><StatusBadge startDate={notification.startDate} endDate={notification.endDate} /></td>
+                                        <td className="px-6 py-4 text-xs font-mono">{notification.startDate} <br/> {notification.endDate}</td>
+                                        <td className="px-6 py-4">{notification.serviceId ? services.find(s => s.id === notification.serviceId)?.name : 'لا يوجد'}</td>
+                                        {canManage && (
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                    <button onClick={() => handleDeleteNotification(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                       <EmptyState
+                          icon={<BellAlertIcon className="w-16 h-16 text-slate-400" />}
+                          title="لا توجد إشعارات حالياً"
+                          message="يمكنك إضافة إشعار جديد لإعلام المستخدمين بالعروض أو الأخبار الهامة."
+                        >
+                          {canManage && (
+                            <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                                <PlusIcon className="w-5 h-5" />
+                                <span>إضافة إشعار جديد</span>
+                            </button>
+                          )}
+                        </EmptyState>
                     )}
                 </div>
             </div>

@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon } from '../components/common/Icons';
+import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon, WrenchScrewdriverIcon } from '../components/common/Icons';
 import type { Service } from '../types';
 import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
+import EmptyState from '../components/common/EmptyState';
 
 const Rating: React.FC<{ rating: number }> = ({ rating }) => (
     <div className="flex items-center">
@@ -170,57 +171,67 @@ const ServicePage: React.FC = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="p-3"><StarIcon className="w-5 h-5 mx-auto"/></th>
-                                <th scope="col" className="px-6 py-3">اسم الخدمة</th>
-                                <th scope="col" className="px-6 py-3">التقييم</th>
-                                <th scope="col" className="px-6 py-3">عدد التقييمات</th>
-                                <th scope="col" className="px-6 py-3">إجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {sortedServices.map(service => (
-                                <tr key={service.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-4 py-4 text-center">
-                                        <button onClick={() => handleToggleFavorite(service.id)} className="p-2 rounded-full hover:bg-yellow-100 dark:hover:bg-yellow-900/50" title="إضافة للمفضلة">
-                                            {service.isFavorite 
-                                                ? <StarIcon className="w-5 h-5 text-yellow-400" /> 
-                                                : <StarIconOutline className="w-5 h-5 text-gray-400" />
-                                            }
-                                        </button>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="font-semibold text-gray-900 dark:text-white">{service.name}</div>
-                                        <div className="text-xs">{service.address}</div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1">
-                                            <Rating rating={service.rating} />
-                                            <span className="text-xs font-bold">({service.rating.toFixed(1)})</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">{service.reviews.length}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => navigate(`/services/detail/${service.id}`)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض التفاصيل"><EyeIcon className="w-5 h-5" /></button>
-                                            {canManage && (
-                                                <>
-                                                    <button onClick={() => handleEditService(service)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                    <button onClick={() => handleDeleteService(service.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
+                     {sortedServices.length > 0 ? (
+                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="p-3"><StarIcon className="w-5 h-5 mx-auto"/></th>
+                                    <th scope="col" className="px-6 py-3">اسم الخدمة</th>
+                                    <th scope="col" className="px-6 py-3">التقييم</th>
+                                    <th scope="col" className="px-6 py-3">عدد التقييمات</th>
+                                    <th scope="col" className="px-6 py-3">إجراءات</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                     {sortedServices.length === 0 && (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            لا توجد خدمات مضافة في هذه الفئة حتى الآن.
-                        </div>
+                            </thead>
+                            <tbody>
+                                {sortedServices.map(service => (
+                                    <tr key={service.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="px-4 py-4 text-center">
+                                            <button onClick={() => handleToggleFavorite(service.id)} className="p-2 rounded-full hover:bg-yellow-100 dark:hover:bg-yellow-900/50" title="إضافة للمفضلة">
+                                                {service.isFavorite 
+                                                    ? <StarIcon className="w-5 h-5 text-yellow-400" /> 
+                                                    : <StarIconOutline className="w-5 h-5 text-gray-400" />
+                                                }
+                                            </button>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="font-semibold text-gray-900 dark:text-white">{service.name}</div>
+                                            <div className="text-xs">{service.address}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-1">
+                                                <Rating rating={service.rating} />
+                                                <span className="text-xs font-bold">({service.rating.toFixed(1)})</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">{service.reviews.length}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => navigate(`/services/detail/${service.id}`)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض التفاصيل"><EyeIcon className="w-5 h-5" /></button>
+                                                {canManage && (
+                                                    <>
+                                                        <button onClick={() => handleEditService(service)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                        <button onClick={() => handleDeleteService(service.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <EmptyState
+                            icon={<WrenchScrewdriverIcon className="w-16 h-16 text-slate-400" />}
+                            title={`لا توجد خدمات في فئة "${categoryName}"`}
+                            message="يمكنك البدء بإضافة أول خدمة في هذه الفئة من خلال الزر أدناه."
+                        >
+                            {canManage && (
+                                <button onClick={handleAddService} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                                    <PlusIcon className="w-5 h-5" />
+                                    <span>إضافة خدمة جديدة</span>
+                                </button>
+                            )}
+                        </EmptyState>
                     )}
                 </div>
             </div>

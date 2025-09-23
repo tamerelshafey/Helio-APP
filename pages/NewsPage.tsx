@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '../components/common/Icons';
+import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, NewspaperIcon } from '../components/common/Icons';
 import type { News } from '../types';
 import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
+import EmptyState from '../components/common/EmptyState';
 
 const NewsForm: React.FC<{
     onSave: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
@@ -143,10 +144,18 @@ const NewsPage: React.FC = () => {
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
-                    <h3 className="text-xl font-semibold">لا توجد أخبار حالياً</h3>
-                    <p className="mt-2">انقر على "إضافة خبر جديد" لبدء النشر.</p>
-                </div>
+                <EmptyState
+                  icon={<NewspaperIcon className="w-16 h-16 text-slate-400" />}
+                  title="لا توجد أخبار حالياً"
+                  message="انقر على زر 'إضافة خبر جديد' لبدء مشاركة آخر المستجدات مع سكان المدينة."
+                >
+                  {canManage && (
+                    <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                        <PlusIcon className="w-5 h-5" />
+                        <span>إضافة خبر جديد</span>
+                    </button>
+                  )}
+                </EmptyState>
             )}
             
             <Modal

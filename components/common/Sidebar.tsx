@@ -16,7 +16,8 @@ import {
     BuildingOffice2Icon,
     ChatBubbleOvalLeftIcon,
     QuestionMarkCircleIcon,
-    ClipboardDocumentListIcon
+    ClipboardDocumentListIcon,
+    PencilSquareIcon
 } from './Icons';
 import { useAppContext } from '../../context/AppContext';
 import type { AdminUser } from '../../types';
@@ -104,6 +105,7 @@ const Sidebar: React.FC = () => {
             { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
             { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
             { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users", roles: ['مدير عام'] },
+            { name: "إدارة المحتوى", icon: <PencilSquareIcon className="w-6 h-6" />, to: "/content-management", roles: ['مدير عام'] },
             { name: "إدارة التقييمات", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/reviews", roles: serviceManagerRoles },
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/reports" },
             { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/audit-log", roles: ['مدير عام'] }

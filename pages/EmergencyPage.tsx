@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, PhoneIcon, PencilSquareIcon, TrashIcon, PlusIcon } from '../components/common/Icons';
+import { ArrowLeftIcon, PhoneIcon, PencilSquareIcon, TrashIcon, PlusIcon, ShieldExclamationIcon } from '../components/common/Icons';
 import type { EmergencyContact } from '../types';
 import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
+import EmptyState from '../components/common/EmptyState';
 
 const EmergencyCard: React.FC<{ contact: EmergencyContact; onEdit: (contact: EmergencyContact) => void; onDelete: (id: number) => void; }> = ({ contact, onEdit, onDelete }) => {
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
@@ -132,11 +133,26 @@ const EmergencyPage: React.FC = () => {
                     )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {emergencyContacts.map((contact) => (
-                        <EmergencyCard key={contact.id} contact={contact} onEdit={handleEditClick} onDelete={handleDeleteEmergencyContact} />
-                    ))}
-                </div>
+                {emergencyContacts.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {emergencyContacts.map((contact) => (
+                            <EmergencyCard key={contact.id} contact={contact} onEdit={handleEditClick} onDelete={handleDeleteEmergencyContact} />
+                        ))}
+                    </div>
+                ) : (
+                    <EmptyState
+                        icon={<ShieldExclamationIcon className="w-16 h-16 text-slate-400" />}
+                        title="لا توجد أرقام طوارئ مضافة"
+                        message="ابدأ بإضافة أرقام الطوارئ الهامة لسكان المدينة."
+                    >
+                        {canManage && (
+                            <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                                <PlusIcon className="w-5 h-5" />
+                                <span>إضافة رقم جديد</span>
+                            </button>
+                        )}
+                    </EmptyState>
+                )}
             </div>
             
             <Modal 

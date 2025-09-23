@@ -12,6 +12,7 @@ import {
     NewspaperIcon,
     UserGroupIcon
 } from '../components/common/Icons';
+import { useAppContext } from '../context/AppContext';
 
 const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; description: string }> = ({ icon, title, description }) => (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg text-center transform hover:-translate-y-2 transition-transform duration-300">
@@ -25,6 +26,14 @@ const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; description:
 
 
 const PublicHomePage: React.FC = () => {
+    const { publicPagesContent } = useAppContext();
+    const content = publicPagesContent.home;
+
+    const featureIcons: { [key: string]: React.ReactNode } = {
+        "دليل شامل": <MagnifyingGlassIcon className="w-8 h-8 text-cyan-500"/>,
+        "أخبار وتنبيهات": <NewspaperIcon className="w-8 h-8 text-cyan-500"/>,
+        "مجتمع متصل": <UserGroupIcon className="w-8 h-8 text-cyan-500"/>,
+    };
 
     return (
         <div className="animate-fade-in" dir="rtl">
@@ -33,14 +42,14 @@ const PublicHomePage: React.FC = () => {
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                     <div className="text-center md:text-right">
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-800 dark:text-white mb-4 leading-tight">
-                            مدينتك...
+                            {content.heroTitleLine1}
                             <br/>
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
-                                في تطبيق واحد
+                                {content.heroTitleLine2}
                             </span>
                         </h1>
                         <p className="max-w-xl mx-auto md:mx-0 text-lg text-gray-600 dark:text-gray-300 mb-8">
-                            Helio هو دليلك الشامل لاستكشاف الخدمات، متابعة الأخبار، والتواصل مع مجتمع هليوبوليس الجديدة.
+                            {content.heroSubtitle}
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
                             <a href="https://play.google.com/store/apps/details?id=com.helio.company" target="_blank" rel="noopener noreferrer" className="bg-black text-white rounded-lg px-4 py-3 flex items-center justify-center gap-3 transition-transform hover:scale-105 w-full sm:w-auto">
@@ -83,27 +92,20 @@ const PublicHomePage: React.FC = () => {
             <section className="bg-slate-50 dark:bg-slate-900/50 py-16 md:py-24">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                      <div className="text-center max-w-2xl mx-auto mb-12">
-                        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-white mb-4">كل ما تحتاجه في هليوبوليس الجديدة</h2>
+                        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-white mb-4">{content.featuresSectionTitle}</h2>
                         <p className="text-lg text-gray-600 dark:text-gray-300">
-                            استكشف، تواصل، وكن على اطلاع دائم. Helio مصمم ليكون رفيقك اليومي في المدينة.
+                           {content.featuresSectionSubtitle}
                         </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <FeatureCard 
-                            icon={<MagnifyingGlassIcon className="w-8 h-8 text-cyan-500"/>} 
-                            title="دليل شامل" 
-                            description="كل الخدمات والمحلات والمرافق بين يديك، مع تقييمات حقيقية من السكان."
-                        />
-                        <FeatureCard 
-                            icon={<NewspaperIcon className="w-8 h-8 text-cyan-500"/>} 
-                            title="أخبار وتنبيهات" 
-                            description="لا تفوت أي جديد! كن على اطلاع بآخر مستجدات وأخبار المدينة أولاً بأول."
-                        />
-                        <FeatureCard 
-                            icon={<UserGroupIcon className="w-8 h-8 text-cyan-500"/>} 
-                            title="مجتمع متصل" 
-                            description="شارك برأيك وتقييماتك للخدمات وكن جزءًا من مجتمع فعال ومتعاون."
-                        />
+                        {content.features.map((feature, index) => (
+                             <FeatureCard 
+                                key={index}
+                                icon={featureIcons[feature.title] || <MagnifyingGlassIcon className="w-8 h-8 text-cyan-500"/>}
+                                title={feature.title} 
+                                description={feature.description}
+                            />
+                        ))}
                     </div>
                 </div>
             </section>
@@ -111,7 +113,7 @@ const PublicHomePage: React.FC = () => {
              {/* Info Links Section */}
             <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
                  <div className="text-center max-w-2xl mx-auto mb-12">
-                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-white mb-4">معلومات تهمك</h2>
+                    <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-white mb-4">{content.infoLinksSectionTitle}</h2>
                 </div>
                 <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
                      <Link to="/about" className="group flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">

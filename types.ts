@@ -1,3 +1,6 @@
+// FIX: Import ReactNode to resolve type error
+import type { ReactNode } from 'react';
+
 export interface User {
   id: string;
   name: string;
@@ -173,6 +176,80 @@ export interface AuditLog {
   details: string;
 }
 
+// New Types for Public Page Content Management
+export interface PolicySection {
+  title: string;
+  content: (string | { list: string[] })[]; // string is a paragraph, object is a list
+}
+
+export interface PolicyPageContent {
+  title: string;
+  lastUpdated: string;
+  sections: PolicySection[];
+}
+
+export interface FaqItem {
+  q: string;
+  a: string; // Storing as simple string for easier editing.
+}
+
+export interface FaqCategory {
+  category: string;
+  items: FaqItem[];
+}
+
+export interface FaqPageContent {
+  title: string;
+  subtitle: string;
+  categories: FaqCategory[];
+}
+
+export interface AboutPageContent {
+  title: string;
+  intro: string;
+  vision: { title: string; text: string };
+  mission: { title: string; text: string };
+}
+
+export interface HomePageFeature {
+  title: string;
+  description: string;
+}
+
+export interface HomePageContent {
+  heroTitleLine1: string;
+  heroTitleLine2: string;
+  heroSubtitle: string;
+  featuresSectionTitle: string;
+  featuresSectionSubtitle: string;
+  features: HomePageFeature[];
+  infoLinksSectionTitle: string;
+}
+
+export interface PublicPagesContent {
+  home: HomePageContent;
+  about: AboutPageContent;
+  faq: FaqPageContent;
+  privacy: PolicyPageContent;
+  terms: PolicyPageContent;
+}
+
+export interface ToastMessage {
+  id: number;
+  message: string;
+  type: 'success' | 'error';
+}
+
+export interface SearchResult {
+  id: string; // e.g., 'service-1'
+  type: 'خدمة' | 'عقار' | 'خبر' | 'مستخدم';
+  title: string;
+  subtitle?: string;
+  link: string;
+  // FIX: Use imported ReactNode type
+  icon: ReactNode;
+}
+
 export interface AppContextType {
   currentUser: AdminUser | null;
   isAuthenticated: boolean;
@@ -224,4 +301,9 @@ export interface AppContextType {
   handleSaveSupervisor: (type: 'internal' | 'external', supervisor: Supervisor) => void;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  publicPagesContent: PublicPagesContent;
+  handleUpdatePublicPageContent: <K extends keyof PublicPagesContent>(page: K, newContent: PublicPagesContent[K]) => void;
+  toasts: ToastMessage[];
+  showToast: (message: string, type: 'success' | 'error') => void;
+  dismissToast: (id: number) => void;
 }

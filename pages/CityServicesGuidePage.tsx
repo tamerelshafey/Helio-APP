@@ -8,6 +8,7 @@ import type { ServiceGuide } from '../types';
 import { useAppContext, useHasPermission } from '../context/AppContext';
 import Modal from '../components/common/Modal';
 import AttachmentUploader from '../components/common/AttachmentUploader';
+import EmptyState from '../components/common/EmptyState';
 
 const GuideForm: React.FC<{
     onSave: (guide: Omit<ServiceGuide, 'id'> & { id?: number }) => void;
@@ -99,7 +100,7 @@ const CityServicesGuidePage: React.FC = () => {
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingGuide, setEditingGuide] = useState<ServiceGuide | null>(null);
-    const [openGuideId, setOpenGuideId] = useState<number | null>(1);
+    const [openGuideId, setOpenGuideId] = useState<number | null>(serviceGuides.length > 0 ? serviceGuides[0].id : null);
 
     const handleToggleGuide = (id: number) => {
         setOpenGuideId(openGuideId === id ? null : id);
@@ -137,7 +138,7 @@ const CityServicesGuidePage: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                    {serviceGuides.map(guide => (
+                    {serviceGuides.length > 0 ? serviceGuides.map(guide => (
                         <div key={guide.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
                             <button onClick={() => handleToggleGuide(guide.id)} className="w-full flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-right">
                                 <span className="font-semibold text-lg text-gray-800 dark:text-white">{guide.title}</span>
@@ -183,7 +184,20 @@ const CityServicesGuidePage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <EmptyState
+                          icon={<DocumentDuplicateIcon className="w-16 h-16 text-slate-400" />}
+                          title="لا توجد أدلة خدمات مضافة"
+                          message="ابدأ بإضافة دليل جديد لمساعدة السكان في إنجاز معاملاتهم بسهولة."
+                        >
+                          {canManage && (
+                            <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                                <PlusIcon className="w-5 h-5" />
+                                <span>إضافة دليل جديد</span>
+                            </button>
+                          )}
+                        </EmptyState>
+                    )}
                 </div>
             </div>
 
