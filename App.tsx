@@ -21,8 +21,6 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ServicesOverviewPage = lazy(() => import('./pages/ServicesOverviewPage'));
-const AboutCityPage = lazy(() => import('./pages/AboutCityPage'));
-const AboutCompanyPage = lazy(() => import('./pages/AboutCompanyPage'));
 const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
 const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'));
@@ -53,8 +51,6 @@ const App: React.FC = () => {
                 <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/about-city" element={<AboutCityPage />} />
-                <Route path="/about-company" element={<AboutCompanyPage />} />
                 <Route path="/services-overview" element={<ServicesOverviewPage />} />
                 <Route path="/reviews" element={<ReviewsPage />} />
                 <Route path="/faq" element={<FaqPage />} />

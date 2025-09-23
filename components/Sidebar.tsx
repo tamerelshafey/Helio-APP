@@ -1,4 +1,4 @@
-import React, { useState, memo, useMemo, useEffect } from 'react';
+import React, { useState, memo, useMemo, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
     HomeIcon, UserGroupIcon, Cog6ToothIcon, MagnifyingGlassIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, 
@@ -59,7 +59,7 @@ const filterNavItems = (items: NavItemData[], query: string): NavItemData[] => {
 const Sidebar: React.FC = () => {
     const { categories } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
-    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true, 'المدينة والجهاز': true });
+    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
     const [searchQuery, setSearchQuery] = useState('');
     const location = useLocation();
 
@@ -161,6 +161,18 @@ const Sidebar: React.FC = () => {
         const isMenuOpen = (searchQuery.length > 0 && hasChildren) || !!openMenus[item.name] || isParentOfActive;
         const isActive = item.to ? location.pathname === item.to.split('#')[0] : false;
         
+        const linkRef = useRef<HTMLAnchorElement>(null);
+
+        useEffect(() => {
+            if (isActive) {
+                // Small delay to allow parent menu to open smoothly
+                const timer = setTimeout(() => {
+                    linkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+                return () => clearTimeout(timer);
+            }
+        }, [isActive]);
+
         const paddingRightClass = level === 1 ? 'pr-6' : level === 2 ? 'pr-10' : 'pr-4';
 
         if (hasChildren) {
@@ -184,7 +196,7 @@ const Sidebar: React.FC = () => {
 
         const linkClasses = `flex items-center space-x-3 rtl:space-x-reverse w-full px-3 py-2 rounded-md transition-colors text-sm font-medium ${paddingRightClass} text-right ${isActive ? 'bg-cyan-500 text-white font-semibold shadow' : `hover:bg-slate-800 hover:text-white ${level > 0 ? 'text-gray-300' : 'text-white'}`}`;
         
-        return <Link to={item.to || '#'} className={linkClasses}>{item.icon}<span>{item.name}</span></Link>;
+        return <Link ref={linkRef} to={item.to || '#'} className={linkClasses}>{item.icon}<span>{item.name}</span></Link>;
     };
     
     const SidebarContent = () => (

@@ -3,53 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PhoneIcon, UserCircleIcon, BusIcon, CalendarDaysIcon, MapPinIcon, PencilSquareIcon, CheckCircleIcon, XMarkIcon, PlusIcon, TrashIcon } from '../components/common/Icons';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-
-// --- TYPES ---
-interface Driver {
-    id: number;
-    name: string;
-    phone: string;
-    avatar: string;
-}
-interface ScheduleDriver {
-    name: string;
-    phone: string;
-}
-interface WeeklyScheduleItem {
-    day: string;
-    drivers: ScheduleDriver[];
-}
-interface ExternalRoute {
-    id: number;
-    name: string;
-    timings: string[];
-    waitingPoint: string;
-}
-
-// --- INITIAL DATA ---
-const initialInternalSupervisor = { name: 'أ. محمد عبدالسلام', phone: '012-3456-7890' };
-const initialExternalSupervisor = { name: 'أ. حسين فهمي', phone: '015-4321-0987' };
-const initialInternalDrivers: Driver[] = [
-    { id: 1, name: 'أحمد المصري', phone: '010-1111-2222', avatar: 'https://picsum.photos/200/200?random=1' },
-    { id: 2, name: 'خالد عبدالله', phone: '011-2222-3333', avatar: 'https://picsum.photos/200/200?random=3' },
-    { id: 3, name: 'ياسر القحطاني', phone: '015-3333-4444', avatar: 'https://picsum.photos/200/200?random=7' },
-    { id: 4, name: 'سعيد العويران', phone: '012-4444-5555', avatar: 'https://picsum.photos/200/200?random=8' },
-];
-const initialWeeklySchedule: WeeklyScheduleItem[] = [
-    { day: 'الأحد', drivers: [{ name: 'أحمد المصري', phone: '010-1111-2222' }] },
-    { day: 'الإثنين', drivers: [{ name: 'خالد عبدالله', phone: '011-2222-3333' }, { name: 'سعيد العويران', phone: '012-4444-5555' }] },
-    { day: 'الثلاثاء', drivers: [{ name: 'ياسر القحطاني', phone: '015-3333-4444' }] },
-    { day: 'الأربعاء', drivers: [{ name: 'سعيد العويران', phone: '012-4444-5555' }] },
-    { day: 'الخميس', drivers: [{ name: 'أحمد المصري', phone: '010-1111-2222' }, { name: 'ياسر القحطاني', phone: '015-3333-4444' }] },
-    { day: 'الجمعة', drivers: [{ name: 'خالد عبدالله', phone: '011-2222-3333' }] },
-    { day: 'السبت', drivers: [{ name: 'ياسر القحطاني', phone: '015-3333-4444' }] },
-];
-const initialExternalRoutes: ExternalRoute[] = [
-    { id: 1, name: 'هليوبوليس الجديدة <> ميدان رمسيس', timings: ['07:00 ص', '09:00 ص', '02:00 م', '05:00 م'], waitingPoint: 'أمام البوابة الرئيسية للمدينة' },
-    { id: 2, name: 'هليوبوليس الجديدة <> التجمع الخامس', timings: ['08:00 ص', '11:00 ص', '03:00 م', '06:00 م'], waitingPoint: 'بجوار مول سيتي بلازا' },
-    { id: 3, name: 'هليوبوليس الجديدة <> مدينة نصر', timings: ['07:30 ص', '10:30 ص', '01:30 م', '04:30 م'], waitingPoint: 'أمام محطة الوقود' },
-];
-
+import { useAppContext } from '../context/AppContext';
+import type { Driver, ExternalRoute, WeeklyScheduleItem, Supervisor } from '../types';
 
 // --- HELPER COMPONENTS ---
 const CallButton: React.FC<{ phone: string }> = ({ phone }) => (
@@ -72,12 +27,15 @@ const DriverForm: React.FC<{ driver: Driver | null; onSave: (driver: Omit<Driver
         if (driver) {
             setFormData({ name: driver.name, phone: driver.phone });
             setAvatar([driver.avatar]);
+        } else {
+            setFormData({ name: '', phone: '' });
+            setAvatar([]);
         }
     }, [driver]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ id: driver?.id, ...formData, avatar: avatar[0] || 'https://picsum.photos/200/200?random=10' });
+        onSave({ id: driver?.id, ...formData, avatar: avatar[0] || `https://picsum.photos/200/200?random=${Date.now()}` });
         onClose();
     };
 
@@ -96,6 +54,8 @@ const RouteForm: React.FC<{ route: ExternalRoute | null; onSave: (route: Omit<Ex
     useEffect(() => {
         if (route) {
             setFormData({ name: route.name, timings: route.timings.join('\n'), waitingPoint: route.waitingPoint });
+        } else {
+             setFormData({ name: '', timings: '', waitingPoint: '' });
         }
     }, [route]);
 
@@ -118,85 +78,59 @@ const RouteForm: React.FC<{ route: ExternalRoute | null; onSave: (route: Omit<Ex
 // --- MAIN COMPONENT ---
 const TransportationPage: React.FC = () => {
     const navigate = useNavigate();
+    const { 
+        transportation, handleSaveDriver, handleDeleteDriver, 
+        handleSaveRoute, handleDeleteRoute, handleSaveSchedule, handleSaveSupervisor
+    } = useAppContext();
+    
     const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
     
-    // States
-    const [internalSupervisor, setInternalSupervisor] = useState(initialInternalSupervisor);
-    const [externalSupervisor, setExternalSupervisor] = useState(initialExternalSupervisor);
     const [isEditingInternal, setIsEditingInternal] = useState(false);
     const [isEditingExternal, setIsEditingExternal] = useState(false);
-    const [internalDrivers, setInternalDrivers] = useState<Driver[]>(initialInternalDrivers);
-    const [schedule, setSchedule] = useState<WeeklyScheduleItem[]>(initialWeeklySchedule);
-    const [editedSchedule, setEditedSchedule] = useState(schedule);
+    
+    const [editedSchedule, setEditedSchedule] = useState<WeeklyScheduleItem[]>(transportation.weeklySchedule);
     const [isEditingSchedule, setIsEditingSchedule] = useState(false);
-    const [externalRoutes, setExternalRoutes] = useState<ExternalRoute[]>(initialExternalRoutes);
-
+    
     // Modal States
     const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
     const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
     const [isRouteModalOpen, setIsRouteModalOpen] = useState(false);
     const [editingRoute, setEditingRoute] = useState<ExternalRoute | null>(null);
 
+    useEffect(() => {
+        setEditedSchedule(transportation.weeklySchedule);
+    }, [transportation.weeklySchedule]);
+    
+
     // --- CRUD Handlers ---
-
-    // Drivers
-    const handleSaveDriver = (driverData: Omit<Driver, 'id'> & { id?: number }) => {
-        setInternalDrivers(prev => {
-            if (driverData.id) {
-                // Update driver and cascade changes to schedule
-                const oldDriver = prev.find(d => d.id === driverData.id);
-                if (oldDriver && (oldDriver.name !== driverData.name || oldDriver.phone !== driverData.phone)) {
-                    setSchedule(s => s.map(day => ({ ...day, drivers: day.drivers.map(d => d.name === oldDriver.name ? { name: driverData.name, phone: driverData.phone } : d) })));
-                }
-                return prev.map(d => d.id === driverData.id ? { ...d, ...driverData, id: d.id } : d);
-            } else {
-                const newDriver = { ...driverData, id: Date.now() };
-                return [newDriver, ...prev];
-            }
-        });
+    const handleSaveAndCloseDriver = (driverData: Omit<Driver, 'id'> & { id?: number }) => {
+        handleSaveDriver(driverData);
+        setIsDriverModalOpen(false);
     };
-    const handleDeleteDriver = (id: number) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا السائق؟ سيتم إزالته من جميع الجداول.')) {
-            const driverToRemove = internalDrivers.find(d => d.id === id);
-            if(driverToRemove) {
-                 setSchedule(s => s.map(day => ({ ...day, drivers: day.drivers.filter(d => d.name !== driverToRemove.name) })));
-            }
-            setInternalDrivers(prev => prev.filter(d => d.id !== id));
-        }
-    };
-
-    // Routes
-    const handleSaveRoute = (routeData: Omit<ExternalRoute, 'id'> & { id?: number }) => {
-        setExternalRoutes(prev => {
-            if (routeData.id) {
-                return prev.map(r => r.id === routeData.id ? { ...r, ...routeData, id: r.id } : r);
-            } else {
-                return [{ ...routeData, id: Date.now() }, ...prev];
-            }
-        });
-    };
-    const handleDeleteRoute = (id: number) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا المسار؟')) {
-            setExternalRoutes(prev => prev.filter(r => r.id !== id));
-        }
+    const handleSaveAndCloseRoute = (routeData: Omit<ExternalRoute, 'id'> & { id?: number }) => {
+        handleSaveRoute(routeData);
+        setIsRouteModalOpen(false);
     };
 
     // Schedule
     const handleEditScheduleToggle = () => {
         if (isEditingSchedule) {
-            setSchedule(editedSchedule);
+            handleSaveSchedule(editedSchedule);
         } else {
-            setEditedSchedule(JSON.parse(JSON.stringify(schedule)));
+            setEditedSchedule(JSON.parse(JSON.stringify(transportation.weeklySchedule)));
         }
         setIsEditingSchedule(!isEditingSchedule);
     };
     const handleCancelEditSchedule = () => setIsEditingSchedule(false);
     const handleScheduleDriverChange = (day: string, driverIndex: number, newDriverName: string) => {
-        const driver = internalDrivers.find(d => d.name === newDriverName);
+        const driver = transportation.internalDrivers.find(d => d.name === newDriverName);
         if (!driver) return;
         setEditedSchedule(prev => prev.map(item => item.day === day ? { ...item, drivers: item.drivers.map((d, i) => i === driverIndex ? { name: newDriverName, phone: driver.phone } : d) } : item));
     };
-    const handleAddDriverToSchedule = (day: string) => setEditedSchedule(prev => prev.map(item => item.day === day ? { ...item, drivers: [...item.drivers, { name: internalDrivers[0].name, phone: internalDrivers[0].phone }] } : item));
+    const handleAddDriverToSchedule = (day: string) => {
+        if (transportation.internalDrivers.length === 0) return;
+        setEditedSchedule(prev => prev.map(item => item.day === day ? { ...item, drivers: [...item.drivers, { name: transportation.internalDrivers[0].name, phone: transportation.internalDrivers[0].phone }] } : item));
+    };
     const handleRemoveDriverFromSchedule = (day: string, driverIndex: number) => setEditedSchedule(prev => prev.map(item => item.day === day ? { ...item, drivers: item.drivers.filter((_, i) => i !== driverIndex) } : item));
 
     // --- Component Logic ---
@@ -209,14 +143,18 @@ const TransportationPage: React.FC = () => {
         return { firstday, lastday };
     };
     const { firstday, lastday } = getWeekRange();
-    const daysOfWeek = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
     const todayIndex = new Date().getDay();
     
-    // Supervisor Card Component (defined inside to easily access state setters)
-    const SupervisorCard: React.FC<{ supervisor: { name: string, phone: string }; setSupervisor: React.Dispatch<React.SetStateAction<{ name: string, phone: string }>>; isEditing: boolean; setIsEditing: React.Dispatch<React.SetStateAction<boolean>>; title: string; }> = ({ supervisor, setSupervisor, isEditing, setIsEditing, title }) => {
+    // Supervisor Card Component
+    const SupervisorCard: React.FC<{ supervisor: Supervisor; onSave: (supervisor: Supervisor) => void; isEditing: boolean; setIsEditing: React.Dispatch<React.SetStateAction<boolean>>; title: string; }> = ({ supervisor, onSave, isEditing, setIsEditing, title }) => {
         const [editedInfo, setEditedInfo] = useState(supervisor);
-        const handleSave = () => { setSupervisor(editedInfo); setIsEditing(false); };
+        const handleSave = () => { onSave(editedInfo); setIsEditing(false); };
         const handleCancel = () => { setEditedInfo(supervisor); setIsEditing(false); };
+        
+        useEffect(() => {
+            setEditedInfo(supervisor);
+        }, [supervisor]);
+
         return (
              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3 flex-grow">
@@ -251,7 +189,7 @@ const TransportationPage: React.FC = () => {
             <div>
                 {activeTab === 'internal' && (
                     <div className="space-y-8">
-                        <SupervisorCard supervisor={internalSupervisor} setSupervisor={setInternalSupervisor} isEditing={isEditingInternal} setIsEditing={setIsEditingInternal} title="مشرف الباصات الداخلية" />
+                        <SupervisorCard supervisor={transportation.internalSupervisor} onSave={(s) => handleSaveSupervisor('internal', s)} isEditing={isEditingInternal} setIsEditing={setIsEditingInternal} title="مشرف الباصات الداخلية" />
                         
                         <div>
                             <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold">قائمة السائقين</h2><button onClick={() => { setEditingDriver(null); setIsDriverModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4" /><span>إضافة سائق</span></button></div>
@@ -259,7 +197,7 @@ const TransportationPage: React.FC = () => {
                                 <table className="w-full text-right">
                                     <thead><tr><th className="p-3">السائق</th><th className="p-3">رقم الهاتف</th><th className="p-3">إجراءات</th></tr></thead>
                                     <tbody>
-                                        {internalDrivers.map(driver => (
+                                        {transportation.internalDrivers.map(driver => (
                                             <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
                                                 <td className="p-3"><div className="flex items-center gap-3"><img src={driver.avatar} alt={driver.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/><span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span></div></td>
                                                 <td className="p-3 text-gray-600 dark:text-gray-300 font-mono">{driver.phone}</td>
@@ -276,7 +214,7 @@ const TransportationPage: React.FC = () => {
                             <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md">
                                 <div className="text-center mb-4"><h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">{`الأسبوع: ${firstday} - ${lastday}`}</h3></div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2">
-                                    {(isEditingSchedule ? editedSchedule : schedule).map((item, index) => (
+                                    {(isEditingSchedule ? editedSchedule : transportation.weeklySchedule).map((item, index) => (
                                         <div key={item.day} className={`p-3 rounded-lg min-h-[150px] ${index === todayIndex ? 'bg-cyan-50 dark:bg-cyan-900/50 border-2 border-cyan-500' : 'bg-slate-50 dark:bg-slate-700/50'}`}>
                                             <h4 className={`font-bold text-center border-b pb-2 mb-2 ${index === todayIndex ? 'text-cyan-600 dark:text-cyan-300 border-cyan-300' : 'text-gray-700 dark:text-gray-300 border-slate-200 dark:border-slate-600'}`}>{item.day}</h4>
                                             <div className="flex flex-col gap-2">
@@ -284,7 +222,7 @@ const TransportationPage: React.FC = () => {
                                                     <div key={driverIndex} className="text-xs p-1 rounded">
                                                         {isEditingSchedule ? (
                                                             <div className="flex items-center gap-1">
-                                                                <select value={driver.name} onChange={(e) => handleScheduleDriverChange(item.day, driverIndex, e.target.value)} className="w-full text-xs bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded py-1 px-1 focus:outline-none focus:ring-1 focus:ring-cyan-500">{internalDrivers.map(d=><option key={d.id} value={d.name}>{d.name}</option>)}</select>
+                                                                <select value={driver.name} onChange={(e) => handleScheduleDriverChange(item.day, driverIndex, e.target.value)} className="w-full text-xs bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded py-1 px-1 focus:outline-none focus:ring-1 focus:ring-cyan-500">{transportation.internalDrivers.map(d=><option key={d.id} value={d.name}>{d.name}</option>)}</select>
                                                                 <button onClick={() => handleRemoveDriverFromSchedule(item.day, driverIndex)} className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><TrashIcon className="w-3 h-3"/></button>
                                                             </div>
                                                         ) : (
@@ -303,10 +241,10 @@ const TransportationPage: React.FC = () => {
                 )}
                 {activeTab === 'external' && (
                     <div className="space-y-8">
-                        <SupervisorCard supervisor={externalSupervisor} setSupervisor={setExternalSupervisor} isEditing={isEditingExternal} setIsEditing={setIsEditingExternal} title="مشرف الباصات الخارجية" />
+                        <SupervisorCard supervisor={transportation.externalSupervisor} onSave={(s) => handleSaveSupervisor('external', s)} isEditing={isEditingExternal} setIsEditing={setIsEditingExternal} title="مشرف الباصات الخارجية" />
                         <div className="flex justify-end"><button onClick={() => { setEditingRoute(null); setIsRouteModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4"/><span>إضافة مسار</span></button></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {externalRoutes.map(route => (
+                            {transportation.externalRoutes.map(route => (
                                 <div key={route.id} className="group relative bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md flex flex-col gap-4">
                                      <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => { setEditingRoute(route); setIsRouteModalOpen(true); }} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50"><PencilSquareIcon className="w-4 h-4" /></button>
@@ -323,8 +261,8 @@ const TransportationPage: React.FC = () => {
             </div>
 
             {/* Modals */}
-            <Modal isOpen={isDriverModalOpen} onClose={() => setIsDriverModalOpen(false)} title={editingDriver ? 'تعديل بيانات السائق' : 'إضافة سائق جديد'}><DriverForm driver={editingDriver} onSave={handleSaveDriver} onClose={() => setIsDriverModalOpen(false)}/></Modal>
-            <Modal isOpen={isRouteModalOpen} onClose={() => setIsRouteModalOpen(false)} title={editingRoute ? 'تعديل المسار' : 'إضافة مسار جديد'}><RouteForm route={editingRoute} onSave={handleSaveRoute} onClose={() => setIsRouteModalOpen(false)} /></Modal>
+            <Modal isOpen={isDriverModalOpen} onClose={() => setIsDriverModalOpen(false)} title={editingDriver ? 'تعديل بيانات السائق' : 'إضافة سائق جديد'}><DriverForm driver={editingDriver} onSave={handleSaveAndCloseDriver} onClose={() => setIsDriverModalOpen(false)}/></Modal>
+            <Modal isOpen={isRouteModalOpen} onClose={() => setIsRouteModalOpen(false)} title={editingRoute ? 'تعديل المسار' : 'إضافة مسار جديد'}><RouteForm route={editingRoute} onSave={handleSaveAndCloseRoute} onClose={() => setIsRouteModalOpen(false)} /></Modal>
         </div>
     );
 };

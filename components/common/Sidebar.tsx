@@ -60,46 +60,14 @@ const filterNavItems = (items: NavItemData[], query: string): NavItemData[] => {
 const Sidebar: React.FC = () => {
     const { categories } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
-    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true, 'المدينة والجهاز': true });
+    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true });
     const [searchQuery, setSearchQuery] = useState('');
     const location = useLocation();
 
     const navItems = useMemo(() => {
-        const cityAndDeviceCategory = categories.find(c => c.name === "المدينة والجهاز");
-        const otherServiceCategories = categories.filter(c => c.name !== "المدينة والجهاز");
+        const serviceCategories = categories.filter(c => c.name !== "المدينة والجهاز");
 
-        const cityAndDeviceNavChildren: NavItemData[] = [];
-        if (cityAndDeviceCategory) {
-            cityAndDeviceCategory.subCategories.forEach(sub => {
-                if (sub.name.includes("المدينة")) {
-                    cityAndDeviceNavChildren.push({
-                        name: sub.name,
-                        icon: <BuildingLibraryIcon className="w-5 h-5 text-green-400" />,
-                        to: "/about-city",
-                    });
-                } else if (sub.name.includes("شركة")) {
-                    cityAndDeviceNavChildren.push({
-                        name: sub.name,
-                        icon: <BuildingOffice2Icon className="w-5 h-5 text-purple-400" />,
-                        to: "/about-company",
-                    });
-                }
-            });
-            // Add the one that is not in mock data
-            cityAndDeviceNavChildren.push({
-                name: "دليل خدمات جهاز المدينة",
-                icon: <DocumentDuplicateIcon className="w-5 h-5 text-sky-400" />,
-                to: "/city-services-guide",
-            });
-        }
-        
-        const cityAndDeviceNavItem: NavItemData | null = cityAndDeviceCategory ? {
-            name: cityAndDeviceCategory.name,
-            icon: getIcon(cityAndDeviceCategory.icon, { className: "w-6 h-6" }),
-            children: cityAndDeviceNavChildren
-        } : null;
-
-        const otherServiceNavItems: NavItemData[] = otherServiceCategories.map(category => ({
+        const serviceNavItems: NavItemData[] = serviceCategories.map(category => ({
             name: category.name,
             icon: getIcon(category.icon, { className: "w-5 h-5" }),
             children: category.subCategories.map(sub => ({
@@ -112,14 +80,18 @@ const Sidebar: React.FC = () => {
         const constructedNavItems: NavItemData[] = [
             { name: "نظرة عامة", icon: <HomeIcon className="w-6 h-6" />, to: "/" },
             { name: "هيكل الخدمات", icon: <RectangleGroupIcon className="w-6 h-6" />, to: "/services-overview" },
+            { 
+                name: "دليل خدمات جهاز المدينة", 
+                icon: <DocumentDuplicateIcon className="w-6 h-6 text-sky-400" />, 
+                to: "/city-services-guide" 
+            },
         ];
         
-        if (cityAndDeviceNavItem) constructedNavItems.push(cityAndDeviceNavItem);
-        if (otherServiceNavItems.length > 0) {
+        if (serviceNavItems.length > 0) {
             constructedNavItems.push({
                 name: "الخدمات الرئيسية",
                 icon: <WrenchScrewdriverIcon className="w-6 h-6" />,
-                children: otherServiceNavItems
+                children: serviceNavItems
             });
         }
 

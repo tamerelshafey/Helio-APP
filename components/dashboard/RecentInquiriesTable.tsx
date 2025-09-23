@@ -8,23 +8,13 @@ const formatRelativeTime = (dateString: string) => {
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    let unit: string;
-    let value: number;
-
-    if (seconds < 60) {
-        value = seconds;
-        unit = 'ثانية';
-    } else if (seconds < 3600) {
-        value = Math.floor(seconds / 60);
-        unit = 'دقيقة';
-    } else if (seconds < 86400) {
-        value = Math.floor(seconds / 3600);
-        unit = 'ساعة';
-    } else {
-        value = Math.floor(seconds / 86400);
-        unit = 'يوم';
-    }
-    return `قبل ${value} ${unit}`;
+    if (seconds < 60) return `قبل ${Math.round(seconds)} ثانية`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `قبل ${minutes} دقيقة`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `قبل ${hours} ساعة`;
+    const days = Math.floor(hours / 24);
+    return `قبل ${days} يوم`;
 };
 
 
@@ -66,7 +56,7 @@ const RecentActivityTable: React.FC = () => {
 
       return [...serviceActivities, ...propertyActivities, ...newsActivities]
           .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-          .slice(0, 4);
+          .slice(0, 5);
   }, [services, properties, news]);
 
   return (

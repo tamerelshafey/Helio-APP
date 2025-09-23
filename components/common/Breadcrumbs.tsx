@@ -16,8 +16,6 @@ const breadcrumbNameMap: { [key: string]: string } = {
   'privacy-policy': 'سياسة الخصوصية',
   'reports': 'التقارير',
   'about': 'حول',
-  'about-city': 'عن المدينة',
-  'about-company': 'عن الشركة',
   'subcategory': 'فئة فرعية',
   'detail': 'تفاصيل',
   'reviews': 'إدارة التقييمات',

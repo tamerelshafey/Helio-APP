@@ -11,7 +11,9 @@ const formatRelativeTime = (dateString: string) => {
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `قبل ${minutes} دقيقة`;
     const hours = Math.floor(minutes / 60);
-    return `قبل ${hours} ساعة`;
+    if (hours < 24) return `قبل ${hours} ساعة`;
+    const days = Math.floor(hours / 24);
+    return `قبل ${days} يوم`;
 };
 
 const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
@@ -32,14 +34,17 @@ const AlertsPanel: React.FC = () => {
     const { users, properties } = useAppContext();
 
     const alerts = useMemo(() => {
-        const userAlerts: Alert[] = users.slice(0, 2).map(user => ({
+        const sortedUsers = [...users].sort((a,b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime());
+        const sortedProperties = [...properties].sort((a,b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
+
+        const userAlerts: Alert[] = sortedUsers.slice(0, 2).map(user => ({
             id: `user-${user.id}`,
             message: `مستخدم جديد سجل: ${user.name}`,
             time: user.joinDate,
             type: 'user_registered'
         }));
 
-        const propertyAlerts: Alert[] = properties.slice(0, 1).map(prop => ({
+        const propertyAlerts: Alert[] = sortedProperties.slice(0, 1).map(prop => ({
             id: `prop-${prop.id}`,
             message: `تم إدراج عقار جديد: ${prop.title.substring(0, 25)}...`,
             time: prop.creationDate,

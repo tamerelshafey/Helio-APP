@@ -25,7 +25,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [admins, setAdmins] = useState<AdminUser[]>(mockAdmins);
 
     const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-        return localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme) {
+            return storedTheme === 'dark';
+        }
+        return true; // Default to dark mode on first visit
     });
 
     useEffect(() => {
