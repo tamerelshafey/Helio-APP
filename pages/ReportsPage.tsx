@@ -320,7 +320,7 @@ const ReportsPage: React.FC = () => {
             </button>
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white">تقارير مخصصة</h1>
 
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg space-y-6">
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg space-y-6">
                  <div className="flex flex-col md:flex-row gap-4 items-center">
                     <div className="flex gap-2">
                         <TabButton active={activeTab === 'services'} onClick={() => setActiveTab('services')} icon={<WrenchScrewdriverIcon className="w-5 h-5"/>}>الخدمات</TabButton>

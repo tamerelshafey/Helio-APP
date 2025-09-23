@@ -11,7 +11,7 @@ const TermsOfUsePage: React.FC = () => {
                 <ArrowLeftIcon className="w-5 h-5" />
                 <span>العودة</span>
             </button>
-            <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg max-w-4xl mx-auto">
+            <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg max-w-4xl mx-auto">
                 <div className="text-center mb-8">
                     <div className="inline-block p-4 bg-cyan-100 dark:bg-cyan-900/50 rounded-full">
                         <DocumentDuplicateIcon className="w-12 h-12 text-cyan-500" />

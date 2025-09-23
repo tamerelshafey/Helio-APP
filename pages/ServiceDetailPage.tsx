@@ -78,13 +78,13 @@ const ServiceDetailPage: React.FC = () => {
                 <div className="relative">
                     <img src={service.images[0]} alt={service.name} className="w-full h-48 sm:h-64 object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                    <div className="absolute bottom-0 right-0 p-6">
+                    <div className="absolute bottom-0 right-0 p-4 sm:p-6">
                         <h1 className="text-3xl font-bold text-white">{service.name}</h1>
                         <p className="text-gray-200">{service.address}</p>
                     </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                     <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">حول الخدمة</h2>
                     <p className="text-gray-600 dark:text-gray-300 mb-6">{service.about}</p>
                     
@@ -95,7 +95,7 @@ const ServiceDetailPage: React.FC = () => {
                     <div className="space-y-6">
                         {service.reviews.map(review => (
                             <div key={review.id} className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                                <div className="flex justify-between items-start">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
                                     <div className="flex items-center gap-4">
                                         <img src={review.avatar} alt={review.username} className="w-12 h-12 rounded-full object-cover" loading="lazy"/>
                                         <div>
@@ -104,7 +104,7 @@ const ServiceDetailPage: React.FC = () => {
                                             <Rating rating={review.rating} />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1 self-end sm:self-center">
                                         <button onClick={() => handleOpenReplyModal(review)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-900/50 rounded-md" title="الرد على التقييم"><ChatBubbleLeftRightIcon className="w-5 h-5" /></button>
                                         <button onClick={() => handleOpenEditModal(review)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل التقييم"><PencilSquareIcon className="w-5 h-5" /></button>
                                         <button onClick={() => handleDeleteReview(service.id, review.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف التقييم"><TrashIcon className="w-5 h-5" /></button>

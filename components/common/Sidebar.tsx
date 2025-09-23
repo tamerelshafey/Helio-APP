@@ -1,4 +1,4 @@
-import React, { useState, memo, useMemo, useEffect } from 'react';
+import React, { useState, memo, useMemo, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
     HomeIcon, UserGroupIcon, Cog6ToothIcon, MagnifyingGlassIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, 
@@ -15,7 +15,8 @@ import {
     EnvelopeIcon,
     BuildingOffice2Icon,
     ChatBubbleOvalLeftIcon,
-    QuestionMarkCircleIcon
+    QuestionMarkCircleIcon,
+    ClipboardDocumentListIcon
 } from './Icons';
 import { useAppContext } from '../../context/AppContext';
 
@@ -58,7 +59,7 @@ const filterNavItems = (items: NavItemData[], query: string): NavItemData[] => {
 };
 
 const Sidebar: React.FC = () => {
-    const { categories } = useAppContext();
+    const { categories, logout } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true });
     const [searchQuery, setSearchQuery] = useState('');
@@ -85,22 +86,6 @@ const Sidebar: React.FC = () => {
                 icon: <DocumentDuplicateIcon className="w-6 h-6 text-sky-400" />, 
                 to: "/city-services-guide" 
             },
-            {
-                name: "المدينة والشركة",
-                icon: <BuildingLibraryIcon className="w-6 h-6" />,
-                children: [
-                    {
-                        name: "التعريف بالمدينة",
-                        icon: <BuildingLibraryIcon className="w-5 h-5 text-green-400" />,
-                        to: "/about-city",
-                    },
-                    {
-                        name: "تعريف بشركة مصر الجديدة",
-                        icon: <BuildingOffice2Icon className="w-5 h-5 text-purple-400" />,
-                        to: "/about-company",
-                    },
-                ]
-            },
         ];
         
         if (serviceNavItems.length > 0) {
@@ -120,11 +105,7 @@ const Sidebar: React.FC = () => {
             { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users" },
             { name: "إدارة التقييمات", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/reviews" },
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/reports" },
-            { name: "حول التطبيق", icon: <InformationCircleIcon className="w-6 h-6" />, to: "/about" },
-            { name: "الأسئلة الشائعة", icon: <QuestionMarkCircleIcon className="w-6 h-6" />, to: "/faq" },
-            { name: "شروط الاستخدام", icon: <DocumentDuplicateIcon className="w-6 h-6" />, to: "/terms-of-use" },
-            { name: "سياسة الخصوصية", icon: <BookOpenIcon className="w-6 h-6" />, to: "/privacy-policy" },
-            { name: "الإعدادات", icon: <Cog6ToothIcon className="w-6 h-6" />, to: "/settings" }
+            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/audit-log" }
         );
         return constructedNavItems;
     }, [categories]);
@@ -152,6 +133,18 @@ const Sidebar: React.FC = () => {
         const isMenuOpen = (searchQuery.length > 0 && hasChildren) || !!openMenus[item.name] || isParentOfActive;
         const isActive = item.to ? location.pathname === item.to.split('#')[0] : false;
         
+        const linkRef = useRef<HTMLAnchorElement>(null);
+
+        useEffect(() => {
+            if (isActive) {
+                // Small delay to allow parent menu to open smoothly
+                const timer = setTimeout(() => {
+                    linkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+                return () => clearTimeout(timer);
+            }
+        }, [isActive]);
+
         const paddingRightClass = level === 1 ? 'pr-6' : level === 2 ? 'pr-10' : 'pr-4';
 
         if (hasChildren) {
@@ -175,7 +168,7 @@ const Sidebar: React.FC = () => {
 
         const linkClasses = `flex items-center space-x-3 rtl:space-x-reverse w-full px-3 py-2 rounded-md transition-colors text-sm font-medium ${paddingRightClass} text-right ${isActive ? 'bg-cyan-500 text-white font-semibold shadow' : `hover:bg-slate-800 hover:text-white ${level > 0 ? 'text-gray-300' : 'text-white'}`}`;
         
-        return <Link to={item.to || '#'} className={linkClasses}>{item.icon}<span>{item.name}</span></Link>;
+        return <Link ref={linkRef} to={item.to || '#'} className={linkClasses}>{item.icon}<span>{item.name}</span></Link>;
     };
     
     const SidebarContent = () => (
@@ -194,8 +187,15 @@ const Sidebar: React.FC = () => {
                 <div className="flex items-center space-x-4 rtl:space-x-reverse">
                     <img className="w-12 h-12 rounded-full object-cover" src="https://picsum.photos/100" alt="Admin" loading="lazy" />
                     <div><p className="font-semibold text-white">مدير النظام</p><p className="text-sm text-gray-400">admin@helio.com</p></div>
-                    <button className="mr-auto rtl:ml-auto p-2 rounded-full hover:bg-slate-800 transition"><ArrowLeftOnRectangleIcon className="w-6 h-6" /></button>
                 </div>
+                 <button
+                    onClick={logout}
+                    className="w-full mt-4 flex items-center justify-center gap-2 bg-cyan-500/10 text-cyan-400 font-semibold px-4 py-2 rounded-lg hover:bg-cyan-500/20 transition-colors"
+                    title="العودة للصفحة الرئيسية وتسجيل الخروج"
+                >
+                    <ArrowLeftOnRectangleIcon className="w-5 h-5" />
+                    <span>العودة للموقع العام</span>
+                </button>
             </div>
         </div>
     );

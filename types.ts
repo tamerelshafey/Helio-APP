@@ -165,8 +165,18 @@ export interface Supervisor {
     phone: string;
 }
 
+export interface AuditLog {
+  id: number;
+  timestamp: string;
+  user: string;
+  action: string;
+  details: string;
+}
 
 export interface AppContextType {
+  isAuthenticated: boolean;
+  login: () => void;
+  logout: () => void;
   categories: Category[];
   services: Service[];
   news: News[];
@@ -183,6 +193,8 @@ export interface AppContextType {
       weeklySchedule: WeeklyScheduleItem[];
       externalRoutes: ExternalRoute[];
   };
+  auditLogs: AuditLog[];
+  logActivity: (action: string, details: string) => void;
   handleUpdateReview: (serviceId: number, reviewId: number, newComment: string) => void;
   handleDeleteReview: (serviceId: number, reviewId: number) => void;
   handleReplyToReview: (serviceId: number, reviewId: number, reply: string) => void;

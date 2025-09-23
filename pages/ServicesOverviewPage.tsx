@@ -66,7 +66,7 @@ const ServicesOverviewPage: React.FC = () => {
             </h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg">
+                <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">توزيع الخدمات</h2>
                      <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
@@ -81,7 +81,7 @@ const ServicesOverviewPage: React.FC = () => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg">
+                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">قائمة الفئات التفصيلية</h2>
                      <div className="space-y-2">
                         {categoryData.map(category => (

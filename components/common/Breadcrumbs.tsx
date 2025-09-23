@@ -23,6 +23,7 @@ const breadcrumbNameMap: { [key: string]: string } = {
   'reviews': 'إدارة التقييمات',
   'faq': 'الأسئلة الشائعة',
   'terms-of-use': 'شروط الاستخدام',
+  'audit-log': 'سجل التدقيق',
 };
 
 const Breadcrumbs: React.FC = () => {
