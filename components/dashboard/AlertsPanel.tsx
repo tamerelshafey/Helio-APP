@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import type { Alert } from '../../types';
 import { BellAlertIcon, UserPlusIcon, BuildingStorefrontIcon } from '../common/Icons';
-import { useAppContext } from '../../context/AppContext';
+import { useUserManagementContext } from '../../context/UserManagementContext';
+import { usePropertiesContext } from '../../context/PropertiesContext';
 
 const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -31,7 +32,8 @@ const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
 }
 
 const AlertsPanel: React.FC = () => {
-    const { users, properties } = useAppContext();
+    const { users } = useUserManagementContext();
+    const { properties } = usePropertiesContext();
 
     const alerts = useMemo(() => {
         const sortedUsers = [...users].sort((a,b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime());
@@ -56,22 +58,24 @@ const AlertsPanel: React.FC = () => {
     }, [users, properties]);
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <h3 className="text-xl font-semibold mb-4 text-gray-700">تنبيهات فورية</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">تنبيهات فورية</h3>
             <div className="space-y-4">
-                {alerts.map(alert => (
+                {alerts.length > 0 ? alerts.map(alert => (
                     <div key={alert.id} className="flex items-start space-x-3 rtl:space-x-reverse">
-                        <div className="p-2 bg-gray-100 rounded-full">
+                        <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-full">
                            <AlertIcon type={alert.type} />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-800">{alert.message}</p>
-                            <p className="text-xs text-gray-500">{formatRelativeTime(alert.time)}</p>
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{alert.message}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{formatRelativeTime(alert.time)}</p>
                         </div>
                     </div>
-                ))}
+                )) : (
+                    <p className="text-center text-sm text-gray-500 py-4">لا توجد تنبيهات جديدة.</p>
+                )}
             </div>
-             <button className="mt-4 w-full text-cyan-500 hover:underline text-sm font-medium">
+             <button className="mt-4 w-full text-cyan-500 dark:text-cyan-400 hover:underline text-sm font-medium">
                 عرض كل التنبيهات
             </button>
         </div>

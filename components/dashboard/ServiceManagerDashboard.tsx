@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
+import { useServicesContext } from '../../context/ServicesContext';
 import KpiCard from '../common/KpiCard';
 import { WrenchScrewdriverIcon, StarIcon, ChatBubbleOvalLeftIcon, ShieldExclamationIcon, RectangleGroupIcon, DocumentDuplicateIcon, EyeIcon, ChartPieIcon, ChartBarIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ServiceManagerDashboard: React.FC = () => {
-    const { services, categories, emergencyContacts } = useAppContext();
+    const { emergencyContacts } = useAppContext();
+    const { services, categories } = useServicesContext();
     const allReviews = useMemo(() => services.flatMap(s => s.reviews.map(r => ({...r, serviceName: s.name}))), [services]);
 
     const stats = useMemo(() => {

@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
 import type { Activity } from '../../types';
 import { WrenchScrewdriverIcon, ShieldExclamationIcon, NewspaperIcon, BuildingOffice2Icon } from '../common/Icons';
-import { useAppContext } from '../../context/AppContext';
+import { useServicesContext } from '../../context/ServicesContext';
+import { usePropertiesContext } from '../../context/PropertiesContext';
+import { useContentContext } from '../../context/ContentContext';
 
 const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -30,7 +32,9 @@ const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
 };
 
 const RecentActivityTable: React.FC = () => {
-  const { services, properties, news } = useAppContext();
+  const { news } = useContentContext();
+  const { properties } = usePropertiesContext();
+  const { services } = useServicesContext();
     
   const recentActivities = useMemo(() => {
       const serviceActivities: Activity[] = services.map(s => ({

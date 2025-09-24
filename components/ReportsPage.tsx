@@ -1,6 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+// FIX: Import useContentContext to get news data
+import { useContentContext } from '../context/ContentContext';
+// FIX: Import contexts for services and properties
+import { useServicesContext } from '../context/ServicesContext';
+import { usePropertiesContext } from '../context/PropertiesContext';
 import { ArrowLeftIcon, StarIcon, EyeIcon, ChatBubbleOvalLeftIcon, WrenchScrewdriverIcon, ChartPieIcon, ChartBarIcon, HomeModernIcon, NewspaperIcon, MagnifyingGlassIcon, StarIconOutline } from './Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { Service, Property, News } from '../types';
@@ -286,7 +290,10 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
 
 const ReportsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { services, properties, news } = useAppContext();
+    // FIX: Get data from correct contexts
+    const { news } = useContentContext();
+    const { services } = useServicesContext();
+    const { properties } = usePropertiesContext();
     const [activeTab, setActiveTab] = useState<'services' | 'properties' | 'news'>('services');
     
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Review } from '../types';
 import { ArrowLeftIcon, StarIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon } from './Icons';
-import { useAppContext } from '../context/AppContext';
+// FIX: Use useServicesContext for service data and handlers
+import { useServicesContext } from '../context/ServicesContext';
 import Modal from './Modal';
 
 const Rating: React.FC<{ rating: number; size?: string }> = ({ rating, size = 'w-5 h-5' }) => (
@@ -48,7 +49,8 @@ const ServiceDetailPage: React.FC = () => {
     const { serviceId: serviceIdStr } = useParams<{ serviceId: string }>();
     const serviceId = Number(serviceIdStr);
     
-    const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview } = useAppContext();
+    // FIX: Use useServicesContext for service data and handlers
+    const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview } = useServicesContext();
     const service = services.find(s => s.id === serviceId);
 
     const [isReplyModalOpen, setReplyModalOpen] = useState(false);

@@ -2,21 +2,28 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import KpiCard from '../components/common/KpiCard';
 import UserActivityChart from '../components/dashboard/UserActivityChart';
-import RecentActivityTable from '../components/dashboard/RecentActivityTable';
+import RecentActivityTable from '../components/dashboard/RecentInquiriesTable';
 import AlertsPanel from '../components/dashboard/AlertsPanel';
 import UsersToVerify from '../components/dashboard/UsersToVerify';
 import Footer from '../components/common/Footer';
 import { UserIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon } from '../components/common/Icons';
-import { useAppContext } from '../context/AppContext';
+import { useUserManagementContext } from '../context/UserManagementContext';
+import { useServicesContext } from '../context/ServicesContext';
+import { usePropertiesContext } from '../context/PropertiesContext';
+import { useContentContext } from '../context/ContentContext';
 import PropertyManagerDashboard from '../components/dashboard/PropertyManagerDashboard';
 import NewsManagerDashboard from '../components/dashboard/NewsManagerDashboard';
 import TransportationManagerDashboard from '../components/dashboard/TransportationManagerDashboard';
 import ServiceManagerDashboard from '../components/dashboard/ServiceManagerDashboard';
 import TopServicesChart from '../components/dashboard/TopServicesChart';
 import CategoryDistributionChart from '../components/dashboard/CategoryDistributionChart';
+import { useAuthContext } from '../context/AuthContext';
 
 const GeneralDashboard: React.FC = () => {
-  const { categories, properties, news, notifications, services, users } = useAppContext();
+  const { users } = useUserManagementContext();
+  const { services, categories } = useServicesContext();
+  const { properties } = usePropertiesContext();
+  const { news, notifications } = useContentContext();
   
   const thirtyDaysAgo = React.useMemo(() => {
       const date = new Date();
@@ -93,7 +100,7 @@ const GeneralDashboard: React.FC = () => {
 };
 
 const DashboardPage: React.FC = () => {
-    const { currentUser } = useAppContext();
+    const { currentUser } = useAuthContext();
 
     if (currentUser?.role === 'مسؤول العقارات') {
         return <PropertyManagerDashboard />;

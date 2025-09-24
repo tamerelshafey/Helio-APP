@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react';
 import type { Activity } from '../types';
 import { WrenchScrewdriverIcon, NewspaperIcon, HomeModernIcon } from './Icons';
-import { useAppContext } from '../context/AppContext';
+// FIX: Import contexts for their respective data
+import { useContentContext } from '../context/ContentContext';
+import { usePropertiesContext } from '../context/PropertiesContext';
+import { useServicesContext } from '../context/ServicesContext';
 
 const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -23,8 +26,8 @@ const formatRelativeTime = (dateString: string) => {
 
 const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
   const iconClasses = "w-6 h-6";
-  // FIX: Replace JSX.Element with React.ReactElement to resolve namespace issue.
-  const typeMap: { [key in Activity['type']]: React.ReactElement } = {
+  // FIX: Replace JSX.Element with React.ReactNode to resolve namespace issue.
+  const typeMap: { [key in Activity['type']]: React.ReactNode } = {
     NEW_SERVICE: <WrenchScrewdriverIcon className={`${iconClasses} text-blue-500`} />,
     NEWS_PUBLISHED: <NewspaperIcon className={`${iconClasses} text-purple-500`} />,
     NEW_PROPERTY: <HomeModernIcon className={`${iconClasses} text-green-500`} />,
@@ -34,7 +37,12 @@ const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
 };
 
 const RecentActivityTable: React.FC = () => {
-  const { services, properties, news } = useAppContext();
+  // FIX: services comes from ServicesContext
+  // FIX: properties comes from PropertiesContext
+  const { properties } = usePropertiesContext();
+  // FIX: news comes from ContentContext
+  const { news } = useContentContext();
+  const { services } = useServicesContext();
     
   const recentActivities = useMemo(() => {
       const serviceActivities: Activity[] = services.map(s => ({

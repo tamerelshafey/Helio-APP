@@ -5,7 +5,8 @@ import {
     MagnifyingGlassIcon, HomeModernIcon, MapPinIcon, PhoneIcon
 } from './Icons';
 import type { Property } from '../types';
-import { useAppContext } from '../context/AppContext';
+// FIX: Use usePropertiesContext for property data and handlers
+import { usePropertiesContext } from '../context/PropertiesContext';
 import Modal from './Modal';
 import ImageUploader from './ImageUploader';
 
@@ -130,7 +131,8 @@ const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete:
 
 const PropertiesPage: React.FC = () => {
     const navigate = useNavigate();
-    const { properties, handleSaveProperty, handleDeleteProperty } = useAppContext();
+    // FIX: Use usePropertiesContext for property data and handlers
+    const { properties, handleSaveProperty, handleDeleteProperty } = usePropertiesContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProperty, setEditingProperty] = useState<Property | null>(null);
     const [searchTerm, setSearchTerm] = useState('');

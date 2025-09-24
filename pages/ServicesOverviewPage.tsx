@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useServicesContext } from '../context/ServicesContext';
 import { ArrowLeftIcon, ChevronDownIcon, RectangleGroupIcon, Squares2X2Icon, HeartIcon, CakeIcon, AcademicCapIcon, ShoppingBagIcon, DevicePhoneMobileIcon, BoltIcon, SparklesIcon, WrenchScrewdriverIcon, CarIcon, GiftIcon, PaintBrushIcon } from '../components/common/Icons';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -16,7 +16,7 @@ const getIcon = (name: string, props: React.SVGProps<SVGSVGElement>) => {
 
 const ServicesOverviewPage: React.FC = () => {
     const navigate = useNavigate();
-    const { services, categories } = useAppContext();
+    const { services, categories } = useServicesContext();
     const [openCategoryId, setOpenCategoryId] = useState<number | null>(null);
 
     const categoryData = useMemo(() => {

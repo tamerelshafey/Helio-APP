@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
+import { usePropertiesContext } from '../../context/PropertiesContext';
 import KpiCard from '../common/KpiCard';
 import { HomeModernIcon, ChartPieIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const PropertyManagerDashboard: React.FC = () => {
-    const { properties } = useAppContext();
+    const { properties } = usePropertiesContext();
 
     const stats = useMemo(() => {
         const thirtyDaysAgo = new Date();

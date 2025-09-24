@@ -1,5 +1,6 @@
 import React, { useState, useCallback, ReactNode } from 'react';
 import { useAppContext } from '../context/AppContext';
+import { useUIContext } from '../context/UIContext';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, HomeIcon, InformationCircleIcon, QuestionMarkCircleIcon, BookOpenIcon, PlusIcon, TrashIcon, ChevronDownIcon, ChevronUpIcon, PencilSquareIcon } from '../components/common/Icons';
 import type { HomePageContent, AboutPageContent, FaqPageContent, FaqCategory, FaqItem, PolicyPageContent, PolicySection, PublicPagesContent } from '../types';
@@ -29,6 +30,7 @@ const SaveButton: React.FC<{ onClick: () => void; isSaving: boolean }> = ({ onCl
 const HomePageForm: React.FC<{ content: HomePageContent; onSave: (data: HomePageContent) => void }> = ({ content, onSave }) => {
     const [data, setData] = useState(content);
     const [isSaving, setIsSaving] = useState(false);
+    const { showToast } = useUIContext();
 
     const handleChange = (field: keyof HomePageContent, value: string) => setData(prev => ({ ...prev, [field]: value }));
     const handleFeatureChange = (index: number, field: keyof typeof data.features[0], value: string) => {
@@ -40,7 +42,10 @@ const HomePageForm: React.FC<{ content: HomePageContent; onSave: (data: HomePage
     const handleSaveClick = () => {
         setIsSaving(true);
         onSave(data);
-        setTimeout(() => setIsSaving(false), 1000); // Simulate save
+        setTimeout(() => {
+            setIsSaving(false);
+            showToast('تم حفظ محتوى الصفحة الرئيسية بنجاح!');
+        }, 1000);
     };
     
     return (
@@ -73,11 +78,15 @@ const HomePageForm: React.FC<{ content: HomePageContent; onSave: (data: HomePage
 const AboutPageForm: React.FC<{ content: AboutPageContent; onSave: (data: AboutPageContent) => void }> = ({ content, onSave }) => {
     const [data, setData] = useState(content);
     const [isSaving, setIsSaving] = useState(false);
+    const { showToast } = useUIContext();
     
     const handleSaveClick = () => {
         setIsSaving(true);
         onSave(data);
-        setTimeout(() => setIsSaving(false), 1000);
+        setTimeout(() => {
+            setIsSaving(false);
+            showToast('تم حفظ محتوى صفحة "حول التطبيق" بنجاح!');
+        }, 1000);
     };
 
     return (
@@ -97,6 +106,7 @@ const AboutPageForm: React.FC<{ content: AboutPageContent; onSave: (data: AboutP
 const FaqPageForm: React.FC<{ content: FaqPageContent; onSave: (data: FaqPageContent) => void }> = ({ content, onSave }) => {
     const [data, setData] = useState(content);
     const [isSaving, setIsSaving] = useState(false);
+    const { showToast } = useUIContext();
 
     const handleCategoryChange = (catIndex: number, value: string) => {
         const newData = { ...data };
@@ -124,7 +134,10 @@ const FaqPageForm: React.FC<{ content: FaqPageContent; onSave: (data: FaqPageCon
      const handleSaveClick = () => {
         setIsSaving(true);
         onSave(data);
-        setTimeout(() => setIsSaving(false), 1000);
+        setTimeout(() => {
+            setIsSaving(false);
+            showToast('تم حفظ محتوى صفحة "الأسئلة الشائعة" بنجاح!');
+        }, 1000);
     };
 
     return (
@@ -161,6 +174,7 @@ const FaqPageForm: React.FC<{ content: FaqPageContent; onSave: (data: FaqPageCon
 const PolicyPageForm: React.FC<{ content: PolicyPageContent; onSave: (data: PolicyPageContent) => void }> = ({ content, onSave }) => {
     const [data, setData] = useState(content);
     const [isSaving, setIsSaving] = useState(false);
+    const { showToast } = useUIContext();
 
     const parseContentToString = (content: (string | { list: string[] })[]): string => {
         return content.map(item => {
@@ -195,7 +209,10 @@ const PolicyPageForm: React.FC<{ content: PolicyPageContent; onSave: (data: Poli
     const handleSaveClick = () => {
         setIsSaving(true);
         onSave(data);
-        setTimeout(() => setIsSaving(false), 1000);
+        setTimeout(() => {
+            setIsSaving(false);
+            showToast(`تم حفظ محتوى صفحة "${data.title}" بنجاح!`);
+        }, 1000);
     };
 
     return (

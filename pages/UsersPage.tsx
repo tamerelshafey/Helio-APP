@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from '../components/common/Icons';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+import { useUserManagementContext } from '../context/UserManagementContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import type { AppUser, AdminUser, UserStatus } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
@@ -160,7 +162,8 @@ const AdminForm: React.FC<{
 };
 
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
-    const { users, handleDeleteUser } = useAppContext();
+    const { users, handleDeleteUser } = useUserManagementContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مدير عام']);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
@@ -173,6 +176,13 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
             return matchesSearch && matchesFilter;
         });
     }, [users, searchTerm, statusFilter]);
+
+    const confirmDelete = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+            handleDeleteUser(id);
+            showToast('تم حذف المستخدم بنجاح!');
+        }
+    };
 
     return (
         <div className="animate-fade-in">
@@ -224,7 +234,7 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <button onClick={() => onEdit(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => confirmDelete(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
                                         </div>
                                     </td>
                                 )}
@@ -239,8 +249,16 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
 };
 
 const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) => void; }> = ({ onAdd, onEdit }) => {
-    const { admins, handleDeleteAdmin } = useAppContext();
+    const { admins, handleDeleteAdmin } = useUserManagementContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مدير عام']);
+
+    const confirmDelete = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا المدير؟')) {
+            handleDeleteAdmin(id);
+            showToast('تم حذف المدير بنجاح!');
+        }
+    };
 
     return (
         <div className="animate-fade-in">
@@ -280,8 +298,8 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
                                     {canManage && (
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <button onClick={() => onEdit(admin)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                <button onClick={() => handleDeleteAdmin(admin.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                                <button onClick={() => onEdit(admin)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                <button onClick={() => confirmDelete(admin.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
                                             </div>
                                         </td>
                                     )}
@@ -290,27 +308,28 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
                         </tbody>
                     </table>
                 </div>
-             ) : (
-                <EmptyState
+            ) : (
+                 <EmptyState
                     icon={<UserCircleIcon className="w-16 h-16 text-slate-400" />}
                     title="لا يوجد مديرون مضافون"
-                    message="ابدأ بإضافة حسابات للمديرين والمشرفين للوصول إلى لوحة التحكم."
+                    message="يمكنك إضافة مدير جديد من الزر أدناه."
                 >
                     {canManage && (
                         <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
                             <UserPlusIcon className="w-5 h-5" />
-                            <span>إضافة مدير جديد</span>
+                            <span>إضافة مدير</span>
                         </button>
                     )}
                 </EmptyState>
-             )}
+            )}
         </div>
     );
 };
 
 const UsersPage: React.FC = () => {
     const navigate = useNavigate();
-    const { handleSaveUser, handleSaveAdmin } = useAppContext();
+    const { handleSaveUser, handleSaveAdmin } = useUserManagementContext();
+    const { showToast } = useUIContext();
     const [activeTab, setActiveTab] = useState<'users' | 'admins'>('users');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);
@@ -335,13 +354,17 @@ const UsersPage: React.FC = () => {
     };
     
     const handleSaveAndCloseUser = (user: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => {
+        const isNew = !user.id;
         handleSaveUser(user);
         handleCloseModal();
+        showToast(isNew ? 'تم إضافة المستخدم بنجاح!' : 'تم حفظ التعديلات بنجاح!');
     };
 
     const handleSaveAndCloseAdmin = (admin: Omit<AdminUser, 'id'> & { id?: number }) => {
+        const isNew = !admin.id;
         handleSaveAdmin(admin);
         handleCloseModal();
+        showToast(isNew ? 'تم إضافة المدير بنجاح!' : 'تم حفظ التعديلات بنجاح!');
     };
 
     const renderContent = () => {

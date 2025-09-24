@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useUserManagementContext } from '../context/UserManagementContext';
 import type { AdminUser } from '../types';
+import { useAuthContext } from '../context/AuthContext';
 
 const LoginPage: React.FC = () => {
-    const { login, admins } = useAppContext();
+    const { admins } = useUserManagementContext();
+    const { login } = useAuthContext();
     const navigate = useNavigate();
 
     const handleQuickLogin = (user: AdminUser) => {

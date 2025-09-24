@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useUserManagementContext } from '../context/UserManagementContext';
+import { useUIContext } from '../context/UIContext';
+import { useCommunityContext } from '../context/CommunityContext';
 import type { CommunityPost, AppUser } from '../types';
 import {
     ArrowLeftIcon,
@@ -26,13 +28,14 @@ const formatTimestamp = (timestamp: string) => {
 
 const CommunityPage: React.FC = () => {
     const navigate = useNavigate();
-    const { 
-        communityPosts, 
-        users, 
-        handleDeletePost, 
-        handleTogglePostPin, 
-        handleDeleteComment 
-    } = useAppContext();
+    const { users } = useUserManagementContext();
+    const {
+        communityPosts,
+        handleDeletePost,
+        handleTogglePostPin,
+        handleDeleteComment
+    } = useCommunityContext();
+    const { showToast } = useUIContext();
 
     const getUserById = (id: number): AppUser | undefined => users.find(u => u.id === id);
 
@@ -51,6 +54,26 @@ const CommunityPage: React.FC = () => {
         const totalComments = communityPosts.reduce((acc, post) => acc + post.comments.length, 0);
         return { totalPosts, newPostsToday, totalComments };
     }, [communityPosts]);
+
+    const confirmDeletePost = (postId: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا المنشور؟')) {
+            handleDeletePost(postId);
+            showToast('تم حذف المنشور بنجاح!');
+        }
+    };
+
+    const togglePin = (postId: number) => {
+        const isPinned = communityPosts.find(p => p.id === postId)?.isPinned;
+        handleTogglePostPin(postId);
+        showToast(isPinned ? 'تم إلغاء تثبيت المنشور.' : 'تم تثبيت المنشور.');
+    };
+
+    const confirmDeleteComment = (postId: number, commentId: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا التعليق؟')) {
+            handleDeleteComment(postId, commentId);
+            showToast('تم حذف التعليق بنجاح!');
+        }
+    };
 
     return (
         <div className="animate-fade-in">
@@ -86,10 +109,10 @@ const CommunityPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => handleTogglePostPin(post.id)} className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 ${post.isPinned ? 'text-yellow-500' : 'text-gray-400'}`} title={post.isPinned ? "إلغاء التثبيت" : "تثبيت"}>
+                                    <button onClick={() => togglePin(post.id)} className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 ${post.isPinned ? 'text-yellow-500' : 'text-gray-400'}`} title={post.isPinned ? "إلغاء التثبيت" : "تثبيت"}>
                                         <PinIcon className="w-5 h-5" />
                                     </button>
-                                    <button onClick={() => handleDeletePost(post.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full" title="حذف المنشور">
+                                    <button onClick={() => confirmDeletePost(post.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full" title="حذف المنشور">
                                         <TrashIcon className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -115,7 +138,7 @@ const CommunityPage: React.FC = () => {
                                                     <div className="flex-grow">
                                                         <div className="flex justify-between items-center">
                                                             <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">{commentAuthor?.name || 'مستخدم محذوف'}</p>
-                                                             <button onClick={() => handleDeleteComment(post.id, comment.id)} className="p-1 text-red-500 opacity-50 hover:opacity-100" title="حذف التعليق">
+                                                             <button onClick={() => confirmDeleteComment(post.id, comment.id)} className="p-1 text-red-500 opacity-50 hover:opacity-100" title="حذف التعليق">
                                                                 <TrashIcon className="w-4 h-4" />
                                                             </button>
                                                         </div>

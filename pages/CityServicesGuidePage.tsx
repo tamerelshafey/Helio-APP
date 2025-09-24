@@ -5,7 +5,9 @@ import {
     ChevronDownIcon, DocumentDuplicateIcon 
 } from '../components/common/Icons';
 import type { ServiceGuide } from '../types';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import AttachmentUploader from '../components/common/AttachmentUploader';
 import EmptyState from '../components/common/EmptyState';
@@ -97,6 +99,7 @@ const GuideForm: React.FC<{
 const CityServicesGuidePage: React.FC = () => {
     const navigate = useNavigate();
     const { serviceGuides, handleSaveServiceGuide, handleDeleteServiceGuide } = useAppContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingGuide, setEditingGuide] = useState<ServiceGuide | null>(null);
@@ -114,6 +117,20 @@ const CityServicesGuidePage: React.FC = () => {
     const handleEditClick = (guide: ServiceGuide) => {
         setEditingGuide(guide);
         setIsModalOpen(true);
+    };
+
+    const handleSaveAndClose = (guideData: Omit<ServiceGuide, 'id'> & { id?: number }) => {
+        const isNew = !guideData.id;
+        handleSaveServiceGuide(guideData);
+        setIsModalOpen(false);
+        showToast(isNew ? 'تم إضافة الدليل بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+
+    const confirmDelete = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا الدليل؟')) {
+            handleDeleteServiceGuide(id);
+            showToast('تم حذف الدليل بنجاح!');
+        }
     };
     
     return (
@@ -146,7 +163,7 @@ const CityServicesGuidePage: React.FC = () => {
                                      {canManage && (
                                         <>
                                             <button onClick={(e) => { e.stopPropagation(); handleEditClick(guide); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل الدليل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteServiceGuide(guide.id); }} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف الدليل"><TrashIcon className="w-5 h-5" /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); confirmDelete(guide.id); }} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف الدليل"><TrashIcon className="w-5 h-5" /></button>
                                         </>
                                      )}
                                     <ChevronDownIcon className={`w-6 h-6 transition-transform duration-300 ${openGuideId === guide.id ? 'rotate-180' : ''}`} />
@@ -207,7 +224,7 @@ const CityServicesGuidePage: React.FC = () => {
                 title={editingGuide ? 'تعديل الدليل' : 'إضافة دليل جديد'}
             >
                 <GuideForm 
-                    onSave={handleSaveServiceGuide}
+                    onSave={handleSaveAndClose}
                     onClose={() => setIsModalOpen(false)}
                     guide={editingGuide}
                 />

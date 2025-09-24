@@ -8,10 +8,19 @@ import AlertsPanel from './AlertsPanel';
 import UsersToVerify from './UsersToVerify';
 import Footer from './Footer';
 import { UserIcon, MapIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon } from './Icons';
-import { useAppContext } from '../context/AppContext';
+// FIX: Import useContentContext to get news and notifications data
+import { useContentContext } from '../context/ContentContext';
+// FIX: Import useServicesContext to get categories
+import { useServicesContext } from '../context/ServicesContext';
+// FIX: Import usePropertiesContext to get properties data
+import { usePropertiesContext } from '../context/PropertiesContext';
 
 const DashboardView: React.FC = () => {
-  const { categories, properties, news, notifications } = useAppContext();
+  // FIX: 'properties' comes from PropertiesContext
+  // FIX: 'news' and 'notifications' come from ContentContext
+  const { news, notifications } = useContentContext();
+  const { properties } = usePropertiesContext();
+  const { categories } = useServicesContext();
   
   const firstServiceLink = (categories.length > 0 && categories[0].subCategories.length > 0)
     ? `/services/subcategory/${categories[0].subCategories[0].id}`

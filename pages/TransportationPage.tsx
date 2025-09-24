@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PhoneIcon, UserCircleIcon, BusIcon, CalendarDaysIcon, MapPinIcon, PencilSquareIcon, CheckCircleIcon, XMarkIcon, PlusIcon, TrashIcon } from '../components/common/Icons';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import { useAppContext, useHasPermission } from '../context/AppContext';
-import type { Driver, ExternalRoute, WeeklyScheduleItem, Supervisor, AdminUser } from '../types';
+import { useTransportationContext } from '../context/TransportationContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
+import type { Driver, ExternalRoute, WeeklyScheduleItem, Supervisor } from '../types';
 
 // --- HELPER COMPONENTS ---
 const CallButton: React.FC<{ phone: string }> = ({ phone }) => (
@@ -81,7 +83,8 @@ const TransportationPage: React.FC = () => {
     const { 
         transportation, handleSaveDriver, handleDeleteDriver, 
         handleSaveRoute, handleDeleteRoute, handleSaveSchedule, handleSaveSupervisor
-    } = useAppContext();
+    } = useTransportationContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول الباصات']);
     
     const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
@@ -105,18 +108,35 @@ const TransportationPage: React.FC = () => {
 
     // --- CRUD Handlers ---
     const handleSaveAndCloseDriver = (driverData: Omit<Driver, 'id'> & { id?: number }) => {
+        const isNew = !driverData.id;
         handleSaveDriver(driverData);
         setIsDriverModalOpen(false);
+        showToast(isNew ? 'تم إضافة السائق بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+    const confirmDeleteDriver = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا السائق؟ سيتم إزالته من جميع الجداول.')) {
+            handleDeleteDriver(id);
+            showToast('تم حذف السائق بنجاح!');
+        }
     };
     const handleSaveAndCloseRoute = (routeData: Omit<ExternalRoute, 'id'> & { id?: number }) => {
+        const isNew = !routeData.id;
         handleSaveRoute(routeData);
         setIsRouteModalOpen(false);
+        showToast(isNew ? 'تم إضافة المسار بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+    const confirmDeleteRoute = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا المسار؟')) {
+            handleDeleteRoute(id);
+            showToast('تم حذف المسار بنجاح!');
+        }
     };
 
     // Schedule
     const handleEditScheduleToggle = () => {
         if (isEditingSchedule) {
             handleSaveSchedule(editedSchedule);
+            showToast('تم حفظ جدول المناوبات بنجاح!');
         } else {
             setEditedSchedule(JSON.parse(JSON.stringify(transportation.weeklySchedule)));
         }
@@ -149,7 +169,7 @@ const TransportationPage: React.FC = () => {
     // Supervisor Card Component
     const SupervisorCard: React.FC<{ supervisor: Supervisor; onSave: (supervisor: Supervisor) => void; isEditing: boolean; setIsEditing: React.Dispatch<React.SetStateAction<boolean>>; title: string; }> = ({ supervisor, onSave, isEditing, setIsEditing, title }) => {
         const [editedInfo, setEditedInfo] = useState(supervisor);
-        const handleSave = () => { onSave(editedInfo); setIsEditing(false); };
+        const handleSave = () => { onSave(editedInfo); setIsEditing(false); showToast('تم حفظ بيانات المشرف بنجاح!'); };
         const handleCancel = () => { setEditedInfo(supervisor); setIsEditing(false); };
         
         useEffect(() => {
@@ -205,7 +225,7 @@ const TransportationPage: React.FC = () => {
                                             <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
                                                 <td className="p-3"><div className="flex items-center gap-3"><img src={driver.avatar} alt={driver.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/><span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span></div></td>
                                                 <td className="p-3 text-gray-600 dark:text-gray-300 font-mono">{driver.phone}</td>
-                                                <td className="p-3"><div className="flex items-center gap-2"><CallButton phone={driver.phone} />{canManage && <><button onClick={() => { setEditingDriver(driver); setIsDriverModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5"/></button><button onClick={() => handleDeleteDriver(driver.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5"/></button></>}</div></td>
+                                                <td className="p-3"><div className="flex items-center gap-2"><CallButton phone={driver.phone} />{canManage && <><button onClick={() => { setEditingDriver(driver); setIsDriverModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5"/></button><button onClick={() => confirmDeleteDriver(driver.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5"/></button></>}</div></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -252,7 +272,7 @@ const TransportationPage: React.FC = () => {
                                 <div key={route.id} className="group relative bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md flex flex-col gap-4">
                                      {canManage && <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => { setEditingRoute(route); setIsRouteModalOpen(true); }} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50"><PencilSquareIcon className="w-4 h-4" /></button>
-                                        <button onClick={() => handleDeleteRoute(route.id)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon className="w-4 h-4" /></button>
+                                        <button onClick={() => confirmDeleteRoute(route.id)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon className="w-4 h-4" /></button>
                                     </div>}
                                     <h3 className="font-bold text-lg text-cyan-600 dark:text-cyan-400">{route.name}</h3>
                                     <div><h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">المواعيد:</h4><div className="flex flex-wrap gap-2">{route.timings.map(time => (<span key={time} className="bg-slate-200 dark:bg-slate-700 text-xs font-mono px-2 py-1 rounded">{time}</span>))}</div></div>

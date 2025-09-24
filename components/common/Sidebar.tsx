@@ -19,7 +19,8 @@ import {
     ClipboardDocumentListIcon,
     PencilSquareIcon
 } from './Icons';
-import { useAppContext } from '../../context/AppContext';
+import { useServicesContext } from '../../context/ServicesContext';
+import { useAuthContext } from '../../context/AuthContext';
 import type { AdminUser } from '../../types';
 
 const iconComponents: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
@@ -62,7 +63,8 @@ const filterNavItemsBySearch = (items: NavItemData[], query: string): NavItemDat
 };
 
 const Sidebar: React.FC = () => {
-    const { categories, logout, currentUser } = useAppContext();
+    const { categories } = useServicesContext();
+    const { logout, currentUser } = useAuthContext();
     const [isOpen, setIsOpen] = useState(false);
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true });
     const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +78,7 @@ const Sidebar: React.FC = () => {
             icon: getIcon(category.icon, { className: "w-5 h-5" }),
             children: category.subCategories.map(sub => ({
                 name: sub.name,
-                icon: <div className="w-5 h-5" />,
+                icon: <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>, // Dot icon for sub-items
                 to: `/services/subcategory/${sub.id}`,
             }))
         }));
@@ -161,15 +163,15 @@ const Sidebar: React.FC = () => {
         const linkRef = useRef<HTMLAnchorElement>(null);
 
         useEffect(() => {
-            if (isActive) {
+            if (isActive && !isOpen) { // Only scroll on desktop
                 const timer = setTimeout(() => {
                     linkRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300);
                 return () => clearTimeout(timer);
             }
-        }, [isActive]);
+        }, [isActive, isOpen]);
 
-        const paddingRightClass = level === 1 ? 'pr-6' : level === 2 ? 'pr-10' : 'pr-4';
+        const paddingRightClass = level === 1 ? 'pr-8' : level === 2 ? 'pr-10' : 'pr-4';
 
         if (hasChildren) {
             return (
@@ -179,7 +181,7 @@ const Sidebar: React.FC = () => {
                             {item.icon}
                             <span className="font-medium">{item.name}</span>
                         </div>
-                        <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMenuOpen ? 'rotate-0' : '-rotate-90'}`} />
+                        <ChevronDownIcon className={`w-5 h-5 transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
                     <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMenuOpen ? 'max-h-[1000px]' : 'max-h-0'}`}>
                          <ul className={`mt-1 mr-4 pl-0 pr-2 space-y-1 ${level === 0 ? 'border-r-2 border-slate-200 dark:border-slate-700' : ''}`}>
@@ -232,9 +234,9 @@ const Sidebar: React.FC = () => {
                 {isOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
             </button>
             <aside className="w-72 hidden lg:block flex-shrink-0"><SidebarContent /></aside>
-            <div className={`fixed inset-0 z-40 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:hidden`}>
+            <div className={`fixed inset-0 z-40 transform transition-transform duration-300 ease-in-out lg:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full'}`}>
                  <div className="absolute inset-0 bg-black opacity-50" onClick={() => setIsOpen(false)}></div>
-                 <div className="relative w-72 h-full mr-auto rtl:ml-auto"><SidebarContent /></div>
+                 <div className="relative w-72 h-full mr-auto rtl:ml-auto rtl:mr-0"><SidebarContent /></div>
             </div>
         </>
     );

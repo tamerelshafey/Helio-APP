@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
+import { useUserManagementContext } from '../../context/UserManagementContext';
+import { useServicesContext } from '../../context/ServicesContext';
+import { usePropertiesContext } from '../../context/PropertiesContext';
+import { useContentContext } from '../../context/ContentContext';
 import type { SearchResult } from '../../types';
 import { MagnifyingGlassIcon, XMarkIcon, WrenchScrewdriverIcon, HomeModernIcon, NewspaperIcon, UserGroupIcon } from './Icons';
 
@@ -10,7 +13,10 @@ interface GlobalSearchModalProps {
 }
 
 const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }) => {
-    const { services, properties, news, users } = useAppContext();
+    const { users } = useUserManagementContext();
+    const { services } = useServicesContext();
+    const { properties } = usePropertiesContext();
+    const { news } = useContentContext();
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
@@ -85,14 +91,10 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
         return [...serviceResults, ...propertyResults, ...newsResults, ...userResults].slice(0, 15);
     }, [searchTerm, services, properties, news, users]);
 
-    const groupedResults = useMemo(() => {
-        // FIX: Refactor reduce to be more explicit for TypeScript's type inference.
-        return searchResults.reduce((acc: Record<string, SearchResult[]>, result) => {
+    const groupedResults: Record<string, SearchResult[]> = useMemo(() => {
+        return searchResults.reduce<Record<string, SearchResult[]>>((acc, result) => {
             const type = result.type;
-            if (!acc[type]) {
-                acc[type] = [];
-            }
-            acc[type].push(result);
+            (acc[type] = acc[type] || []).push(result);
             return acc;
         }, {});
     }, [searchResults]);
@@ -111,7 +113,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
             onClick={onClose}
         >
             <div 
-                className="bg-white rounded-lg shadow-xl w-full max-w-2xl animate-fade-in-up"
+                className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl animate-fade-in-up"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="relative">
@@ -122,28 +124,28 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         autoFocus
-                        className="w-full bg-transparent text-gray-800 text-lg p-4 pr-12 border-b border-slate-200 focus:outline-none"
+                        className="w-full bg-transparent text-gray-800 dark:text-gray-200 text-lg p-4 pr-12 border-b border-slate-200 dark:border-slate-700 focus:outline-none"
                     />
-                    <button onClick={onClose} className="absolute top-1/2 left-4 -translate-y-1/2 p-2 rounded-full text-gray-500 hover:bg-slate-200">
+                    <button onClick={onClose} className="absolute top-1/2 left-4 -translate-y-1/2 p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-slate-700">
                         <XMarkIcon className="w-6 h-6"/>
                     </button>
                 </div>
                 <div className="max-h-[60vh] overflow-y-auto">
                     {searchTerm.trim().length < 2 ? (
-                        <p className="p-8 text-center text-gray-500">ابدأ بالكتابة للبحث...</p>
+                        <p className="p-8 text-center text-gray-500 dark:text-gray-400">ابدأ بالكتابة للبحث...</p>
                     ) : searchResults.length > 0 ? (
                         <div className="p-2">
                             {Object.entries(groupedResults).map(([type, results]) => (
                                 <div key={type} className="mb-2">
-                                    <h3 className="text-xs font-bold uppercase text-gray-400 px-4 py-2">{type}</h3>
+                                    <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 px-4 py-2">{type}</h3>
                                     <ul>
                                         {results.map(result => (
                                             <li key={result.id}>
-                                                <button onClick={() => handleLinkClick(result.link)} className="w-full text-right flex items-center gap-4 p-3 rounded-md hover:bg-slate-100 transition-colors">
+                                                <button onClick={() => handleLinkClick(result.link)} className="w-full text-right flex items-center gap-4 p-3 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                                     <div className="flex-shrink-0">{result.icon}</div>
                                                     <div>
-                                                        <p className="font-semibold text-gray-800">{result.title}</p>
-                                                        {result.subtitle && <p className="text-sm text-gray-500">{result.subtitle}</p>}
+                                                        <p className="font-semibold text-gray-800 dark:text-white">{result.title}</p>
+                                                        {result.subtitle && <p className="text-sm text-gray-500 dark:text-gray-300">{result.subtitle}</p>}
                                                     </div>
                                                 </button>
                                             </li>
@@ -153,7 +155,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                             ))}
                         </div>
                     ) : (
-                        <p className="p-8 text-center text-gray-500">لا توجد نتائج تطابق بحثك.</p>
+                        <p className="p-8 text-center text-gray-500 dark:text-gray-400">لا توجد نتائج تطابق بحثك.</p>
                     )}
                 </div>
             </div>

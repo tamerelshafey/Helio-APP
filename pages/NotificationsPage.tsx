@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, BellAlertIcon } from '../components/common/Icons';
 import type { Notification, Service } from '../types';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+// FIX: Use ContentContext for notifications data and handlers
+import { useContentContext } from '../context/ContentContext';
+// FIX: Import useServicesContext to get services data
+import { useServicesContext } from '../context/ServicesContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
@@ -120,7 +125,10 @@ const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDa
 
 const NotificationsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { notifications, services, handleSaveNotification, handleDeleteNotification } = useAppContext();
+    // FIX: Get notifications state and handlers from ContentContext
+    const { notifications, handleSaveNotification, handleDeleteNotification } = useContentContext();
+    const { services } = useServicesContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول الاخبار والاعلانات والاشعارات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
@@ -133,6 +141,20 @@ const NotificationsPage: React.FC = () => {
     const handleEditClick = (notification: Notification) => {
         setEditingNotification(notification);
         setIsModalOpen(true);
+    };
+    
+    const handleSaveAndClose = (notificationData: Omit<Notification, 'id'> & { id?: number }) => {
+        const isNew = !notificationData.id;
+        handleSaveNotification(notificationData);
+        setIsModalOpen(false);
+        showToast(isNew ? 'تم إضافة الإشعار بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+    
+    const confirmDelete = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
+            handleDeleteNotification(id);
+            showToast('تم حذف الإشعار بنجاح!');
+        }
     };
     
     return (
@@ -181,7 +203,7 @@ const NotificationsPage: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                    <button onClick={() => handleDeleteNotification(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                                    <button onClick={() => confirmDelete(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
                                                 </div>
                                             </td>
                                         )}
@@ -212,7 +234,7 @@ const NotificationsPage: React.FC = () => {
                 title={editingNotification ? 'تعديل الإشعار' : 'إضافة إشعار جديد'}
             >
                 <NotificationForm 
-                    onSave={handleSaveNotification}
+                    onSave={handleSaveAndClose}
                     onClose={() => setIsModalOpen(false)}
                     notification={editingNotification}
                     services={services}

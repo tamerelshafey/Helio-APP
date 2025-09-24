@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon } from './Icons';
 import type { Service } from '../types';
-import { useAppContext } from '../context/AppContext';
+// FIX: Use useServicesContext for service data and handlers
+import { useServicesContext } from '../context/ServicesContext';
 import Modal from './Modal';
 import ImageUploader from './ImageUploader';
 
@@ -107,7 +108,8 @@ const ServicePage: React.FC = () => {
     const { subCategoryId: subCategoryIdStr } = useParams<{ subCategoryId: string }>();
     const subCategoryId = Number(subCategoryIdStr);
     
-    const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite } = useAppContext();
+    // FIX: Use useServicesContext for service data and handlers
+    const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite } = useServicesContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState<Service | null>(null);
     const [sortOrder, setSortOrder] = useState<'default' | 'favorite' | 'rating' | 'alpha'>('default');

@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, NewspaperIcon } from '../components/common/Icons';
 import type { Ad, Service } from '../types';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+import { useContentContext } from '../context/ContentContext';
+import { useServicesContext } from '../context/ServicesContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
@@ -120,7 +123,9 @@ const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDa
 
 const AdsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { ads, services, handleSaveAd, handleDeleteAd } = useAppContext();
+    const { ads, handleSaveAd, handleDeleteAd } = useContentContext();
+    const { services } = useServicesContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول الاخبار والاعلانات والاشعارات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAd, setEditingAd] = useState<Ad | null>(null);
@@ -135,6 +140,20 @@ const AdsPage: React.FC = () => {
         setIsModalOpen(true);
     };
     
+    const handleSaveAndClose = (adData: Omit<Ad, 'id'> & { id?: number }) => {
+        const isNew = !adData.id;
+        handleSaveAd(adData);
+        setIsModalOpen(false);
+        showToast(isNew ? 'تم إضافة الإعلان بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+    
+    const confirmDelete = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
+            handleDeleteAd(id);
+            showToast('تم حذف الإعلان بنجاح!');
+        }
+    };
+
     return (
         <div className="animate-fade-in">
             <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
@@ -181,7 +200,7 @@ const AdsPage: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <button onClick={() => handleEditClick(ad)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                    <button onClick={() => handleDeleteAd(ad.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                                    <button onClick={() => confirmDelete(ad.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
                                                 </div>
                                             </td>
                                         )}
@@ -212,7 +231,7 @@ const AdsPage: React.FC = () => {
                 title={editingAd ? 'تعديل الإعلان' : 'إضافة إعلان جديد'}
             >
                 <AdForm 
-                    onSave={handleSaveAd}
+                    onSave={handleSaveAndClose}
                     onClose={() => setIsModalOpen(false)}
                     ad={editingAd}
                     services={services}

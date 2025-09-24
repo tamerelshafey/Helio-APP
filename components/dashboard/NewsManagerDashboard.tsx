@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
+import { useContentContext } from '../../context/ContentContext';
 import KpiCard from '../common/KpiCard';
 import { NewspaperIcon, BellAlertIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon, ChartPieIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -21,7 +21,7 @@ const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDa
 };
 
 const NewsManagerDashboard: React.FC = () => {
-    const { news, notifications } = useAppContext();
+    const { news, notifications } = useContentContext();
 
     const stats = useMemo(() => {
         // News Stats

@@ -6,10 +6,10 @@ import {
     CheckCircleIcon, XCircleIcon
 } from '../components/common/Icons';
 import type { Review } from '../types';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+import { useServicesContext } from '../context/ServicesContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import KpiCard from '../components/common/KpiCard';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { GoogleGenAI, Type } from "@google/genai";
 
 // AI Analysis Types
@@ -61,7 +61,7 @@ const EditReviewForm: React.FC<{ review: Review; onSave: (comment: string) => vo
 // Main Page Component
 const ReviewsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview } = useAppContext();
+    const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview } = useServicesContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const [searchTerm, setSearchTerm] = useState('');
     const [ratingFilter, setRatingFilter] = useState<number>(0);
@@ -93,7 +93,6 @@ const ReviewsPage: React.FC = () => {
                 averageRating: 0,
                 newReviews: 0,
                 pendingReplies: 0,
-                ratingDistribution: [],
             };
         }
 
@@ -105,27 +104,11 @@ const ReviewsPage: React.FC = () => {
         const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
         const averageRating = totalRating / allReviews.length;
         
-        const ratingDistribution = [
-            { name: '5 نجوم', count: 0 },
-            { name: '4 نجوم', count: 0 },
-            { name: '3 نجوم', count: 0 },
-            { name: '2 نجوم', count: 0 },
-            { name: '1 نجمة', count: 0 },
-        ];
-
-        allReviews.forEach(review => {
-            const rating = Math.round(review.rating);
-            if (rating >= 1 && rating <= 5) {
-                ratingDistribution[5 - rating].count++;
-            }
-        });
-
         return {
             total: allReviews.length,
             averageRating,
             newReviews,
             pendingReplies,
-            ratingDistribution,
         };
     }, [allReviews]);
 

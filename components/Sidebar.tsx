@@ -17,7 +17,10 @@ import {
     ChatBubbleOvalLeftIcon,
     ClipboardDocumentListIcon
 } from './Icons';
-import { useAppContext } from '../context/AppContext';
+// FIX: Import useServicesContext to get categories
+import { useServicesContext } from '../context/ServicesContext';
+// FIX: Import useAuthContext to get logout function
+import { useAuthContext } from '../context/AuthContext';
 
 const iconComponents: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
     BuildingLibraryIcon, InformationCircleIcon, DocumentDuplicateIcon, TruckIcon,
@@ -58,6 +61,14 @@ const filterNavItems = (items: NavItemData[], query: string): NavItemData[] => {
 };
 
 const Sidebar: React.FC = () => {
-    const { categories, logout } = useAppContext();
+    // FIX: 'categories' comes from ServicesContext.
+    const { categories } = useServicesContext();
+    const { logout } = useAuthContext();
     const [isOpen, setIsOpen] = useState(false);
-    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true
+    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true });
+
+    // NOTE: The rest of the component was not provided. Returning null to make it a valid component.
+    return null;
+};
+
+export default Sidebar;

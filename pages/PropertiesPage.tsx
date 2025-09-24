@@ -5,7 +5,10 @@ import {
     MagnifyingGlassIcon, HomeModernIcon, MapPinIcon, PhoneIcon
 } from '../components/common/Icons';
 import type { Property } from '../types';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+// FIX: Use usePropertiesContext for property data and handlers
+import { usePropertiesContext } from '../context/PropertiesContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
@@ -136,7 +139,9 @@ const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete:
 
 const PropertiesPage: React.FC = () => {
     const navigate = useNavigate();
-    const { properties, handleSaveProperty, handleDeleteProperty } = useAppContext();
+    // FIX: Use usePropertiesContext for property data and handlers
+    const { properties, handleSaveProperty, handleDeleteProperty } = usePropertiesContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول العقارات']);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -152,6 +157,20 @@ const PropertiesPage: React.FC = () => {
     const handleEditClick = (property: Property) => {
         setEditingProperty(property);
         setIsModalOpen(true);
+    };
+
+    const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => {
+        const isNew = !propertyData.id;
+        handleSaveProperty(propertyData);
+        setIsModalOpen(false);
+        showToast(isNew ? 'تم إضافة العقار بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+
+    const confirmDelete = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا العقار؟')) {
+            handleDeleteProperty(id);
+            showToast('تم حذف العقار بنجاح!');
+        }
     };
 
     const filteredProperties = useMemo(() => {
@@ -202,7 +221,7 @@ const PropertiesPage: React.FC = () => {
                 {filteredProperties.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredProperties.map(prop => (
-                            <PropertyCard key={prop.id} property={prop} onEdit={() => handleEditClick(prop)} onDelete={() => handleDeleteProperty(prop.id)} />
+                            <PropertyCard key={prop.id} property={prop} onEdit={() => handleEditClick(prop)} onDelete={() => confirmDelete(prop.id)} />
                         ))}
                     </div>
                 ) : (
@@ -227,7 +246,7 @@ const PropertiesPage: React.FC = () => {
               title={editingProperty ? 'تعديل العقار' : 'إضافة عقار جديد'}
             >
                 <PropertyForm 
-                  onSave={handleSaveProperty}
+                  onSave={handleSaveAndClose}
                   onClose={() => setIsModalOpen(false)}
                   property={editingProperty}
                 />

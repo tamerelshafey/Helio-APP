@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
+import { useTransportationContext } from '../../context/TransportationContext';
 import KpiCard from '../common/KpiCard';
 import { BusIcon, UserGroupIcon, MapIcon, PhoneIcon, UserCircleIcon, CalendarDaysIcon } from '../common/Icons';
 
 const TransportationManagerDashboard: React.FC = () => {
-    const { transportation } = useAppContext();
+    const { transportation } = useTransportationContext();
 
     const today = new Date().toLocaleDateString('ar-EG', { weekday: 'long' });
     const todaySchedule = transportation.weeklySchedule.find(d => d.day === today);

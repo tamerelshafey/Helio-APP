@@ -4,7 +4,7 @@ import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import Spinner from './components/common/Spinner';
 import Breadcrumbs from './components/common/Breadcrumbs';
-import { useAppContext } from './context/AppContext';
+import { useAuthContext } from './context/AuthContext';
 import PublicHeader from './components/PublicHeader';
 import PublicFooter from './components/PublicFooter';
 import ToastContainer from './components/common/Toast';
@@ -42,7 +42,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 
 
 const App: React.FC = () => {
-  const { isAuthenticated } = useAppContext();
+  const { isAuthenticated } = useAuthContext();
 
   if (!isAuthenticated) {
     return (

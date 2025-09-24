@@ -1,9 +1,15 @@
 import React, { memo } from 'react';
 import { BellIcon, SunIcon, MoonIcon } from './Icons';
-import { useAppContext } from '../context/AppContext';
+// FIX: Use `useUIContext` for UI state like dark mode.
+import { useUIContext } from '../context/UIContext';
+// FIX: Import useAuthContext to get currentUser
+import { useAuthContext } from '../context/AuthContext';
 
 const Header: React.FC = () => {
-  const { isDarkMode, toggleDarkMode, currentUser } = useAppContext();
+  // FIX: 'currentUser' comes from AuthContext, not AppContext.
+  // FIX: `isDarkMode` and `toggleDarkMode` come from `useUIContext`.
+  const { isDarkMode, toggleDarkMode } = useUIContext();
+  const { currentUser } = useAuthContext();
   
   return (
     <header className="flex items-center justify-between p-6 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">

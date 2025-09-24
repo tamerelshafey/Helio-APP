@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon } from './Icons';
 import type { News } from '../types';
-import { useAppContext } from '../context/AppContext';
 import Modal from './Modal';
 import ImageUploader from './ImageUploader';
+// FIX: Import useContentContext to access news data and handlers.
+import { useContentContext } from '../context/ContentContext';
 
 const NewsForm: React.FC<{
     onSave: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
@@ -98,7 +99,7 @@ const NewsCard: React.FC<{ newsItem: News; onEdit: () => void; onDelete: () => v
 
 const NewsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { news, handleSaveNews, handleDeleteNews } = useAppContext();
+    const { news, handleSaveNews, handleDeleteNews } = useContentContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNews, setEditingNews] = useState<News | null>(null);
 

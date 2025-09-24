@@ -2,7 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon, WrenchScrewdriverIcon } from '../components/common/Icons';
 import type { Service } from '../types';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+// FIX: Import useServicesContext for service-related data
+import { useServicesContext } from '../context/ServicesContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
@@ -108,7 +111,9 @@ const ServicePage: React.FC = () => {
     const { subCategoryId: subCategoryIdStr } = useParams<{ subCategoryId: string }>();
     const subCategoryId = Number(subCategoryIdStr);
     
-    const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite } = useAppContext();
+    // FIX: Use useServicesContext for service-related data
+    const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite } = useServicesContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -133,9 +138,19 @@ const ServicePage: React.FC = () => {
 
     const handleAddService = () => { setEditingService(null); setIsModalOpen(true); };
     const handleEditService = (service: Service) => { setEditingService(service); setIsModalOpen(true); };
+    
     const handleSaveAndClose = (serviceData: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => {
+        const isNew = !serviceData.id;
         handleSaveService(serviceData);
         setIsModalOpen(false);
+        showToast(isNew ? 'تمت إضافة الخدمة بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+
+    const confirmDeleteService = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذه الخدمة؟')) {
+            handleDeleteService(id);
+            showToast('تم حذف الخدمة بنجاح!');
+        }
     };
 
     return (
@@ -210,7 +225,7 @@ const ServicePage: React.FC = () => {
                                                 {canManage && (
                                                     <>
                                                         <button onClick={() => handleEditService(service)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                        <button onClick={() => handleDeleteService(service.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                                        <button onClick={() => confirmDeleteService(service.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
                                                     </>
                                                 )}
                                             </div>

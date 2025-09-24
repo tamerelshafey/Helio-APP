@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PhoneIcon, PencilSquareIcon, TrashIcon, PlusIcon, ShieldExclamationIcon } from '../components/common/Icons';
 import type { EmergencyContact } from '../types';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+import { useAppContext } from '../context/AppContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import EmptyState from '../components/common/EmptyState';
 
@@ -100,6 +102,7 @@ const EmergencyForm: React.FC<{
 const EmergencyPage: React.FC = () => {
     const navigate = useNavigate();
     const { emergencyContacts, handleSaveEmergencyContact, handleDeleteEmergencyContact } = useAppContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
@@ -112,6 +115,20 @@ const EmergencyPage: React.FC = () => {
     const handleEditClick = (contact: EmergencyContact) => {
         setEditingContact(contact);
         setIsModalOpen(true);
+    };
+
+    const handleSaveAndClose = (contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }) => {
+        const isNew = !contactData.id;
+        handleSaveEmergencyContact(contactData);
+        setIsModalOpen(false);
+        showToast(isNew ? 'تم إضافة الرقم بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+    
+    const confirmDelete = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا الرقم؟')) {
+            handleDeleteEmergencyContact(id);
+            showToast('تم حذف الرقم بنجاح!');
+        }
     };
 
     return (
@@ -136,7 +153,7 @@ const EmergencyPage: React.FC = () => {
                 {emergencyContacts.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {emergencyContacts.map((contact) => (
-                            <EmergencyCard key={contact.id} contact={contact} onEdit={handleEditClick} onDelete={handleDeleteEmergencyContact} />
+                            <EmergencyCard key={contact.id} contact={contact} onEdit={handleEditClick} onDelete={confirmDelete} />
                         ))}
                     </div>
                 ) : (
@@ -161,7 +178,7 @@ const EmergencyPage: React.FC = () => {
                 title={editingContact ? 'تعديل الرقم' : 'إضافة رقم جديد'}
             >
                 <EmergencyForm 
-                    onSave={handleSaveEmergencyContact}
+                    onSave={handleSaveAndClose}
                     onClose={() => setIsModalOpen(false)}
                     contact={editingContact}
                 />

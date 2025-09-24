@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, BellAlertIcon } from './Icons';
 import type { Notification, Service } from '../types';
-import { useAppContext } from '../context/AppContext';
+import { useServicesContext } from '../context/ServicesContext';
 import Modal from './Modal';
 import ImageUploader from './ImageUploader';
+// FIX: Import useContentContext to access notification data and handlers.
+import { useContentContext } from '../context/ContentContext';
 
 const NotificationForm: React.FC<{
     onSave: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
@@ -119,7 +121,8 @@ const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDa
 
 const NotificationsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { notifications, services, handleSaveNotification, handleDeleteNotification } = useAppContext();
+    const { notifications, handleSaveNotification, handleDeleteNotification } = useContentContext();
+    const { services } = useServicesContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
 

@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, NewspaperIcon } from '../components/common/Icons';
 import type { News } from '../types';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+// FIX: Use ContentContext for news data and handlers
+import { useContentContext } from '../context/ContentContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
@@ -102,7 +105,9 @@ const NewsCard: React.FC<{ newsItem: News; onEdit: () => void; onDelete: () => v
 
 const NewsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { news, handleSaveNews, handleDeleteNews } = useAppContext();
+    // FIX: news state and handlers are in ContentContext
+    const { news, handleSaveNews, handleDeleteNews } = useContentContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول الاخبار والاعلانات والاشعارات']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNews, setEditingNews] = useState<News | null>(null);
@@ -115,6 +120,20 @@ const NewsPage: React.FC = () => {
     const handleEditClick = (newsItem: News) => {
         setEditingNews(newsItem);
         setIsModalOpen(true);
+    };
+
+    const handleSaveAndClose = (newsData: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => {
+        const isNew = !newsData.id;
+        handleSaveNews(newsData);
+        setIsModalOpen(false);
+        showToast(isNew ? 'تم نشر الخبر بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    };
+
+    const confirmDelete = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا الخبر؟')) {
+            handleDeleteNews(id);
+            showToast('تم حذف الخبر بنجاح!');
+        }
     };
 
     return (
@@ -139,7 +158,7 @@ const NewsPage: React.FC = () => {
                             key={newsItem.id} 
                             newsItem={newsItem} 
                             onEdit={() => handleEditClick(newsItem)}
-                            onDelete={() => handleDeleteNews(newsItem.id)}
+                            onDelete={() => confirmDelete(newsItem.id)}
                         />
                     ))}
                 </div>
@@ -164,7 +183,7 @@ const NewsPage: React.FC = () => {
                 title={editingNews ? 'تعديل الخبر' : 'إضافة خبر جديد'}
             >
                 <NewsForm 
-                    onSave={handleSaveNews}
+                    onSave={handleSaveAndClose}
                     onClose={() => setIsModalOpen(false)}
                     newsItem={editingNews}
                 />

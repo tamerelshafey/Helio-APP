@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, BellIcon, UserCircleIcon, SunIcon, Cog6ToothIcon } from './Icons';
-import { useAppContext } from '../context/AppContext';
+// FIX: Use useUIContext for UI-related state.
+import { useUIContext } from '../context/UIContext';
 
 type Tab = 'general' | 'notifications' | 'account' | 'appearance';
 
@@ -135,7 +136,8 @@ const AccountSettings = () => (
 );
 
 const AppearanceSettings = () => {
-    const { isDarkMode, toggleDarkMode } = useAppContext();
+    // FIX: isDarkMode and toggleDarkMode come from UIContext.
+    const { isDarkMode, toggleDarkMode } = useUIContext();
 
     return (
         <div>

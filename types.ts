@@ -277,22 +277,22 @@ export interface SearchResult {
   icon: ReactNode;
 }
 
-export interface AppContextType {
+export interface AuthContextType {
   currentUser: AdminUser | null;
   isAuthenticated: boolean;
   login: (user: AdminUser) => void;
   logout: () => void;
-  categories: Category[];
-  services: Service[];
-  news: News[];
-  notifications: Notification[];
-  ads: Ad[];
-  properties: Property[];
-  emergencyContacts: EmergencyContact[];
-  serviceGuides: ServiceGuide[];
-  users: AppUser[];
-  admins: AdminUser[];
-  communityPosts: CommunityPost[];
+}
+
+export interface UIContextType {
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+  toasts: ToastMessage[];
+  showToast: (message: string, type?: 'success' | 'error') => void;
+  dismissToast: (id: number) => void;
+}
+
+export interface TransportationContextType {
   transportation: {
       internalSupervisor: Supervisor;
       externalSupervisor: Supervisor;
@@ -300,45 +300,68 @@ export interface AppContextType {
       weeklySchedule: WeeklyScheduleItem[];
       externalRoutes: ExternalRoute[];
   };
-  auditLogs: AuditLog[];
-  logActivity: (action: string, details: string) => void;
-  handleUpdateReview: (serviceId: number, reviewId: number, newComment: string) => void;
-  handleDeleteReview: (serviceId: number, reviewId: number) => void;
-  handleReplyToReview: (serviceId: number, reviewId: number, reply: string) => void;
-  handleSaveService: (service: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => void;
-  handleDeleteService: (id: number) => void;
-  handleToggleFavorite: (serviceId: number) => void;
-  handleSaveNews: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
-  handleDeleteNews: (id: number) => void;
-  handleSaveNotification: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
-  handleDeleteNotification: (id: number) => void;
-  handleSaveAd: (ad: Omit<Ad, 'id'> & { id?: number }) => void;
-  handleDeleteAd: (id: number) => void;
-  handleSaveProperty: (property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => void;
-  handleDeleteProperty: (id: number) => void;
-  handleSaveEmergencyContact: (contact: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }) => void;
-  handleDeleteEmergencyContact: (id: number) => void;
-  handleSaveServiceGuide: (guide: Omit<ServiceGuide, 'id'> & { id?: number }) => void;
-  handleDeleteServiceGuide: (id: number) => void;
-  handleSaveUser: (user: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => void;
-  handleDeleteUser: (id: number) => void;
-  handleSaveAdmin: (admin: Omit<AdminUser, 'id'> & { id?: number }) => void;
-  handleDeleteAdmin: (id: number) => void;
-  handleDeletePost: (postId: number) => void;
-  handleTogglePostPin: (postId: number) => void;
-  handleDeleteComment: (postId: number, commentId: number) => void;
   handleSaveDriver: (driver: Omit<Driver, 'id'> & { id?: number }) => void;
   handleDeleteDriver: (id: number) => void;
   handleSaveRoute: (route: Omit<ExternalRoute, 'id'> & { id?: number }) => void;
   handleDeleteRoute: (id: number) => void;
   handleSaveSchedule: (schedule: WeeklyScheduleItem[]) => void;
   handleSaveSupervisor: (type: 'internal' | 'external', supervisor: Supervisor) => void;
+}
+
+export interface CommunityContextType {
+  communityPosts: CommunityPost[];
+  handleDeletePost: (postId: number) => void;
+  handleTogglePostPin: (postId: number) => void;
+  handleDeleteComment: (postId: number, commentId: number) => void;
+}
+
+export interface ServicesContextType {
+  categories: Category[];
+  services: Service[];
+  handleUpdateReview: (serviceId: number, reviewId: number, newComment: string) => void;
+  handleDeleteReview: (serviceId: number, reviewId: number) => void;
+  handleReplyToReview: (serviceId: number, reviewId: number, reply: string) => void;
+  handleSaveService: (service: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => void;
+  handleDeleteService: (id: number) => void;
+  handleToggleFavorite: (serviceId: number) => void;
+}
+
+export interface PropertiesContextType {
+  properties: Property[];
+  handleSaveProperty: (property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => void;
+  handleDeleteProperty: (id: number) => void;
+}
+
+export interface ContentContextType {
+  news: News[];
+  notifications: Notification[];
+  ads: Ad[];
+  handleSaveNews: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
+  handleDeleteNews: (id: number) => void;
+  handleSaveNotification: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
+  handleDeleteNotification: (id: number) => void;
+  handleSaveAd: (ad: Omit<Ad, 'id'> & { id?: number }) => void;
+  handleDeleteAd: (id: number) => void;
+}
+
+export interface UserManagementContextType {
+  users: AppUser[];
+  admins: AdminUser[];
+  handleSaveUser: (user: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => void;
+  handleDeleteUser: (id: number) => void;
+  handleSaveAdmin: (admin: Omit<AdminUser, 'id'> & { id?: number }) => void;
+  handleDeleteAdmin: (id: number) => void;
+}
+
+export interface AppContextType {
+  emergencyContacts: EmergencyContact[];
+  serviceGuides: ServiceGuide[];
+  auditLogs: AuditLog[];
+  logActivity: (action: string, details: string) => void;
+  handleSaveEmergencyContact: (contact: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }) => void;
+  handleDeleteEmergencyContact: (id: number) => void;
+  handleSaveServiceGuide: (guide: Omit<ServiceGuide, 'id'> & { id?: number }) => void;
+  handleDeleteServiceGuide: (id: number) => void;
   publicPagesContent: PublicPagesContent;
   handleUpdatePublicPageContent: <K extends keyof PublicPagesContent>(page: K, newContent: PublicPagesContent[K]) => void;
-  toasts: ToastMessage[];
-  showToast: (message: string, type: 'success' | 'error') => void;
-  dismissToast: (id: number) => void;
-  // FIX: Add missing properties for dark mode
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
 }

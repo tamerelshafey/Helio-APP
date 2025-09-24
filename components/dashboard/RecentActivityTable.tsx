@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react';
 import type { Activity } from '../../types';
 import { WrenchScrewdriverIcon, ShieldExclamationIcon, NewspaperIcon, BuildingOffice2Icon } from '../common/Icons';
-import { useAppContext } from '../../context/AppContext';
+import { useServicesContext } from '../../context/ServicesContext';
+import { usePropertiesContext } from '../../context/PropertiesContext';
+// FIX: Add missing import for useContentContext
+import { useContentContext } from '../../context/ContentContext';
 
 const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -26,11 +29,14 @@ const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
     NEWS_PUBLISHED: <NewspaperIcon className={`${iconClasses} text-purple-500`} />,
     NEW_PROPERTY: <BuildingOffice2Icon className={`${iconClasses} text-green-500`} />,
   };
-  return <div className="p-2 bg-gray-100 rounded-full">{typeMap[type]}</div>;
+  return <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-full">{typeMap[type]}</div>;
 };
 
 const RecentActivityTable: React.FC = () => {
-  const { services, properties, news } = useAppContext();
+  // FIX: Get news data from ContentContext
+  const { news } = useContentContext();
+  const { properties } = usePropertiesContext();
+  const { services } = useServicesContext();
     
   const recentActivities = useMemo(() => {
       const serviceActivities: Activity[] = services.map(s => ({
@@ -61,16 +67,16 @@ const RecentActivityTable: React.FC = () => {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left text-gray-500">
+      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
         <tbody>
           {recentActivities.map((activity) => (
-            <tr key={activity.id} className="bg-white border-b hover:bg-slate-50">
+            <tr key={activity.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700">
               <td className="px-4 py-4">
                 <div className="flex items-center space-x-3 rtl:space-x-reverse">
                   <ActivityIcon type={activity.type} />
                   <div>
-                    <div className="font-medium text-gray-800">{activity.description}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="font-medium text-gray-800 dark:text-gray-200">{activity.description}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                        {formatRelativeTime(activity.time)}
                     </div>
                   </div>

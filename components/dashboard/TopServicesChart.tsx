@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useAppContext } from '../../context/AppContext';
+import { useServicesContext } from '../../context/ServicesContext';
 import { EyeIcon } from '../common/Icons';
 
 const TopServicesChart: React.FC = () => {
-    const { services } = useAppContext();
+    const { services } = useServicesContext();
 
     const topViewed = useMemo(() => 
         [...services]

@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
+import { useContentContext } from '../context/ContentContext';
+import { useServicesContext } from '../context/ServicesContext';
+import { usePropertiesContext } from '../context/PropertiesContext';
 import { ArrowLeftIcon, StarIcon, EyeIcon, ChatBubbleOvalLeftIcon, WrenchScrewdriverIcon, ChartPieIcon, ChartBarIcon, HomeModernIcon, NewspaperIcon, MagnifyingGlassIcon, StarIconOutline } from '../components/common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { Service, Property, News, Category } from '../types';
@@ -299,7 +301,9 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
 
 const ReportsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { services, properties, news, categories } = useAppContext();
+    const { news } = useContentContext();
+    const { services, categories } = useServicesContext();
+    const { properties } = usePropertiesContext();
     const [activeTab, setActiveTab] = useState<'services' | 'properties' | 'news'>('services');
     
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -344,7 +348,7 @@ const ReportsPage: React.FC = () => {
                          <label className="text-sm font-semibold">عرض البيانات من:</label>
                          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-slate-100 dark:bg-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500"/>
                          <label className="text-sm font-semibold">إلى:</label>
-                         <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-slate-100 dark:bg-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500"/>
+                         <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-slate-100 dark:bg-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500"/>
                     </div>
                 </div>
                 

@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Review } from '../types';
 import { ArrowLeftIcon, StarIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon } from '../components/common/Icons';
-import { useAppContext, useHasPermission } from '../context/AppContext';
+// FIX: Import useServicesContext for service-related data
+import { useServicesContext } from '../context/ServicesContext';
+import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 
 const Rating: React.FC<{ rating: number; size?: string }> = ({ rating, size = 'w-5 h-5' }) => (
@@ -48,7 +51,9 @@ const ServiceDetailPage: React.FC = () => {
     const { serviceId: serviceIdStr } = useParams<{ serviceId: string }>();
     const serviceId = Number(serviceIdStr);
     
-    const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview } = useAppContext();
+    // FIX: Use useServicesContext for service-related data
+    const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview } = useServicesContext();
+    const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const service = services.find(s => s.id === serviceId);
 
@@ -64,6 +69,29 @@ const ServiceDetailPage: React.FC = () => {
     const handleOpenEditModal = (review: Review) => {
         setSelectedReview(review);
         setEditModalOpen(true);
+    };
+
+    const confirmDeleteReview = (serviceId: number, reviewId: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا التقييم؟')) {
+            handleDeleteReview(serviceId, reviewId);
+            showToast('تم حذف التقييم بنجاح!');
+        }
+    };
+    
+    const handleSaveReply = (reply: string) => {
+        if (selectedReview && service) {
+            handleReplyToReview(service.id, selectedReview.id, reply);
+            setReplyModalOpen(false);
+            showToast('تم إضافة الرد بنجاح!');
+        }
+    };
+
+    const handleSaveReview = (comment: string) => {
+        if (selectedReview && service) {
+            handleUpdateReview(service.id, selectedReview.id, comment);
+            setEditModalOpen(false);
+            showToast('تم تعديل التقييم بنجاح!');
+        }
     };
 
     if (!service) return <div>Service not found!</div>;
@@ -85,7 +113,7 @@ const ServiceDetailPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="p-4 sm:p-6">
+                <div className="p-6">
                     <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">حول الخدمة</h2>
                     <p className="text-gray-600 dark:text-gray-300 mb-6">{service.about}</p>
                     
@@ -96,7 +124,7 @@ const ServiceDetailPage: React.FC = () => {
                     <div className="space-y-6">
                         {service.reviews.map(review => (
                             <div key={review.id} className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                                <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                                <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-4">
                                         <img src={review.avatar} alt={review.username} className="w-12 h-12 rounded-full object-cover" loading="lazy"/>
                                         <div>
@@ -106,10 +134,10 @@ const ServiceDetailPage: React.FC = () => {
                                         </div>
                                     </div>
                                     {canManage && (
-                                        <div className="flex items-center gap-1 self-end sm:self-center">
+                                        <div className="flex items-center gap-1">
                                             <button onClick={() => handleOpenReplyModal(review)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-900/50 rounded-md" title="الرد على التقييم"><ChatBubbleLeftRightIcon className="w-5 h-5" /></button>
                                             <button onClick={() => handleOpenEditModal(review)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل التقييم"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => handleDeleteReview(service.id, review.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف التقييم"><TrashIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => confirmDeleteReview(service.id, review.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف التقييم"><TrashIcon className="w-5 h-5" /></button>
                                         </div>
                                     )}
                                 </div>
@@ -130,10 +158,10 @@ const ServiceDetailPage: React.FC = () => {
             {selectedReview && (
                 <>
                     <Modal isOpen={isReplyModalOpen} onClose={() => setReplyModalOpen(false)} title={`الرد على تقييم ${selectedReview.username}`}>
-                        <ReplyForm review={selectedReview} onClose={() => setReplyModalOpen(false)} onSave={(reply) => { handleReplyToReview(service.id, selectedReview.id, reply); setReplyModalOpen(false); }} />
+                        <ReplyForm review={selectedReview} onClose={() => setReplyModalOpen(false)} onSave={handleSaveReply} />
                     </Modal>
                     <Modal isOpen={isEditModalOpen} onClose={() => setEditModalOpen(false)} title={`تعديل تقييم ${selectedReview.username}`}>
-                        <EditReviewForm review={selectedReview} onClose={() => setEditModalOpen(false)} onSave={(comment) => { handleUpdateReview(service.id, selectedReview.id, comment); setEditModalOpen(false); }} />
+                        <EditReviewForm review={selectedReview} onClose={() => setEditModalOpen(false)} onSave={handleSaveReview} />
                     </Modal>
                 </>
             )}
