@@ -1,17 +1,16 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import { 
-    mockCategories, mockServices, mockNews, mockNotifications, 
+    mockCategories, mockServices, mockNews, mockNotifications, mockAds,
     mockProperties, mockEmergencyContacts, mockServiceGuides,
     mockUsers, mockAdmins,
     mockInternalSupervisor, mockExternalSupervisor, mockInternalDrivers, mockWeeklySchedule, mockExternalRoutes,
-    mockPublicPagesContent
+    mockPublicPagesContent, mockCommunityPosts
 } from '../data/mock-data';
-// FIX: Add missing 'ExternalRoute' type import to resolve compilation errors.
 import type { 
-    Category, Service, Review, News, Notification, Property, 
+    Category, Service, Review, News, Notification, Ad, Property, 
     EmergencyContact, ServiceGuide, AppContextType, AppUser, AdminUser,
     Driver, WeeklyScheduleItem, Supervisor, ExternalRoute,
-    AuditLog, PublicPagesContent, ToastMessage
+    AuditLog, PublicPagesContent, ToastMessage, CommunityPost
 } from '../types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -31,44 +30,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return storedUser ? JSON.parse(storedUser) : null;
     });
 
-    const isAuthenticated = !!currentUser;
-
-    const [categories, setCategories] = useState<Category[]>(mockCategories);
-    const [services, setServices] = useState<Service[]>(mockServices);
-    const [news, setNews] = useState<News[]>(mockNews);
-    const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-    const [properties, setProperties] = useState<Property[]>(mockProperties);
-    const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>(mockEmergencyContacts);
-    const [serviceGuides, setServiceGuides] = useState<ServiceGuide[]>(mockServiceGuides);
-    const [users, setUsers] = useState<AppUser[]>(mockUsers);
-    const [admins, setAdmins] = useState<AdminUser[]>(mockAdmins);
-    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-    const [publicPagesContent, setPublicPagesContent] = useState<PublicPagesContent>(mockPublicPagesContent);
-    const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-
-    const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-        const storedTheme = localStorage.getItem('theme');
+    // FIX: Implement dark mode state and logic
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        const storedTheme = window.localStorage.getItem('theme');
         if (storedTheme) {
             return storedTheme === 'dark';
         }
-        return true; // Default to dark mode on first visit
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
     });
 
     useEffect(() => {
-        const root = window.document.documentElement;
         if (isDarkMode) {
-            root.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
+            document.documentElement.classList.add('dark');
+            window.localStorage.setItem('theme', 'dark');
         } else {
-            root.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
+            document.documentElement.classList.remove('dark');
+            window.localStorage.setItem('theme', 'light');
         }
     }, [isDarkMode]);
 
     const toggleDarkMode = useCallback(() => {
         setIsDarkMode(prev => !prev);
     }, []);
+
+    const isAuthenticated = !!currentUser;
+
+    const [categories, setCategories] = useState<Category[]>(mockCategories);
+    const [services, setServices] = useState<Service[]>(mockServices);
+    const [news, setNews] = useState<News[]>(mockNews);
+    const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+    const [ads, setAds] = useState<Ad[]>(mockAds);
+    const [properties, setProperties] = useState<Property[]>(mockProperties);
+    const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>(mockEmergencyContacts);
+    const [serviceGuides, setServiceGuides] = useState<ServiceGuide[]>(mockServiceGuides);
+    const [users, setUsers] = useState<AppUser[]>(mockUsers);
+    const [admins, setAdmins] = useState<AdminUser[]>(mockAdmins);
+    const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(mockCommunityPosts);
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+    const [publicPagesContent, setPublicPagesContent] = useState<PublicPagesContent>(mockPublicPagesContent);
+    const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
     const login = useCallback((user: AdminUser) => {
         sessionStorage.setItem('currentUser', JSON.stringify(user));
@@ -260,6 +261,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, [notifications, logActivity, showToast]);
 
+    const handleSaveAd = useCallback((ad: Omit<Ad, 'id'> & { id?: number }) => {
+        const isNew = !ad.id;
+        setAds(prevAds => {
+            if (ad.id) {
+                return prevAds.map(n => n.id === ad.id ? { ...n, ...ad, id: n.id } : n);
+            } else {
+                const newAd: Ad = {
+                    id: Math.max(...prevAds.map(n => n.id), 0) + 1,
+                    ...ad,
+                };
+                return [newAd, ...prevAds];
+            }
+        });
+        const action = isNew ? 'إنشاء إعلان جديد' : 'تعديل إعلان';
+        logActivity(action, `حفظ الإعلان: "${ad.title}"`);
+        showToast(isNew ? 'تم إضافة الإعلان بنجاح!' : 'تم حفظ التعديلات بنجاح!');
+    }, [logActivity, showToast]);
+
+    const handleDeleteAd = useCallback((id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
+            const adTitle = ads.find(n => n.id === id)?.title || `ID: ${id}`;
+            setAds(prevAds => prevAds.filter(n => n.id !== id));
+            logActivity('حذف إعلان', `حذف الإعلان: "${adTitle}"`);
+            showToast('تم حذف الإعلان بنجاح!');
+        }
+    }, [ads, logActivity, showToast]);
+
     const handleSaveProperty = useCallback((property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => {
         const isNew = !property.id;
         setProperties(prevProperties => {
@@ -404,6 +432,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, [admins, logActivity, showToast]);
 
+    const handleDeletePost = useCallback((postId: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا المنشور؟')) {
+            const postContent = communityPosts.find(p => p.id === postId)?.content.substring(0, 30) || `ID: ${postId}`;
+            setCommunityPosts(prev => prev.filter(p => p.id !== postId));
+            logActivity('حذف منشور مجتمعي', `حذف المنشور: "${postContent}..."`);
+            showToast('تم حذف المنشور بنجاح!');
+        }
+    }, [communityPosts, logActivity, showToast]);
+
+    const handleTogglePostPin = useCallback((postId: number) => {
+        let isPinnedNow = false;
+        const postContent = communityPosts.find(p => p.id === postId)?.content.substring(0, 30) || `ID: ${postId}`;
+        setCommunityPosts(prev => prev.map(p => {
+            if (p.id === postId) {
+                isPinnedNow = !p.isPinned;
+                return { ...p, isPinned: !p.isPinned };
+            }
+            return p;
+        }));
+        const action = isPinnedNow ? 'تثبيت منشور' : 'إلغاء تثبيت منشور';
+        logActivity(action, `تغيير حالة تثبيت المنشور: "${postContent}..."`);
+        showToast(isPinnedNow ? 'تم تثبيت المنشور.' : 'تم إلغاء تثبيت المنشور.');
+    }, [communityPosts, logActivity, showToast]);
+
+    const handleDeleteComment = useCallback((postId: number, commentId: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا التعليق؟')) {
+            let postContent = '';
+            let commentContent = '';
+            setCommunityPosts(prev => prev.map(p => {
+                if (p.id === postId) {
+                    postContent = p.content.substring(0, 20);
+                    const comment = p.comments.find(c => c.id === commentId);
+                    if (comment) commentContent = comment.content.substring(0, 20);
+                    return { ...p, comments: p.comments.filter(c => c.id !== commentId) };
+                }
+                return p;
+            }));
+            logActivity('حذف تعليق', `حذف تعليق "${commentContent}..." من منشور "${postContent}..."`);
+            showToast('تم حذف التعليق بنجاح!');
+        }
+    }, [logActivity, showToast]);
+
     // Transportation Handlers
     const handleSaveDriver = useCallback((driverData: Omit<Driver, 'id'> & { id?: number }) => {
         const isNew = !driverData.id;
@@ -483,44 +553,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const value = useMemo(() => ({
         isAuthenticated, login, logout, currentUser,
-        categories, services, news, notifications, properties, emergencyContacts, serviceGuides, users, admins,
+        categories, services, news, notifications, ads, properties, emergencyContacts, serviceGuides, users, admins,
+        communityPosts,
         transportation: { internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes },
         auditLogs, logActivity,
         handleUpdateReview, handleDeleteReview, handleReplyToReview,
         handleSaveService, handleDeleteService, handleToggleFavorite,
         handleSaveNews, handleDeleteNews,
         handleSaveNotification, handleDeleteNotification,
+        handleSaveAd, handleDeleteAd,
         handleSaveProperty, handleDeleteProperty,
         handleSaveEmergencyContact, handleDeleteEmergencyContact,
         handleSaveServiceGuide, handleDeleteServiceGuide,
         handleSaveUser, handleDeleteUser,
         handleSaveAdmin, handleDeleteAdmin,
+        handleDeletePost, handleTogglePostPin, handleDeleteComment,
         handleSaveDriver, handleDeleteDriver,
         handleSaveRoute, handleDeleteRoute,
         handleSaveSchedule, handleSaveSupervisor,
-        isDarkMode, toggleDarkMode,
         publicPagesContent, handleUpdatePublicPageContent,
-        toasts, showToast, dismissToast
+        toasts, showToast, dismissToast,
+        isDarkMode, toggleDarkMode
     }), [
         isAuthenticated, login, logout, currentUser,
-        categories, services, news, notifications, properties, emergencyContacts, serviceGuides, users, admins,
+        categories, services, news, notifications, ads, properties, emergencyContacts, serviceGuides, users, admins,
+        communityPosts,
         internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes,
         auditLogs, logActivity,
         handleUpdateReview, handleDeleteReview, handleReplyToReview,
         handleSaveService, handleDeleteService, handleToggleFavorite,
         handleSaveNews, handleDeleteNews,
         handleSaveNotification, handleDeleteNotification,
+        handleSaveAd, handleDeleteAd,
         handleSaveProperty, handleDeleteProperty,
         handleSaveEmergencyContact, handleDeleteEmergencyContact,
         handleSaveServiceGuide, handleDeleteServiceGuide,
         handleSaveUser, handleDeleteUser,
         handleSaveAdmin, handleDeleteAdmin,
+        handleDeletePost, handleTogglePostPin, handleDeleteComment,
         handleSaveDriver, handleDeleteDriver,
         handleSaveRoute, handleDeleteRoute,
         handleSaveSchedule, handleSaveSupervisor,
-        isDarkMode, toggleDarkMode,
         publicPagesContent, handleUpdatePublicPageContent,
-        toasts, showToast, dismissToast
+        toasts, showToast, dismissToast,
+        isDarkMode, toggleDarkMode
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

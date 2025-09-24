@@ -24,10 +24,10 @@ const UserActivityChart: React.FC = () => {
           <YAxis stroke="#9ca3af" />
           <Tooltip 
             contentStyle={{ 
-                backgroundColor: 'rgba(15, 23, 42, 0.9)', 
-                borderColor: '#334155',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                borderColor: '#e2e8f0',
                 borderRadius: '0.5rem',
-                color: '#fff'
+                color: '#0f172a'
             }} 
           />
           <Legend />

@@ -18,16 +18,16 @@ const Toast: React.FC<{ message: ToastMessage; onDismiss: (id: number) => void }
 
     return (
         <div 
-            className="flex items-center bg-white dark:bg-slate-800 shadow-lg rounded-lg p-4 w-full max-w-sm pointer-events-auto ring-1 ring-black ring-opacity-5"
+            className="flex items-center bg-white shadow-lg rounded-lg p-4 w-full max-w-sm pointer-events-auto ring-1 ring-black ring-opacity-5"
             style={{ animation: 'toast-in 0.5s forwards' }}
         >
             <div className="flex-shrink-0">{icon}</div>
             <div className="mr-3 flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{message.message}</p>
+                <p className="text-sm font-medium text-gray-900">{message.message}</p>
             </div>
             <button
                 onClick={() => onDismiss(message.id)}
-                className="mr-4 flex-shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="mr-4 flex-shrink-0 p-1 rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             >
                 <span className="sr-only">إغلاق</span>
                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

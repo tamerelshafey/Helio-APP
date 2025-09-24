@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, BellIcon, UserCircleIcon, SunIcon, Cog6ToothIcon } from './Icons';
+import { useAppContext } from '../context/AppContext';
 
 type Tab = 'general' | 'notifications' | 'account' | 'appearance';
 
@@ -134,21 +135,13 @@ const AccountSettings = () => (
 );
 
 const AppearanceSettings = () => {
-     const [darkMode, setDarkMode] = useState(document.documentElement.classList.contains('dark'));
-     const toggleDarkMode = () => {
-        if (darkMode) {
-            document.documentElement.classList.remove('dark');
-        } else {
-            document.documentElement.classList.add('dark');
-        }
-        setDarkMode(!darkMode);
-     };
+    const { isDarkMode, toggleDarkMode } = useAppContext();
 
     return (
         <div>
             <h2 className="text-2xl font-bold mb-6">المظهر</h2>
             <FormRow label="الوضع الداكن">
-                <ToggleSwitch enabled={darkMode} setEnabled={toggleDarkMode} />
+                <ToggleSwitch enabled={isDarkMode} setEnabled={() => toggleDarkMode()} />
             </FormRow>
              <FormRow label="لغة الواجهة">
                  <select className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none">

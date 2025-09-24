@@ -1,4 +1,3 @@
-// FIX: Import ReactNode to resolve type error
 import type { ReactNode } from 'react';
 
 export interface User {
@@ -88,6 +87,17 @@ export interface Notification {
   endDate: string;
 }
 
+export interface Ad {
+  id: number;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  externalUrl?: string;
+  serviceId?: number; // Link to a service
+  startDate: string;
+  endDate: string;
+}
+
 export interface Property {
   id: number;
   title: string;
@@ -139,7 +149,7 @@ export interface AdminUser {
   name: string;
   email: string;
   avatar: string;
-  role: 'مسؤول العقارات' | 'مسؤول الاخبار والاعلانات والاشعارات' | 'مسؤول الباصات' | 'مسؤول ادارة الخدمات' | 'مدير عام';
+  role: 'مسؤول العقارات' | 'مسؤول الاخبار والاعلانات والاشعارات' | 'مسؤول الباصات' | 'مسؤول ادارة الخدمات' | 'مسؤول ادارة المجتمع' | 'مدير عام';
 }
 
 // Transportation Types
@@ -174,6 +184,24 @@ export interface AuditLog {
   user: string;
   action: string;
   details: string;
+}
+
+// Community Management Types
+export interface CommunityComment {
+  id: number;
+  authorId: number; // Links to AppUser
+  content: string;
+  timestamp: string;
+}
+
+export interface CommunityPost {
+  id: number;
+  authorId: number; // Links to AppUser
+  content: string;
+  imageUrl?: string;
+  timestamp: string;
+  isPinned: boolean;
+  comments: CommunityComment[];
 }
 
 // New Types for Public Page Content Management
@@ -246,7 +274,6 @@ export interface SearchResult {
   title: string;
   subtitle?: string;
   link: string;
-  // FIX: Use imported ReactNode type
   icon: ReactNode;
 }
 
@@ -259,11 +286,13 @@ export interface AppContextType {
   services: Service[];
   news: News[];
   notifications: Notification[];
+  ads: Ad[];
   properties: Property[];
   emergencyContacts: EmergencyContact[];
   serviceGuides: ServiceGuide[];
   users: AppUser[];
   admins: AdminUser[];
+  communityPosts: CommunityPost[];
   transportation: {
       internalSupervisor: Supervisor;
       externalSupervisor: Supervisor;
@@ -283,6 +312,8 @@ export interface AppContextType {
   handleDeleteNews: (id: number) => void;
   handleSaveNotification: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
   handleDeleteNotification: (id: number) => void;
+  handleSaveAd: (ad: Omit<Ad, 'id'> & { id?: number }) => void;
+  handleDeleteAd: (id: number) => void;
   handleSaveProperty: (property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => void;
   handleDeleteProperty: (id: number) => void;
   handleSaveEmergencyContact: (contact: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }) => void;
@@ -293,17 +324,21 @@ export interface AppContextType {
   handleDeleteUser: (id: number) => void;
   handleSaveAdmin: (admin: Omit<AdminUser, 'id'> & { id?: number }) => void;
   handleDeleteAdmin: (id: number) => void;
+  handleDeletePost: (postId: number) => void;
+  handleTogglePostPin: (postId: number) => void;
+  handleDeleteComment: (postId: number, commentId: number) => void;
   handleSaveDriver: (driver: Omit<Driver, 'id'> & { id?: number }) => void;
   handleDeleteDriver: (id: number) => void;
   handleSaveRoute: (route: Omit<ExternalRoute, 'id'> & { id?: number }) => void;
   handleDeleteRoute: (id: number) => void;
   handleSaveSchedule: (schedule: WeeklyScheduleItem[]) => void;
   handleSaveSupervisor: (type: 'internal' | 'external', supervisor: Supervisor) => void;
-  isDarkMode: boolean;
-  toggleDarkMode: () => void;
   publicPagesContent: PublicPagesContent;
   handleUpdatePublicPageContent: <K extends keyof PublicPagesContent>(page: K, newContent: PublicPagesContent[K]) => void;
   toasts: ToastMessage[];
   showToast: (message: string, type: 'success' | 'error') => void;
   dismissToast: (id: number) => void;
+  // FIX: Add missing properties for dark mode
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
 }

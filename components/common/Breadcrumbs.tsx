@@ -10,6 +10,7 @@ const breadcrumbNameMap: { [key: string]: string } = {
   'users': 'المستخدمون',
   'news': 'أخبار المدينة',
   'notifications': 'إدارة الإشعارات',
+  'ads': 'إدارة الإعلانات',
   'transportation': 'إدارة النقل',
   'settings': 'الإعدادات',
   'city-services-guide': 'دليل خدمات جهاز المدينة',
@@ -24,6 +25,8 @@ const breadcrumbNameMap: { [key: string]: string } = {
   'faq': 'الأسئلة الشائعة',
   'terms-of-use': 'شروط الاستخدام',
   'audit-log': 'سجل التدقيق',
+  'content-management': 'إدارة المحتوى',
+  'community': 'إدارة المجتمع',
 };
 
 const Breadcrumbs: React.FC = () => {
@@ -32,7 +35,7 @@ const Breadcrumbs: React.FC = () => {
 
     return (
         <nav className="mb-6 flex items-center space-x-2 rtl:space-x-reverse text-sm font-sans" aria-label="Breadcrumb">
-            <Link to="/" className="text-gray-500 dark:text-gray-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors flex items-center gap-2">
+            <Link to="/" className="text-gray-500 hover:text-cyan-500 transition-colors flex items-center gap-2">
                 <HomeIcon className="w-5 h-5" />
                 <span>الرئيسية</span>
             </Link>
@@ -52,11 +55,11 @@ const Breadcrumbs: React.FC = () => {
                 return (
                     <React.Fragment key={to}>
                         {isLast ? (
-                            <span className="font-semibold text-gray-700 dark:text-gray-200" aria-current="page">
+                            <span className="font-semibold text-gray-700" aria-current="page">
                                 {displayName}
                             </span>
                         ) : (
-                            <Link to={to} className="text-gray-500 dark:text-gray-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">
+                            <Link to={to} className="text-gray-500 hover:text-cyan-500 transition-colors">
                                 {displayName}
                             </Link>
                         )}

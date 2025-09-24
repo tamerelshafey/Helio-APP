@@ -56,22 +56,22 @@ const AlertsPanel: React.FC = () => {
     }, [users, properties]);
 
     return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">تنبيهات فورية</h3>
+        <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <h3 className="text-xl font-semibold mb-4 text-gray-700">تنبيهات فورية</h3>
             <div className="space-y-4">
                 {alerts.map(alert => (
                     <div key={alert.id} className="flex items-start space-x-3 rtl:space-x-reverse">
-                        <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-full">
+                        <div className="p-2 bg-gray-100 rounded-full">
                            <AlertIcon type={alert.type} />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{alert.message}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{formatRelativeTime(alert.time)}</p>
+                            <p className="text-sm font-medium text-gray-800">{alert.message}</p>
+                            <p className="text-xs text-gray-500">{formatRelativeTime(alert.time)}</p>
                         </div>
                     </div>
                 ))}
             </div>
-             <button className="mt-4 w-full text-cyan-500 dark:text-cyan-400 hover:underline text-sm font-medium">
+             <button className="mt-4 w-full text-cyan-500 hover:underline text-sm font-medium">
                 عرض كل التنبيهات
             </button>
         </div>

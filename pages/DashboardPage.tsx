@@ -6,7 +6,7 @@ import RecentActivityTable from '../components/dashboard/RecentActivityTable';
 import AlertsPanel from '../components/dashboard/AlertsPanel';
 import UsersToVerify from '../components/dashboard/UsersToVerify';
 import Footer from '../components/common/Footer';
-import { UserIcon, MapIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon } from '../components/common/Icons';
+import { UserIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon } from '../components/common/Icons';
 import { useAppContext } from '../context/AppContext';
 import PropertyManagerDashboard from '../components/dashboard/PropertyManagerDashboard';
 import NewsManagerDashboard from '../components/dashboard/NewsManagerDashboard';

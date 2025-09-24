@@ -111,7 +111,7 @@ const AdminForm: React.FC<{
         });
     };
     
-    const adminRoles: AdminUser['role'][] = ['مسؤول العقارات', 'مسؤول الاخبار والاعلانات والاشعارات', 'مسؤول الباصات', 'مسؤول ادارة الخدمات'];
+    const adminRoles: AdminUser['role'][] = ['مسؤول العقارات', 'مسؤول الاخبار والاعلانات والاشعارات', 'مسؤول الباصات', 'مسؤول ادارة الخدمات', 'مسؤول ادارة المجتمع', 'مدير عام'];
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">

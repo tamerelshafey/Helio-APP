@@ -19,9 +19,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     const [images, setImages] = useState<string[]>([]);
 
     useEffect(() => {
-        // Only update from props if the initialImages array is different.
-        // This prevents the component from resetting when the parent re-renders
-        // for other reasons, preserving the user's new selections.
         if (JSON.stringify(initialImages) !== JSON.stringify(images)) {
             setImages(initialImages);
         }
@@ -39,7 +36,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             filesToProcess.splice(maxFiles - currentImageCount);
         }
 
-        // FIX: Explicitly type 'file' as File to prevent type error on readAsDataURL.
         const fileReadPromises = filesToProcess.map((file: File) => {
             return new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
@@ -64,7 +60,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             alert("حدث خطأ أثناء قراءة الصور.");
         });
 
-        // Clear the input value to allow selecting the same file again
         event.target.value = '';
     };
 
@@ -78,7 +73,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
                 {label}
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
@@ -95,10 +90,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                     </div>
                 ))}
                 {canAddMore && (
-                    <label className="relative flex flex-col justify-center items-center w-full h-full aspect-square border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-cyan-500 dark:hover:border-cyan-400 transition-colors">
+                    <label className="relative flex flex-col justify-center items-center w-full h-full aspect-square border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-cyan-500 transition-colors">
                         <div className="text-center p-2">
                             <CloudArrowUpIcon className="mx-auto h-8 w-8 text-gray-400" />
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            <p className="mt-1 text-xs text-gray-500">
                                 {multiple ? `إضافة (${images.length}/${maxFiles})` : 'تحميل'}
                             </p>
                         </div>

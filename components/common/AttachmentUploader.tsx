@@ -53,7 +53,7 @@ const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
 
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{label}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
             <div className="mt-2 flex items-center gap-4">
                 {attachmentUrl ? (
                     <div className="relative group">
@@ -61,7 +61,7 @@ const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
                             <img src={attachmentUrl} alt="Preview" className="h-24 w-24 object-cover rounded-lg shadow-md" />
                         )}
                         {attachmentType === 'pdf' && (
-                            <div className="h-24 w-24 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-700 rounded-lg p-2 text-center">
+                            <div className="h-24 w-24 flex flex-col items-center justify-center bg-slate-100 rounded-lg p-2 text-center">
                                 <DocumentDuplicateIcon className="w-10 h-10 text-red-500" />
                                 <span className="text-xs mt-2 truncate">ملف PDF</span>
                             </div>
@@ -75,7 +75,7 @@ const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
                         </button>
                     </div>
                 ) : (
-                    <label className="relative flex flex-col justify-center items-center w-24 h-24 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-cyan-500 dark:hover:border-cyan-400 transition-colors">
+                    <label className="relative flex flex-col justify-center items-center w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-cyan-500 transition-colors">
                         <div className="text-center p-2">
                             <CloudArrowUpIcon className="mx-auto h-8 w-8 text-gray-400" />
                         </div>

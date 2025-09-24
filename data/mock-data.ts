@@ -1,4 +1,4 @@
-import type { Category, Service, Review, News, Notification, Property, EmergencyContact, ServiceGuide, AppUser, AdminUser, Supervisor, Driver, WeeklyScheduleItem, ExternalRoute, PublicPagesContent } from '../types';
+import type { Category, Service, Review, News, Notification, Ad, Property, EmergencyContact, ServiceGuide, AppUser, AdminUser, Supervisor, Driver, WeeklyScheduleItem, ExternalRoute, PublicPagesContent, CommunityPost, CommunityComment } from '../types';
 
 export const mockReviews: Review[] = [
     { id: 1, username: 'أحمد محمود', avatar: 'https://picsum.photos/101', rating: 5, comment: 'خدمة ممتازة وتجربة رائعة! أنصح به بشدة.', date: '2024-07-10', adminReply: 'شكراً لتقييمك! نسعد بخدمتك دائماً.' },
@@ -245,6 +245,27 @@ export const mockNotifications: Notification[] = [
   },
 ];
 
+export const mockAds: Ad[] = [
+  {
+    id: 1,
+    title: 'إعلان: خصومات الصيف في مول سيتي بلازا!',
+    content: 'لا تفوت فرصة الاستفادة من خصومات تصل إلى 50% في جميع المتاجر المشاركة.',
+    imageUrl: 'https://picsum.photos/400/200?random=201',
+    externalUrl: '#',
+    startDate: '2024-07-20',
+    endDate: '2024-08-20',
+  },
+  {
+    id: 2,
+    title: 'إعلان: افتتاح فرع جديد لمطعم أسماك المحيط',
+    content: 'ندعوكم للاحتفال بافتتاح فرعنا الجديد في المنطقة الثانية. أشهى المأكولات البحرية بانتظاركم.',
+    imageUrl: 'https://picsum.photos/400/200?random=202',
+    serviceId: 2,
+    startDate: '2024-08-01',
+    endDate: '2024-08-15',
+  },
+];
+
 export const mockProperties: Property[] = [
     {
         id: 1,
@@ -395,6 +416,7 @@ export const mockAdmins: AdminUser[] = [
   { id: 2, name: 'مريم أحمد', email: 'mariam.ahmed@helio.com', avatar: 'https://picsum.photos/200/200?random=12', role: 'مسؤول الاخبار والاعلانات والاشعارات' },
   { id: 3, name: 'يوسف خالد', email: 'youssef.khaled@helio.com', avatar: 'https://picsum.photos/200/200?random=13', role: 'مسؤول الباصات' },
   { id: 4, name: 'هند سالم', email: 'hind.salem@helio.com', avatar: 'https://picsum.photos/200/200?random=14', role: 'مسؤول ادارة الخدمات' },
+  { id: 6, name: 'نورا فتحي', email: 'noura.fathy@helio.com', avatar: 'https://picsum.photos/200/200?random=16', role: 'مسؤول ادارة المجتمع' },
   { id: 5, name: 'مدير عام', email: 'super@helio.com', avatar: 'https://picsum.photos/200/200?random=15', role: 'مدير عام' },
 ];
 
@@ -422,6 +444,43 @@ export const mockExternalRoutes: ExternalRoute[] = [
     { id: 2, name: 'هليوبوليس الجديدة <> التجمع الخامس', timings: ['08:00 ص', '11:00 ص', '03:00 م', '06:00 م'], waitingPoint: 'بجوار مول سيتي بلازا' },
     { id: 3, name: 'هليوبوليس الجديدة <> مدينة نصر', timings: ['07:30 ص', '10:30 ص', '01:30 م', '04:30 م'], waitingPoint: 'أمام محطة الوقود' },
 ];
+
+// Community Management Mock Data
+export const mockCommunityComments: CommunityComment[] = [
+    { id: 1, authorId: 2, content: "أتفق تمامًا! المكان رائع.", timestamp: "2024-07-25T10:05:00Z" },
+    { id: 2, authorId: 3, content: "هل يوجد مواقف للسيارات؟", timestamp: "2024-07-25T10:15:00Z" },
+    { id: 3, authorId: 1, content: "نعم، يوجد موقف كبير خلف المبنى.", timestamp: "2024-07-25T10:20:00Z" },
+    { id: 4, authorId: 5, content: "شكرًا على المعلومة!", timestamp: "2024-07-24T18:30:00Z" },
+];
+
+export const mockCommunityPosts: CommunityPost[] = [
+    {
+        id: 1,
+        authorId: 1, // أحمد المصري
+        content: "ما هو أفضل مكان لتناول القهوة في هليوبوليس الجديدة؟ جربت عدة أماكن وأبحث عن مكان هادئ ومناسب للعمل.",
+        timestamp: "2024-07-25T10:00:00Z",
+        isPinned: true,
+        comments: [mockCommunityComments[0], mockCommunityComments[1], mockCommunityComments[2]],
+    },
+    {
+        id: 2,
+        authorId: 4, // سارة إبراهيم
+        content: "تم افتتاح حديقة جديدة في الحي الثالث بجوار المدرسة الدولية. مكان رائع للأطفال!",
+        imageUrl: "https://picsum.photos/600/400?random=31",
+        timestamp: "2024-07-24T18:00:00Z",
+        isPinned: false,
+        comments: [mockCommunityComments[3]],
+    },
+    {
+        id: 3,
+        authorId: 5, // محمد حسين
+        content: "هل يعرف أحد مواعيد عمل مكتب البريد في المدينة خلال إجازة العيد؟",
+        timestamp: "2024-07-23T12:45:00Z",
+        isPinned: false,
+        comments: [],
+    },
+];
+
 
 export const mockPublicPagesContent: PublicPagesContent = {
     home: {
