@@ -475,15 +475,17 @@ export const mockCommunityPosts: CommunityPost[] = [
     {
         id: 1,
         authorId: 1, // أحمد المصري
+        type: 'standard',
         content: "ما هو أفضل مكان لتناول القهوة في هليوبوليس الجديدة؟ جربت عدة أماكن وأبحث عن مكان هادئ ومناسب للعمل.",
         timestamp: "2024-07-25T10:00:00Z",
-        isPinned: true,
+        isPinned: false,
         comments: [mockCommunityComments[0], mockCommunityComments[1], mockCommunityComments[2]],
         isReported: false,
     },
     {
         id: 2,
         authorId: 4, // سارة إبراهيم
+        type: 'standard',
         content: "تم افتتاح حديقة جديدة في الحي الثالث بجوار المدرسة الدولية. مكان رائع للأطفال!",
         imageUrl: "https://picsum.photos/600/400?random=31",
         timestamp: "2024-07-24T18:00:00Z",
@@ -494,20 +496,37 @@ export const mockCommunityPosts: CommunityPost[] = [
     {
         id: 3,
         authorId: 5, // محمد حسين
-        content: "هل يعرف أحد مواعيد عمل مكتب البريد في المدينة خلال إجازة العيد؟",
-        timestamp: "2024-07-23T12:45:00Z",
-        isPinned: false,
+        type: 'poll',
+        content: "ما هو أهم مشروع تتمنى رؤيته في المدينة الفترة القادمة؟",
+        pollOptions: [
+            { text: 'زيادة المساحات الخضراء', votes: 15 },
+            { text: 'تطوير شبكة المواصلات', votes: 28 },
+            { text: 'إنشاء مركز ثقافي', votes: 12 },
+        ],
+        timestamp: "2024-07-26T14:00:00Z",
+        isPinned: true,
         comments: [],
-        isReported: true,
+        isReported: false,
     },
     {
         id: 4,
         authorId: 2, // فاطمة الزهراء
+        type: 'standard',
         content: "أبحث عن حضانة جيدة في المنطقة الثانية، هل لديكم أي اقتراحات؟",
         timestamp: "2024-07-26T09:15:00Z",
         isPinned: false,
         comments: [],
         isReported: false,
+    },
+     {
+        id: 5,
+        authorId: 3, // خالد عبدالله
+        type: 'standard',
+        content: "هل يعرف أحد مواعيد عمل مكتب البريد في المدينة خلال إجازة العيد؟",
+        timestamp: "2024-07-23T12:45:00Z",
+        isPinned: false,
+        comments: [],
+        isReported: true,
     },
 ];
 

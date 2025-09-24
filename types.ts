@@ -199,11 +199,20 @@ export interface CommunityComment {
   timestamp: string;
 }
 
+export type PostType = 'standard' | 'poll';
+
+export interface PollOption {
+  text: string;
+  votes: number;
+}
+
 export interface CommunityPost {
   id: number;
   authorId: number; // Links to AppUser
+  type: PostType;
   content: string;
   imageUrl?: string;
+  pollOptions?: PollOption[];
   timestamp: string;
   isPinned: boolean;
   comments: CommunityComment[];
@@ -322,6 +331,7 @@ export interface CommunityContextType {
   handleDeletePost: (postId: number) => void;
   handleTogglePostPin: (postId: number) => void;
   handleDeleteComment: (postId: number, commentId: number) => void;
+  handleVote: (postId: number, optionIndex: number) => void;
 }
 
 export interface ServicesContextType {

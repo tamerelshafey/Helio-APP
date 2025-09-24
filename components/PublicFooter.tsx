@@ -28,7 +28,7 @@ const PublicFooter: React.FC = () => {
                     <div>
                         <h3 className="font-semibold text-gray-800 dark:text-gray-200">تواصل معنا</h3>
                         <ul className="mt-4 space-y-2 text-gray-500 dark:text-gray-400">
-                            <li><a href="mailto:support@tech-bokra.com" className="hover:text-cyan-500 dark:hover:text-cyan-400">support@tech-bokra.com</a></li>
+                            <li><a href="mailto:HelioAPP@tech-bokra.com" className="hover:text-cyan-500 dark:hover:text-cyan-400">HelioAPP@tech-bokra.com</a></li>
                             <li><a href="tel:+201040303547" className="hover:text-cyan-500 dark:hover:text-cyan-400" dir="ltr">+20 104 030 3547</a></li>
                         </ul>
                     </div>

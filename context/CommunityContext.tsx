@@ -44,12 +44,28 @@ export const CommunityProvider: React.FC<{ children: ReactNode }> = ({ children 
         logActivity('حذف تعليق', `حذف تعليق "${commentContent}..." من منشور "${postContent}..."`);
     }, [logActivity]);
 
+    const handleVote = useCallback((postId: number, optionIndex: number) => {
+        setCommunityPosts(prev => prev.map(post => {
+            if (post.id === postId && post.type === 'poll' && post.pollOptions) {
+                const newPollOptions = [...post.pollOptions];
+                newPollOptions[optionIndex] = {
+                    ...newPollOptions[optionIndex],
+                    votes: newPollOptions[optionIndex].votes + 1,
+                };
+                return { ...post, pollOptions: newPollOptions };
+            }
+            return post;
+        }));
+        // Note: Not logging activity for every vote to avoid clutter.
+    }, []);
+
     const value = useMemo(() => ({
         communityPosts,
         handleDeletePost,
         handleTogglePostPin,
         handleDeleteComment,
-    }), [communityPosts, handleDeletePost, handleTogglePostPin, handleDeleteComment]);
+        handleVote,
+    }), [communityPosts, handleDeletePost, handleTogglePostPin, handleDeleteComment, handleVote]);
 
     return <CommunityContext.Provider value={value}>{children}</CommunityContext.Provider>;
 };
