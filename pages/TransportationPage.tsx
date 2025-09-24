@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, PhoneIcon, UserCircleIcon, BusIcon, CalendarDaysIcon, MapPinIcon, PencilSquareIcon, CheckCircleIcon, XMarkIcon, PlusIcon, TrashIcon } from '../components/common/Icons';
+import { ArrowLeftIcon, PhoneIcon, UserCircleIcon, BusIcon, CalendarDaysIcon, MapPinIcon, PencilSquareIcon, CheckCircleIcon, XMarkIcon, PlusIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/common/Icons';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import { useTransportationContext } from '../context/TransportationContext';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
-import type { Driver, ExternalRoute, WeeklyScheduleItem, Supervisor } from '../types';
+import type { Driver, ExternalRoute, WeeklyScheduleItem, Supervisor, ScheduleDriver } from '../types';
 
-// --- HELPER COMPONENTS ---
+// --- HELPER & FORM COMPONENTS ---
+
 const CallButton: React.FC<{ phone: string }> = ({ phone }) => (
     <a href={`tel:${phone}`} className="flex items-center justify-center gap-2 bg-green-500 text-white font-semibold px-3 py-1.5 rounded-md hover:bg-green-600 transition-colors text-sm">
         <PhoneIcon className="w-4 h-4" />
@@ -38,7 +39,6 @@ const DriverForm: React.FC<{ driver: Driver | null; onSave: (driver: Omit<Driver
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({ id: driver?.id, ...formData, avatar: avatar[0] || `https://picsum.photos/200/200?random=${Date.now()}` });
-        onClose();
     };
 
     return (
@@ -64,7 +64,6 @@ const RouteForm: React.FC<{ route: ExternalRoute | null; onSave: (route: Omit<Ex
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({ id: route?.id, name: formData.name, waitingPoint: formData.waitingPoint, timings: formData.timings.split('\n').filter(t => t.trim()) });
-        onClose();
     };
 
     return (
@@ -77,36 +76,217 @@ const RouteForm: React.FC<{ route: ExternalRoute | null; onSave: (route: Omit<Ex
     );
 };
 
-// --- MAIN COMPONENT ---
+const ScheduleCalendar: React.FC = () => {
+    const { transportation, handleSaveOverride, handleResetOverride, handleSaveSchedule } = useTransportationContext();
+    const { showToast } = useUIContext();
+    const canManage = useHasPermission(['مسؤول الباصات']);
+
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [isDayModalOpen, setDayModalOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [isWeekModalOpen, setWeekModalOpen] = useState(false);
+
+    const daysOfWeek = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    
+    const { monthDays, firstDayOfMonth } = useMemo(() => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const days = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
+        return { monthDays: days, firstDayOfMonth: firstDay.getDay() };
+    }, [currentDate]);
+
+    const getDriversForDate = useCallback((date: Date) => {
+        const dateString = date.toISOString().split('T')[0];
+        const override = transportation.scheduleOverrides.find(o => o.date === dateString);
+        if (override) {
+            return override.drivers;
+        }
+        const dayName = daysOfWeek[date.getDay()];
+        const scheduleDay = transportation.weeklySchedule.find(d => d.day === dayName);
+        return scheduleDay ? scheduleDay.drivers : [];
+    }, [transportation.scheduleOverrides, transportation.weeklySchedule, daysOfWeek]);
+
+    const changeMonth = (offset: number) => {
+        setCurrentDate(d => {
+            const newDate = new Date(d);
+            newDate.setMonth(d.getMonth() + offset);
+            return newDate;
+        });
+    };
+    
+    const handleDayClick = (date: Date) => {
+        if (!canManage) return;
+        setSelectedDate(date);
+        setDayModalOpen(true);
+    };
+
+    const DayScheduleModal: React.FC<{ date: Date; onClose: () => void; }> = ({ date, onClose }) => {
+        const initialDrivers = getDriversForDate(date);
+        const [selectedDrivers, setSelectedDrivers] = useState<ScheduleDriver[]>(initialDrivers);
+
+        const handleDriverToggle = (driver: ScheduleDriver) => {
+            setSelectedDrivers(prev => {
+                const isSelected = prev.some(d => d.name === driver.name);
+                if (isSelected) {
+                    return prev.filter(d => d.name !== driver.name);
+                } else {
+                    return [...prev, driver];
+                }
+            });
+        };
+        
+        const handleSave = () => {
+            const dateString = date.toISOString().split('T')[0];
+            handleSaveOverride({ date: dateString, drivers: selectedDrivers });
+            showToast('تم حفظ التعديل بنجاح!');
+            onClose();
+        };
+
+        const handleReset = () => {
+            const dateString = date.toISOString().split('T')[0];
+            handleResetOverride(dateString);
+            showToast('تمت إعادة اليوم إلى القالب الأسبوعي.');
+            onClose();
+        };
+
+        return (
+            <div className="space-y-4">
+                <h4 className="font-bold">اختر السائقين المناوبين:</h4>
+                <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-900/50 rounded-md">
+                    {transportation.internalDrivers.map(driver => {
+                        const isSelected = selectedDrivers.some(d => d.name === driver.name);
+                        return (
+                            <button
+                                key={driver.id}
+                                onClick={() => handleDriverToggle({ name: driver.name, phone: driver.phone })}
+                                className={`p-2 rounded-md text-sm border ${isSelected ? 'bg-cyan-500 text-white border-cyan-500' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                            >
+                                {driver.name}
+                            </button>
+                        );
+                    })}
+                </div>
+                 <div className="flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button onClick={handleReset} className="px-4 py-2 text-sm font-semibold text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md">إعادة إلى القالب</button>
+                    <div className="flex gap-2">
+                        <button onClick={onClose} className="px-4 py-2 text-sm font-semibold bg-slate-100 dark:bg-slate-600 rounded-md hover:bg-slate-200 dark:hover:bg-slate-500">إلغاء</button>
+                        <button onClick={handleSave} className="px-4 py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">حفظ</button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const WeeklyScheduleModal: React.FC<{ onClose: () => void; }> = ({ onClose }) => {
+        const [schedule, setSchedule] = useState(transportation.weeklySchedule);
+        
+        const handleDriverToggle = (day: string, driver: ScheduleDriver) => {
+            setSchedule(prev => prev.map(d => {
+                if (d.day === day) {
+                    const isSelected = d.drivers.some(dr => dr.name === driver.name);
+                    const newDrivers = isSelected ? d.drivers.filter(dr => dr.name !== driver.name) : [...d.drivers, driver];
+                    return { ...d, drivers: newDrivers };
+                }
+                return d;
+            }));
+        };
+
+        const handleSave = () => {
+            handleSaveSchedule(schedule);
+            showToast('تم حفظ القالب الأسبوعي بنجاح!');
+            onClose();
+        };
+
+        return (
+            <div className="space-y-4">
+                {schedule.map(dayItem => (
+                    <div key={dayItem.day} className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg">
+                        <h4 className="font-bold mb-2">{dayItem.day}</h4>
+                        <div className="flex flex-wrap gap-2">
+                            {transportation.internalDrivers.map(driver => {
+                                const isSelected = dayItem.drivers.some(d => d.name === driver.name);
+                                return (
+                                    <button
+                                        key={driver.id}
+                                        onClick={() => handleDriverToggle(dayItem.day, { name: driver.name, phone: driver.phone })}
+                                        className={`px-3 py-1 rounded-full text-xs border ${isSelected ? 'bg-cyan-500 text-white border-cyan-500' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                                    >
+                                        {driver.name}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+                 <div className="flex justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-semibold bg-slate-100 dark:bg-slate-600 rounded-md hover:bg-slate-200 dark:hover:bg-slate-500">إلغاء</button>
+                    <button onClick={handleSave} className="px-4 py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">حفظ القالب</button>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md">
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2"><CalendarDaysIcon className="w-6 h-6" /> جدول المناوبات الشهري</h2>
+                {canManage && (
+                    <button onClick={() => setWeekModalOpen(true)} className="w-full sm:w-auto px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                        إدارة القالب الأسبوعي
+                    </button>
+                )}
+            </div>
+            <div className="flex justify-between items-center mb-4">
+                <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><ChevronRightIcon className="w-5 h-5"/></button>
+                <span className="font-bold text-lg">{currentDate.toLocaleString('ar-EG', { month: 'long', year: 'numeric' })}</span>
+                <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><ChevronLeftIcon className="w-5 h-5"/></button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-500 dark:text-gray-400">
+                {daysOfWeek.map(day => <div key={day} className="py-2">{day}</div>)}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} className="border border-transparent"></div>)}
+                {monthDays.map(date => {
+                    const drivers = getDriversForDate(date);
+                    const isOverride = transportation.scheduleOverrides.some(o => o.date === date.toISOString().split('T')[0]);
+                    return (
+                        <div key={date.toString()} onClick={() => handleDayClick(date)} className={`h-28 border border-slate-200 dark:border-slate-700 rounded-md p-2 text-right overflow-y-auto ${canManage ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50' : ''}`}>
+                            <span className={`font-bold text-sm ${isOverride ? 'text-cyan-500' : ''}`}>{date.getDate()}</span>
+                            <ul className="text-xs mt-1 space-y-1">
+                                {drivers.map((d, i) => <li key={i} className="bg-slate-100 dark:bg-slate-700 p-1 rounded-sm truncate">{d.name}</li>)}
+                            </ul>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {selectedDate && <Modal isOpen={isDayModalOpen} onClose={() => setDayModalOpen(false)} title={`تعديل جدول يوم: ${selectedDate.toLocaleDateString('ar-EG')}`}><DayScheduleModal date={selectedDate} onClose={() => setDayModalOpen(false)} /></Modal>}
+            <Modal isOpen={isWeekModalOpen} onClose={() => setWeekModalOpen(false)} title="إدارة القالب الأسبوعي للمناوبات"><WeeklyScheduleModal onClose={() => setWeekModalOpen(false)} /></Modal>
+        </div>
+    );
+};
+
+// Main Page Component
 const TransportationPage: React.FC = () => {
     const navigate = useNavigate();
-    const { 
-        transportation, handleSaveDriver, handleDeleteDriver, 
-        handleSaveRoute, handleDeleteRoute, handleSaveSchedule, handleSaveSupervisor
-    } = useTransportationContext();
+    const { transportation, handleSaveDriver, handleDeleteDriver, handleSaveRoute, handleDeleteRoute, handleSaveSupervisor } = useTransportationContext();
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول الباصات']);
     
     const [activeTab, setActiveTab] = useState<'internal' | 'external'>('internal');
-    
     const [isEditingInternal, setIsEditingInternal] = useState(false);
     const [isEditingExternal, setIsEditingExternal] = useState(false);
-    
-    const [editedSchedule, setEditedSchedule] = useState<WeeklyScheduleItem[]>(transportation.weeklySchedule);
-    const [isEditingSchedule, setIsEditingSchedule] = useState(false);
-    
-    // Modal States
+
     const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
     const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
     const [isRouteModalOpen, setIsRouteModalOpen] = useState(false);
     const [editingRoute, setEditingRoute] = useState<ExternalRoute | null>(null);
 
-    useEffect(() => {
-        setEditedSchedule(transportation.weeklySchedule);
-    }, [transportation.weeklySchedule]);
-    
-
-    // --- CRUD Handlers ---
     const handleSaveAndCloseDriver = (driverData: Omit<Driver, 'id'> & { id?: number }) => {
         const isNew = !driverData.id;
         handleSaveDriver(driverData);
@@ -131,50 +311,15 @@ const TransportationPage: React.FC = () => {
             showToast('تم حذف المسار بنجاح!');
         }
     };
+    const handleSaveSupervisorAndClose = (type: 'internal' | 'external', supervisor: Supervisor) => {
+        handleSaveSupervisor(type, supervisor);
+        type === 'internal' ? setIsEditingInternal(false) : setIsEditingExternal(false);
+        showToast('تم حفظ بيانات المشرف بنجاح!');
+    };
 
-    // Schedule
-    const handleEditScheduleToggle = () => {
-        if (isEditingSchedule) {
-            handleSaveSchedule(editedSchedule);
-            showToast('تم حفظ جدول المناوبات بنجاح!');
-        } else {
-            setEditedSchedule(JSON.parse(JSON.stringify(transportation.weeklySchedule)));
-        }
-        setIsEditingSchedule(!isEditingSchedule);
-    };
-    const handleCancelEditSchedule = () => setIsEditingSchedule(false);
-    const handleScheduleDriverChange = (day: string, driverIndex: number, newDriverName: string) => {
-        const driver = transportation.internalDrivers.find(d => d.name === newDriverName);
-        if (!driver) return;
-        setEditedSchedule(prev => prev.map(item => item.day === day ? { ...item, drivers: item.drivers.map((d, i) => i === driverIndex ? { name: newDriverName, phone: driver.phone } : d) } : item));
-    };
-    const handleAddDriverToSchedule = (day: string) => {
-        if (transportation.internalDrivers.length === 0) return;
-        setEditedSchedule(prev => prev.map(item => item.day === day ? { ...item, drivers: [...item.drivers, { name: transportation.internalDrivers[0].name, phone: transportation.internalDrivers[0].phone }] } : item));
-    };
-    const handleRemoveDriverFromSchedule = (day: string, driverIndex: number) => setEditedSchedule(prev => prev.map(item => item.day === day ? { ...item, drivers: item.drivers.filter((_, i) => i !== driverIndex) } : item));
-
-    // --- Component Logic ---
-    const getWeekRange = () => {
-        const now = new Date();
-        const first = now.getDate() - now.getDay();
-        const last = first + 6;
-        const firstday = new Date(new Date().setDate(first)).toLocaleDateString('ar-EG-u-nu-latn', { day: '2-digit', month: 'long' });
-        const lastday = new Date(new Date().setDate(last)).toLocaleDateString('ar-EG-u-nu-latn', { day: '2-digit', month: 'long' });
-        return { firstday, lastday };
-    };
-    const { firstday, lastday } = getWeekRange();
-    const todayIndex = new Date().getDay();
-    
-    // Supervisor Card Component
     const SupervisorCard: React.FC<{ supervisor: Supervisor; onSave: (supervisor: Supervisor) => void; isEditing: boolean; setIsEditing: React.Dispatch<React.SetStateAction<boolean>>; title: string; }> = ({ supervisor, onSave, isEditing, setIsEditing, title }) => {
         const [editedInfo, setEditedInfo] = useState(supervisor);
-        const handleSave = () => { onSave(editedInfo); setIsEditing(false); showToast('تم حفظ بيانات المشرف بنجاح!'); };
-        const handleCancel = () => { setEditedInfo(supervisor); setIsEditing(false); };
-        
-        useEffect(() => {
-            setEditedInfo(supervisor);
-        }, [supervisor]);
+        useEffect(() => setEditedInfo(supervisor), [supervisor]);
 
         return (
              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md flex items-center justify-between mb-6">
@@ -191,11 +336,11 @@ const TransportationPage: React.FC = () => {
                 </div>
                  <div className="flex items-center gap-2 ml-4">
                     {isEditing ? (
-                        <><button onClick={handleSave} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-full"><CheckCircleIcon className="w-5 h-5"/></button><button onClick={handleCancel} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><XMarkIcon className="w-5 h-5"/></button></>
+                        <><button onClick={() => onSave(editedInfo)} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-full"><CheckCircleIcon className="w-5 h-5"/></button><button onClick={() => setIsEditing(false)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><XMarkIcon className="w-5 h-5"/></button></>
                     ) : (
                         <>
                             <CallButton phone={supervisor.phone} />
-                            {canManage && <button onClick={() => { setIsEditing(true); setEditedInfo(supervisor); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full"><PencilSquareIcon className="w-5 h-5"/></button>}
+                            {canManage && <button onClick={() => setIsEditing(true)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full"><PencilSquareIcon className="w-5 h-5"/></button>}
                         </>
                     )}
                 </div>
@@ -213,19 +358,21 @@ const TransportationPage: React.FC = () => {
             <div>
                 {activeTab === 'internal' && (
                     <div className="space-y-8">
-                        <SupervisorCard supervisor={transportation.internalSupervisor} onSave={(s) => handleSaveSupervisor('internal', s)} isEditing={isEditingInternal} setIsEditing={setIsEditingInternal} title="مشرف الباصات الداخلية" />
+                        <SupervisorCard supervisor={transportation.internalSupervisor} onSave={(s) => handleSaveSupervisorAndClose('internal', s)} isEditing={isEditingInternal} setIsEditing={setIsEditingInternal} title="مشرف الباصات الداخلية" />
                         
-                        <div>
-                            <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold">قائمة السائقين</h2>{canManage && <button onClick={() => { setEditingDriver(null); setIsDriverModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4" /><span>إضافة سائق</span></button>}</div>
-                            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md overflow-x-auto">
+                        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">قائمة السائقين</h2>
+                                {canManage && <button onClick={() => { setEditingDriver(null); setIsDriverModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4"/><span>إضافة سائق</span></button>}
+                            </div>
+                            <div className="overflow-x-auto">
                                 <table className="w-full text-right">
-                                    <thead><tr><th className="p-3">السائق</th><th className="p-3">رقم الهاتف</th><th className="p-3">إجراءات</th></tr></thead>
                                     <tbody>
                                         {transportation.internalDrivers.map(driver => (
                                             <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
                                                 <td className="p-3"><div className="flex items-center gap-3"><img src={driver.avatar} alt={driver.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/><span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span></div></td>
                                                 <td className="p-3 text-gray-600 dark:text-gray-300 font-mono">{driver.phone}</td>
-                                                <td className="p-3"><div className="flex items-center gap-2"><CallButton phone={driver.phone} />{canManage && <><button onClick={() => { setEditingDriver(driver); setIsDriverModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5"/></button><button onClick={() => confirmDeleteDriver(driver.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5"/></button></>}</div></td>
+                                                <td className="p-3"><div className="flex gap-2">{canManage && <><button onClick={() => { setEditingDriver(driver); setIsDriverModalOpen(true); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-full"><PencilSquareIcon className="w-5 h-5"/></button><button onClick={() => confirmDeleteDriver(driver.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><TrashIcon className="w-5 h-5"/></button></>}<CallButton phone={driver.phone} /></div></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -233,39 +380,12 @@ const TransportationPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-bold flex items-center gap-2"><CalendarDaysIcon className="w-6 h-6" />الجدول الأسبوعي</h2>{canManage && <div className="flex gap-2"><button onClick={handleEditScheduleToggle} className="flex items-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors text-sm"><PencilSquareIcon className="w-4 h-4" /><span>{isEditingSchedule ? 'حفظ' : 'تعديل'}</span></button>{isEditingSchedule && (<button onClick={handleCancelEditSchedule} className="bg-slate-200 text-slate-800 font-semibold px-4 py-2 rounded-lg hover:bg-slate-300 transition-colors text-sm">إلغاء</button>)}</div>}</div>
-                            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md">
-                                <div className="text-center mb-4"><h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">{`الأسبوع: ${firstday} - ${lastday}`}</h3></div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2">
-                                    {(isEditingSchedule ? editedSchedule : transportation.weeklySchedule).map((item, index) => (
-                                        <div key={item.day} className={`p-3 rounded-lg min-h-[150px] ${index === todayIndex ? 'bg-cyan-50 dark:bg-cyan-900/50 border-2 border-cyan-500' : 'bg-slate-50 dark:bg-slate-700/50'}`}>
-                                            <h4 className={`font-bold text-center border-b pb-2 mb-2 ${index === todayIndex ? 'text-cyan-600 dark:text-cyan-300 border-cyan-300' : 'text-gray-700 dark:text-gray-300 border-slate-200 dark:border-slate-600'}`}>{item.day}</h4>
-                                            <div className="flex flex-col gap-2">
-                                                {item.drivers.map((driver, driverIndex) => (
-                                                    <div key={driverIndex} className="text-xs p-1 rounded">
-                                                        {isEditingSchedule ? (
-                                                            <div className="flex items-center gap-1">
-                                                                <select value={driver.name} onChange={(e) => handleScheduleDriverChange(item.day, driverIndex, e.target.value)} className="w-full text-xs bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded py-1 px-1 focus:outline-none focus:ring-1 focus:ring-cyan-500">{transportation.internalDrivers.map(d=><option key={d.id} value={d.name}>{d.name}</option>)}</select>
-                                                                <button onClick={() => handleRemoveDriverFromSchedule(item.day, driverIndex)} className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><TrashIcon className="w-3 h-3"/></button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-center">{driver.name}</div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                                {isEditingSchedule && (<button onClick={() => handleAddDriverToSchedule(item.day)} className="flex items-center justify-center gap-1 text-xs text-cyan-600 hover:text-cyan-700 py-1 mt-1 w-full bg-cyan-100 dark:bg-cyan-900/50 rounded"><PlusIcon className="w-3 h-3"/> إضافة</button>)}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                        <ScheduleCalendar />
                     </div>
                 )}
                 {activeTab === 'external' && (
                     <div className="space-y-8">
-                        <SupervisorCard supervisor={transportation.externalSupervisor} onSave={(s) => handleSaveSupervisor('external', s)} isEditing={isEditingExternal} setIsEditing={setIsEditingExternal} title="مشرف الباصات الخارجية" />
+                        <SupervisorCard supervisor={transportation.externalSupervisor} onSave={(s) => handleSaveSupervisorAndClose('external', s)} isEditing={isEditingExternal} setIsEditing={setIsEditingExternal} title="مشرف الباصات الخارجية" />
                         {canManage && <div className="flex justify-end"><button onClick={() => { setEditingRoute(null); setIsRouteModalOpen(true); }} className="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm"><PlusIcon className="w-4 h-4"/><span>إضافة مسار</span></button></div>}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {transportation.externalRoutes.map(route => (
@@ -284,7 +404,6 @@ const TransportationPage: React.FC = () => {
                 )}
             </div>
 
-            {/* Modals */}
             <Modal isOpen={isDriverModalOpen} onClose={() => setIsDriverModalOpen(false)} title={editingDriver ? 'تعديل بيانات السائق' : 'إضافة سائق جديد'}><DriverForm driver={editingDriver} onSave={handleSaveAndCloseDriver} onClose={() => setIsDriverModalOpen(false)}/></Modal>
             <Modal isOpen={isRouteModalOpen} onClose={() => setIsRouteModalOpen(false)} title={editingRoute ? 'تعديل المسار' : 'إضافة مسار جديد'}><RouteForm route={editingRoute} onSave={handleSaveAndCloseRoute} onClose={() => setIsRouteModalOpen(false)} /></Modal>
         </div>

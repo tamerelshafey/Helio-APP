@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import KpiCard from '../components/common/KpiCard';
 import UserActivityChart from '../components/dashboard/UserActivityChart';
-import RecentActivityTable from '../components/dashboard/RecentInquiriesTable';
+import RecentActivityTable from '../components/dashboard/RecentActivityTable';
 import AlertsPanel from '../components/dashboard/AlertsPanel';
 import UsersToVerify from '../components/dashboard/UsersToVerify';
 import Footer from '../components/common/Footer';
@@ -15,6 +15,7 @@ import PropertyManagerDashboard from '../components/dashboard/PropertyManagerDas
 import NewsManagerDashboard from '../components/dashboard/NewsManagerDashboard';
 import TransportationManagerDashboard from '../components/dashboard/TransportationManagerDashboard';
 import ServiceManagerDashboard from '../components/dashboard/ServiceManagerDashboard';
+import CommunityManagerDashboard from '../components/dashboard/CommunityManagerDashboard';
 import TopServicesChart from '../components/dashboard/TopServicesChart';
 import CategoryDistributionChart from '../components/dashboard/CategoryDistributionChart';
 import { useAuthContext } from '../context/AuthContext';
@@ -113,11 +114,16 @@ const DashboardPage: React.FC = () => {
     if (currentUser?.role === 'مسؤول الباصات') {
         return <TransportationManagerDashboard />;
     }
+    
+    if (currentUser?.role === 'مسؤول ادارة المجتمع') {
+        return <CommunityManagerDashboard />;
+    }
 
     if (currentUser?.role === 'مسؤول ادارة الخدمات') {
         return <ServiceManagerDashboard />;
     }
 
+    // Default to General Dashboard for Super Admin or other roles
     return <GeneralDashboard />;
 };
 

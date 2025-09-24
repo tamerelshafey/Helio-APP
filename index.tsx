@@ -21,25 +21,25 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <HashRouter>
-      <AuthProvider>
-        <UIProvider>
+      <UIProvider>
+        <AuthProvider>
           <AppProvider>
             <UserManagementProvider>
-              <ServicesProvider>
-                <TransportationProvider>
-                  <PropertiesProvider>
-                    <CommunityProvider>
-                      <ContentProvider>
+              <ContentProvider>
+                <PropertiesProvider>
+                  <ServicesProvider>
+                    <TransportationProvider>
+                      <CommunityProvider>
                         <App />
-                      </ContentProvider>
-                    </CommunityProvider>
-                  </PropertiesProvider>
-                </TransportationProvider>
-              </ServicesProvider>
+                      </CommunityProvider>
+                    </TransportationProvider>
+                  </ServicesProvider>
+                </PropertiesProvider>
+              </ContentProvider>
             </UserManagementProvider>
           </AppProvider>
-        </UIProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </UIProvider>
     </HashRouter>
   </React.StrictMode>
 );

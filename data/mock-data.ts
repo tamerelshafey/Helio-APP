@@ -1,4 +1,4 @@
-import type { Category, Service, Review, News, Notification, Ad, Property, EmergencyContact, ServiceGuide, AppUser, AdminUser, Supervisor, Driver, WeeklyScheduleItem, ExternalRoute, PublicPagesContent, CommunityPost, CommunityComment } from '../types';
+import type { Category, Service, Review, News, Notification, Ad, Property, EmergencyContact, ServiceGuide, AppUser, AdminUser, Supervisor, Driver, WeeklyScheduleItem, ExternalRoute, PublicPagesContent, CommunityPost, CommunityComment, ScheduleOverride } from '../types';
 
 export const mockReviews: Review[] = [
     { id: 1, username: 'أحمد محمود', avatar: 'https://picsum.photos/101', rating: 5, comment: 'خدمة ممتازة وتجربة رائعة! أنصح به بشدة.', date: '2024-07-10', adminReply: 'شكراً لتقييمك! نسعد بخدمتك دائماً.' },
@@ -439,6 +439,24 @@ export const mockWeeklySchedule: WeeklyScheduleItem[] = [
     { day: 'الجمعة', drivers: [{ name: 'خالد عبدالله', phone: '011-2222-3333' }] },
     { day: 'السبت', drivers: [{ name: 'ياسر القحطاني', phone: '015-3333-4444' }] },
 ];
+
+const nextMonth = new Date();
+nextMonth.setDate(1); // Go to the 1st to avoid month-end issues
+nextMonth.setMonth(nextMonth.getMonth() + 1);
+const year = nextMonth.getFullYear();
+const month = (nextMonth.getMonth() + 1).toString().padStart(2, '0');
+
+export const mockScheduleOverrides: ScheduleOverride[] = [
+    {
+        date: `${year}-${month}-15`,
+        drivers: [{ name: 'سعيد العويران', phone: '012-4444-5555' }]
+    },
+    {
+        date: `${year}-${month}-16`,
+        drivers: []
+    }
+];
+
 export const mockExternalRoutes: ExternalRoute[] = [
     { id: 1, name: 'هليوبوليس الجديدة <> ميدان رمسيس', timings: ['07:00 ص', '09:00 ص', '02:00 م', '05:00 م'], waitingPoint: 'أمام البوابة الرئيسية للمدينة' },
     { id: 2, name: 'هليوبوليس الجديدة <> التجمع الخامس', timings: ['08:00 ص', '11:00 ص', '03:00 م', '06:00 م'], waitingPoint: 'بجوار مول سيتي بلازا' },
@@ -461,6 +479,7 @@ export const mockCommunityPosts: CommunityPost[] = [
         timestamp: "2024-07-25T10:00:00Z",
         isPinned: true,
         comments: [mockCommunityComments[0], mockCommunityComments[1], mockCommunityComments[2]],
+        isReported: false,
     },
     {
         id: 2,
@@ -470,6 +489,7 @@ export const mockCommunityPosts: CommunityPost[] = [
         timestamp: "2024-07-24T18:00:00Z",
         isPinned: false,
         comments: [mockCommunityComments[3]],
+        isReported: false,
     },
     {
         id: 3,
@@ -478,6 +498,16 @@ export const mockCommunityPosts: CommunityPost[] = [
         timestamp: "2024-07-23T12:45:00Z",
         isPinned: false,
         comments: [],
+        isReported: true,
+    },
+    {
+        id: 4,
+        authorId: 2, // فاطمة الزهراء
+        content: "أبحث عن حضانة جيدة في المنطقة الثانية، هل لديكم أي اقتراحات؟",
+        timestamp: "2024-07-26T09:15:00Z",
+        isPinned: false,
+        comments: [],
+        isReported: false,
     },
 ];
 

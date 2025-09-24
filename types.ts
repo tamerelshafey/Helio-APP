@@ -177,6 +177,11 @@ export interface Supervisor {
     name: string;
     phone: string;
 }
+export interface ScheduleOverride {
+    date: string; // YYYY-MM-DD format
+    drivers: ScheduleDriver[];
+}
+
 
 export interface AuditLog {
   id: number;
@@ -202,6 +207,7 @@ export interface CommunityPost {
   timestamp: string;
   isPinned: boolean;
   comments: CommunityComment[];
+  isReported?: boolean;
 }
 
 // New Types for Public Page Content Management
@@ -299,6 +305,7 @@ export interface TransportationContextType {
       internalDrivers: Driver[];
       weeklySchedule: WeeklyScheduleItem[];
       externalRoutes: ExternalRoute[];
+      scheduleOverrides: ScheduleOverride[];
   };
   handleSaveDriver: (driver: Omit<Driver, 'id'> & { id?: number }) => void;
   handleDeleteDriver: (id: number) => void;
@@ -306,6 +313,8 @@ export interface TransportationContextType {
   handleDeleteRoute: (id: number) => void;
   handleSaveSchedule: (schedule: WeeklyScheduleItem[]) => void;
   handleSaveSupervisor: (type: 'internal' | 'external', supervisor: Supervisor) => void;
+  handleSaveOverride: (override: ScheduleOverride) => void;
+  handleResetOverride: (date: string) => void;
 }
 
 export interface CommunityContextType {

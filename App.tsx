@@ -9,7 +9,7 @@ import PublicHeader from './components/PublicHeader';
 import PublicFooter from './components/PublicFooter';
 import ToastContainer from './components/common/Toast';
 
-// Lazy-loaded page components
+// Lazy-loaded page components from the 'pages' directory
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const ServicePage = lazy(() => import('./pages/ServicePage'));
 const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage'));
@@ -36,7 +36,7 @@ const AboutCityPage = lazy(() => import('./pages/AboutCityPage'));
 const AboutCompanyPage = lazy(() => import('./pages/AboutCompanyPage'));
 
 
-// New Public/Auth Pages
+// Public/Auth Pages
 const PublicHomePage = lazy(() => import('./pages/PublicHomePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 
@@ -47,7 +47,7 @@ const App: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <>
-        <div className="bg-slate-100 text-gray-800 min-h-screen font-sans flex flex-col" dir="rtl">
+        <div className="bg-slate-100 dark:bg-slate-900 text-gray-800 dark:text-gray-900 min-h-screen font-sans flex flex-col" dir="rtl">
           <PublicHeader />
           <main className="flex-grow">
             <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center"><Spinner /></div>}>
@@ -73,11 +73,11 @@ const App: React.FC = () => {
 
   return (
     <>
-      <div className="flex h-screen bg-slate-100 text-gray-800 font-sans" dir="rtl">
+      <div className="flex h-screen bg-slate-100 dark:bg-slate-900 text-gray-800 dark:text-gray-300 font-sans" dir="rtl">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 dark:bg-slate-900 p-4 sm:p-6">
             <div className="h-full w-full">
               <Breadcrumbs />
               <Suspense fallback={<Spinner />}>

@@ -1,19 +1,23 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import { useAppContext } from './AppContext';
 import {
-    mockInternalSupervisor, mockExternalSupervisor, mockInternalDrivers, mockWeeklySchedule, mockExternalRoutes
+    mockInternalSupervisor, mockExternalSupervisor, mockInternalDrivers, mockWeeklySchedule, mockExternalRoutes, mockScheduleOverrides
 } from '../data/mock-data';
 import type {
-    Driver, WeeklyScheduleItem, Supervisor, ExternalRoute, TransportationContextType, ScheduleDriver
+    Driver, WeeklyScheduleItem, Supervisor, ExternalRoute, TransportationContextType, ScheduleDriver, ScheduleOverride
 } from '../types';
 
 const TransportationContext = createContext<TransportationContextType | undefined>(undefined);
 
 export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { logActivity } = useAppContext();
+
     const [internalSupervisor, setInternalSupervisor] = useState<Supervisor>(mockInternalSupervisor);
     const [externalSupervisor, setExternalSupervisor] = useState<Supervisor>(mockExternalSupervisor);
     const [internalDrivers, setInternalDrivers] = useState<Driver[]>(mockInternalDrivers);
     const [weeklySchedule, setWeeklySchedule] = useState<WeeklyScheduleItem[]>(mockWeeklySchedule);
     const [externalRoutes, setExternalRoutes] = useState<ExternalRoute[]>(mockExternalRoutes);
+    const [scheduleOverrides, setScheduleOverrides] = useState<ScheduleOverride[]>(mockScheduleOverrides);
 
     const handleSaveDriver = useCallback((driverData: Omit<Driver, 'id'> & { id?: number }) => {
         setInternalDrivers(prev => {
@@ -63,7 +67,8 @@ export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ chil
 
     const handleSaveSchedule = useCallback((schedule: WeeklyScheduleItem[]) => {
         setWeeklySchedule(schedule);
-    }, []);
+        logActivity('تحديث قالب الجدول', 'تم تحديث القالب الأسبوعي لمناوبات السائقين.');
+    }, [logActivity]);
 
      const handleSaveSupervisor = useCallback((type: 'internal' | 'external', supervisor: Supervisor) => {
         if (type === 'internal') {
@@ -71,18 +76,40 @@ export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ chil
         } else {
             setExternalSupervisor(supervisor);
         }
-    }, []);
+        logActivity('تحديث بيانات مشرف', `تم تحديث بيانات المشرف ${type === 'internal' ? 'الداخلي' : 'الخارجي'}.`);
+    }, [logActivity]);
+
+    const handleSaveOverride = useCallback((override: ScheduleOverride) => {
+        setScheduleOverrides(prev => {
+            const existingIndex = prev.findIndex(o => o.date === override.date);
+            if (existingIndex > -1) {
+                const updated = [...prev];
+                updated[existingIndex] = override;
+                return updated;
+            }
+            return [...prev, override];
+        });
+        logActivity('تعديل جدول مخصص', `تعديل جدول يوم: ${override.date}`);
+    }, [logActivity]);
+
+    const handleResetOverride = useCallback((date: string) => {
+        setScheduleOverrides(prev => prev.filter(o => o.date !== date));
+        logActivity('إعادة تعيين جدول مخصص', `إعادة تعيين جدول يوم: ${date} إلى القالب الأسبوعي`);
+    }, [logActivity]);
+
 
     const value = useMemo(() => ({
-        transportation: { internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes },
+        transportation: { internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes, scheduleOverrides },
         handleSaveDriver, handleDeleteDriver,
         handleSaveRoute, handleDeleteRoute,
         handleSaveSchedule, handleSaveSupervisor,
+        handleSaveOverride, handleResetOverride,
     }), [
-        internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes,
+        internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes, scheduleOverrides,
         handleSaveDriver, handleDeleteDriver,
         handleSaveRoute, handleDeleteRoute,
-        handleSaveSchedule, handleSaveSupervisor
+        handleSaveSchedule, handleSaveSupervisor,
+        handleSaveOverride, handleResetOverride
     ]);
 
     return <TransportationContext.Provider value={value}>{children}</TransportationContext.Provider>;
