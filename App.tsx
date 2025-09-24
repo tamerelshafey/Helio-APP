@@ -34,6 +34,7 @@ const CommunityPage = lazy(() => import('./pages/CommunityPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const AboutCityPage = lazy(() => import('./pages/AboutCityPage'));
 const AboutCompanyPage = lazy(() => import('./pages/AboutCompanyPage'));
+const RequestDeletionPage = lazy(() => import('./pages/RequestDeletionPage'));
 
 
 // Public/Auth Pages
@@ -60,6 +61,7 @@ const App: React.FC = () => {
                 <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                 <Route path="/faq" element={<FaqPage />} />
                 <Route path="/terms-of-use" element={<TermsOfUsePage />} />
+                <Route path="/request-deletion" element={<RequestDeletionPage />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </Suspense>
