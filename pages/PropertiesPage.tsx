@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, 
-    MagnifyingGlassIcon, HomeModernIcon, MapPinIcon, PhoneIcon
+    MagnifyingGlassIcon, HomeModernIcon, MapPinIcon, PhoneIcon, ShareIcon
 } from '../components/common/Icons';
 import type { Property } from '../types';
 // FIX: Use usePropertiesContext for property data and handlers
@@ -106,6 +106,28 @@ const TextareaField: React.FC<{ label: string; value: string; onChange: (val: st
 
 const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete: () => void; }> = ({ property, onEdit, onDelete }) => {
     const canManage = useHasPermission(['مسؤول العقارات']);
+    const { showToast } = useUIContext();
+
+    const handleShare = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const shareData = {
+            title: property.title,
+            text: `${property.title}\n${property.description.substring(0, 100)}...`,
+            url: `https://helio.app/property/${property.id}`
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(shareData.url);
+                showToast('تم نسخ رابط العقار بنجاح!');
+            }
+        } catch (error) {
+            console.error('Error sharing property:', error);
+            showToast('فشلت المشاركة.', 'error');
+        }
+    };
+
     return (
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group">
             <div className="relative">
@@ -115,6 +137,7 @@ const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete:
                 </div>
                  {canManage && (
                     <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <button onClick={handleShare} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50" title="مشاركة"><ShareIcon className="w-5 h-5" /></button>
                         <button onClick={onEdit} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50" title="تعديل العقار"><PencilSquareIcon className="w-5 h-5" /></button>
                         <button onClick={onDelete} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="حذف العقار"><TrashIcon className="w-5 h-5" /></button>
                     </div>

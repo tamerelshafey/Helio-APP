@@ -10,7 +10,8 @@ import {
     TrashIcon,
     PinIcon,
     MapPinSolidIcon,
-    ChatBubbleLeftRightIcon
+    ChatBubbleLeftRightIcon,
+    ShareIcon
 } from '../components/common/Icons';
 import { useNavigate } from 'react-router-dom';
 import KpiCard from '../components/common/KpiCard';
@@ -146,6 +147,25 @@ const CommunityPage: React.FC = () => {
         setCommentsModalOpen(true);
     };
 
+    const handleShare = async (post: CommunityPost) => {
+        const shareData = {
+            title: `منشور من مجتمع هيليو`,
+            text: `${post.content.substring(0, 150)}...`,
+            url: `https://helio.app/post/${post.id}` // Simulated public URL
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(shareData.url);
+                showToast('تم نسخ رابط المنشور بنجاح!');
+            }
+        } catch (error) {
+            console.error('Error sharing post:', error);
+            showToast('فشلت المشاركة.', 'error');
+        }
+    };
+
     return (
         <div className="animate-fade-in">
             <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
@@ -182,6 +202,9 @@ const CommunityPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <button onClick={() => handleShare(post)} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-full" title="مشاركة">
+                                        <ShareIcon className="w-5 h-5" />
+                                    </button>
                                     <button onClick={() => togglePin(post.id)} className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 ${post.isPinned ? 'text-cyan-500' : 'text-gray-400'}`} title={post.isPinned ? "إلغاء التثبيت" : "تثبيت"}>
                                         <PinIcon className="w-5 h-5" />
                                     </button>

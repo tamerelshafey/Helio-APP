@@ -93,7 +93,8 @@ export interface Ad {
   content: string;
   imageUrl?: string;
   externalUrl?: string;
-  serviceId?: number; // Link to a service
+  referralType?: 'service' | 'property' | 'none'; // 'none' for popup, 'service' for service, 'property' for a property
+  referralId?: number; // The ID of the service or property
   startDate: string;
   endDate: string;
 }

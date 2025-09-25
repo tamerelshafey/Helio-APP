@@ -30,6 +30,10 @@ const PrivacyPolicyPage: React.FC = () => {
                                 <h2>{section.title}</h2>
                                 {section.content.map((item, itemIndex) => {
                                     if (typeof item === 'string') {
+                                        // Simple check for titles within content
+                                        if (item.endsWith(':')) {
+                                            return <h3 key={itemIndex} className="font-semibold mt-4">{item}</h3>;
+                                        }
                                         return <p key={itemIndex}>{item}</p>;
                                     } else if (item.list) {
                                         return (

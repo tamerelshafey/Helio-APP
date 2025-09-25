@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Review } from '../types';
-import { ArrowLeftIcon, StarIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon } from '../components/common/Icons';
+import { ArrowLeftIcon, StarIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon, ShareIcon } from '../components/common/Icons';
 // FIX: Import useServicesContext for service-related data
 import { useServicesContext } from '../context/ServicesContext';
 import { useUIContext } from '../context/UIContext';
@@ -94,14 +94,39 @@ const ServiceDetailPage: React.FC = () => {
         }
     };
 
+    const handleShare = async () => {
+        if (!service) return;
+        const shareData = {
+            title: service.name,
+            text: `${service.name}: ${service.about.substring(0, 100)}...`,
+            url: `https://helio.app/service/${service.id}` // Simulated public URL
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(shareData.url);
+                showToast('تم نسخ الرابط بنجاح!');
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+            showToast('فشلت المشاركة.', 'error');
+        }
+    };
+
     if (!service) return <div>Service not found!</div>;
     
     return (
         <div className="animate-fade-in">
-            <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
-                <ArrowLeftIcon className="w-5 h-5" />
-                <span>العودة إلى قائمة الخدمات</span>
-            </button>
+             <div className="flex justify-between items-center mb-6">
+                <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline">
+                    <ArrowLeftIcon className="w-5 h-5" />
+                    <span>العودة إلى قائمة الخدمات</span>
+                </button>
+                <button onClick={handleShare} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-full" title="مشاركة الخدمة">
+                    <ShareIcon className="w-5 h-5" />
+                </button>
+            </div>
             
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
                 <div className="relative">

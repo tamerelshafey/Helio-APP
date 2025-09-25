@@ -33,9 +33,7 @@ const FaqPage: React.FC = () => {
     const navigate = useNavigate();
     const { publicPagesContent } = useAppContext();
     const content = publicPagesContent.faq;
-    const [openFaqId, setOpenFaqId] = useState<string>('c0-i0'); // Unique ID for each item
-
-    let questionCounter = 0;
+    const [openFaqId, setOpenFaqId] = useState<string | null>('c0-i0'); // Unique ID for each item
 
     return (
         <div className="animate-fade-in py-12 px-4">
