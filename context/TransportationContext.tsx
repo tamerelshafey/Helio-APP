@@ -29,26 +29,37 @@ export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ chil
                         ...day, 
                         drivers: day.drivers.map(d => d.name === oldDriver.name ? { name: driverData.name, phone: driverData.phone } : d) 
                     })));
+                     setScheduleOverrides(o => o.map(day => ({ 
+                        ...day, 
+                        drivers: day.drivers.map(d => d.name === oldDriver.name ? { name: driverData.name, phone: driverData.phone } : d) 
+                    })));
                 }
                 return prev.map(d => d.id === driverData.id ? { ...d, ...driverData, id: d.id } : d);
             } else {
-                const newDriver: Driver = { ...driverData, id: Date.now() };
+                const newDriver: Driver = { ...driverData, id: Date.now(), avatar: driverData.avatar || `https://picsum.photos/200/200?random=${Date.now()}` };
                 return [newDriver, ...prev];
             }
         });
-    }, []);
+        logActivity(driverData.id ? 'تعديل سائق' : 'إضافة سائق', `تم حفظ بيانات السائق: ${driverData.name}`);
+    }, [logActivity]);
 
     const handleDeleteDriver = useCallback((id: number) => {
-        const driverName = internalDrivers.find(d => d.id === id)?.name;
-        // Also remove driver from schedule
-        if(driverName) {
-             setWeeklySchedule(s => s.map(day => ({ 
-                ...day, 
-                drivers: day.drivers.filter(d => d.name !== driverName) 
-            })));
-        }
+        const driver = internalDrivers.find(d => d.id === id);
+        if(!driver) return;
+        
+        // Remove driver from schedules
+        setWeeklySchedule(s => s.map(day => ({ 
+            ...day, 
+            drivers: day.drivers.filter(d => d.name !== driver.name) 
+        })));
+        setScheduleOverrides(o => o.map(day => ({ 
+            ...day, 
+            drivers: day.drivers.filter(d => d.name !== driver.name) 
+        })));
+
         setInternalDrivers(prev => prev.filter(d => d.id !== id));
-    }, [internalDrivers]);
+        logActivity('حذف سائق', `تم حذف السائق: ${driver.name}`);
+    }, [internalDrivers, logActivity]);
 
      const handleSaveRoute = useCallback((routeData: Omit<ExternalRoute, 'id'> & { id?: number }) => {
         setExternalRoutes(prev => {
@@ -59,11 +70,16 @@ export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ chil
                 return [newRoute, ...prev];
             }
         });
-    }, []);
+        logActivity(routeData.id ? 'تعديل مسار خارجي' : 'إضافة مسار خارجي', `تم حفظ المسار: ${routeData.name}`);
+    }, [logActivity]);
 
     const handleDeleteRoute = useCallback((id: number) => {
+        const route = externalRoutes.find(r => r.id === id);
         setExternalRoutes(prev => prev.filter(r => r.id !== id));
-    }, []);
+        if (route) {
+            logActivity('حذف مسار خارجي', `تم حذف المسار: ${route.name}`);
+        }
+    }, [externalRoutes, logActivity]);
 
     const handleSaveSchedule = useCallback((schedule: WeeklyScheduleItem[]) => {
         setWeeklySchedule(schedule);

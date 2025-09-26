@@ -6,6 +6,8 @@ import { useServicesContext } from '../context/ServicesContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import { useContentContext } from '../context/ContentContext';
+import { useHasPermission } from '../context/AuthContext';
+import { useUIContext } from '../context/UIContext';
 
 const NotificationForm: React.FC<{
     onSave: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
@@ -122,6 +124,8 @@ const NotificationsPage: React.FC = () => {
     const navigate = useNavigate();
     const { notifications, handleSaveNotification, handleDeleteNotification } = useContentContext();
     const { services } = useServicesContext();
+    const canManage = useHasPermission(['مسؤول المحتوى']);
+    const { showToast } = useUIContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
 
@@ -135,6 +139,19 @@ const NotificationsPage: React.FC = () => {
         setIsModalOpen(true);
     };
     
+    const handleSaveAndClose = (data: Omit<Notification, 'id'> & { id?: number }) => {
+        handleSaveNotification(data);
+        setIsModalOpen(false);
+        showToast(data.id ? 'تم تعديل الإشعار بنجاح!' : 'تم إضافة الإشعار بنجاح!');
+    };
+
+    const confirmDelete = (id: number) => {
+        if(window.confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
+            handleDeleteNotification(id);
+            showToast('تم حذف الإشعار بنجاح!');
+        }
+    };
+
     return (
         <div className="animate-fade-in">
             <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
@@ -147,10 +164,12 @@ const NotificationsPage: React.FC = () => {
                         <BellAlertIcon className="w-8 h-8"/>
                         إدارة الإشعارات
                     </h1>
-                    <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                        <PlusIcon className="w-5 h-5" />
-                        <span>إضافة إشعار جديد</span>
-                    </button>
+                    {canManage && (
+                        <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <PlusIcon className="w-5 h-5" />
+                            <span>إضافة إشعار جديد</span>
+                        </button>
+                    )}
                 </div>
                 
                 <div className="overflow-x-auto">
@@ -161,7 +180,7 @@ const NotificationsPage: React.FC = () => {
                                 <th scope="col" className="px-6 py-3">الحالة</th>
                                 <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
                                 <th scope="col" className="px-6 py-3">الخدمة المرتبطة</th>
-                                <th scope="col" className="px-6 py-3">إجراءات</th>
+                                {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -174,12 +193,14 @@ const NotificationsPage: React.FC = () => {
                                     <td className="px-6 py-4"><StatusBadge startDate={notification.startDate} endDate={notification.endDate} /></td>
                                     <td className="px-6 py-4 text-xs font-mono">{notification.startDate} <br/> {notification.endDate}</td>
                                     <td className="px-6 py-4">{notification.serviceId ? services.find(s => s.id === notification.serviceId)?.name : 'لا يوجد'}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => handleDeleteNotification(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
-                                        </div>
-                                    </td>
+                                    {canManage && (
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                <button onClick={() => confirmDelete(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                            </div>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -198,7 +219,7 @@ const NotificationsPage: React.FC = () => {
                 title={editingNotification ? 'تعديل الإشعار' : 'إضافة إشعار جديد'}
             >
                 <NotificationForm 
-                    onSave={handleSaveNotification}
+                    onSave={handleSaveAndClose}
                     onClose={() => setIsModalOpen(false)}
                     notification={editingNotification}
                     services={services}

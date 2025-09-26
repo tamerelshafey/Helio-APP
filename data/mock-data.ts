@@ -428,12 +428,12 @@ export const mockUsers: AppUser[] = [
 ];
 
 export const mockAdmins: AdminUser[] = [
-  { id: 1, name: 'علي حسن', email: 'ali.hassan@helio.com', avatar: 'https://picsum.photos/200/200?random=11', role: 'مسؤول ادارة المجتمع' },
-  { id: 2, name: 'مريم أحمد', email: 'mariam.ahmed@helio.com', avatar: 'https://picsum.photos/200/200?random=12', role: 'مسؤول ادارة الخدمات' },
-  { id: 3, name: 'يوسف خالد', email: 'youssef.khaled@helio.com', avatar: 'https://picsum.photos/200/200?random=13', role: 'مسؤول العقارات' },
-  { id: 4, name: 'هند سالم', email: 'hind.salem@helio.com', avatar: 'https://picsum.photos/200/200?random=14', role: 'مسؤول الاخبار والاعلانات والاشعارات' },
-  { id: 6, name: 'نورا فتحي', email: 'noura.fathy@helio.com', avatar: 'https://picsum.photos/200/200?random=16', role: 'مسؤول الباصات' },
-  { id: 5, name: 'مدير عام', email: 'super@helio.com', avatar: 'https://picsum.photos/200/200?random=15', role: 'مدير عام' },
+  { id: 1, name: 'علي حسن', email: 'ali.hassan@helio.com', avatar: 'https://picsum.photos/200/200?random=11', roles: ['مسؤول المجتمع'] },
+  { id: 2, name: 'مريم أحمد', email: 'mariam.ahmed@helio.com', avatar: 'https://picsum.photos/200/200?random=12', roles: ['مسؤول ادارة الخدمات'] },
+  { id: 3, name: 'يوسف خالد', email: 'youssef.khaled@helio.com', avatar: 'https://picsum.photos/200/200?random=13', roles: ['مسؤول العقارات'] },
+  { id: 4, name: 'هند سالم', email: 'hind.salem@helio.com', avatar: 'https://picsum.photos/200/200?random=14', roles: ['مسؤول المحتوى', 'مسؤول المجتمع'] },
+  { id: 6, name: 'نورا فتحي', email: 'noura.fathy@helio.com', avatar: 'https://picsum.photos/200/200?random=16', roles: ['مسؤول النقل'] },
+  { id: 5, name: 'مدير عام', email: 'super@helio.com', avatar: 'https://picsum.photos/200/200?random=15', roles: ['مدير عام'] },
 ];
 
 
@@ -447,13 +447,13 @@ export const mockInternalDrivers: Driver[] = [
     { id: 4, name: 'سعيد العويران', phone: '012-4444-5555', avatar: 'https://picsum.photos/200/200?random=8' },
 ];
 export const mockWeeklySchedule: WeeklyScheduleItem[] = [
+    { day: 'الجمعة', drivers: [{ name: 'خالد عبدالله', phone: '011-2222-3333' }] },
+    { day: 'السبت', drivers: [{ name: 'ياسر القحطاني', phone: '015-3333-4444' }] },
     { day: 'الأحد', drivers: [{ name: 'أحمد المصري', phone: '010-1111-2222' }] },
     { day: 'الإثنين', drivers: [{ name: 'خالد عبدالله', phone: '011-2222-3333' }, { name: 'سعيد العويران', phone: '012-4444-5555' }] },
     { day: 'الثلاثاء', drivers: [{ name: 'ياسر القحطاني', phone: '015-3333-4444' }] },
     { day: 'الأربعاء', drivers: [{ name: 'سعيد العويران', phone: '012-4444-5555' }] },
     { day: 'الخميس', drivers: [{ name: 'أحمد المصري', phone: '010-1111-2222' }, { name: 'ياسر القحطاني', phone: '015-3333-4444' }] },
-    { day: 'الجمعة', drivers: [{ name: 'خالد عبدالله', phone: '011-2222-3333' }] },
-    { day: 'السبت', drivers: [{ name: 'ياسر القحطاني', phone: '015-3333-4444' }] },
 ];
 
 const nextMonth = new Date();

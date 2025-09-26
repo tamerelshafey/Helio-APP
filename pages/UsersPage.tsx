@@ -2,11 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from '../components/common/Icons';
 import { useUserManagementContext } from '../context/UserManagementContext';
-import type { AppUser, AdminUser, UserStatus } from '../types';
+import { useAuthContext } from '../context/AuthContext';
+import type { AppUser, AdminUser, UserStatus, AdminUserRole } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import TabButton from '../components/common/TabButton';
-import Pagination from '../components/common/Pagination';
 
 const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
     const statusMap = {
@@ -80,11 +80,21 @@ const AdminForm: React.FC<{
     const [formData, setFormData] = useState({
         name: admin?.name || '',
         email: admin?.email || '',
-        role: admin?.role || 'مسؤول ادارة الخدمات',
     });
+    const [roles, setRoles] = useState<AdminUserRole[]>(admin?.roles || []);
     const [avatar, setAvatar] = useState<string[]>(admin?.avatar ? [admin.avatar] : []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const allAdminRoles: AdminUserRole[] = ['مسؤول ادارة الخدمات', 'مسؤول العقارات', 'مسؤول المحتوى', 'مسؤول النقل', 'مسؤول المجتمع', 'مدير عام'];
+
+    const handleRoleChange = (role: AdminUserRole) => {
+        setRoles(prevRoles =>
+            prevRoles.includes(role)
+                ? prevRoles.filter(r => r !== role)
+                : [...prevRoles, role]
+        );
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -94,29 +104,33 @@ const AdminForm: React.FC<{
         onSave({
             id: admin?.id,
             ...formData,
-            role: formData.role as AdminUser['role'],
+            roles,
             avatar: avatar[0] || `https://picsum.photos/200/200?random=${Date.now()}`,
         });
     };
-    
-    const adminRoles: AdminUser['role'][] = ['مسؤول العقارات', 'مسؤول الاخبار والاعلانات والاشعارات', 'مسؤول الباصات', 'مسؤول ادارة الخدمات', 'مسؤول ادارة المجتمع', 'مدير عام'];
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            <InputField name="name" label="الاسم" value={formData.name} onChange={handleChange} required />
+            <InputField name="email" label="البريد الإلكتروني" value={formData.email} onChange={handleChange} required />
+
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الاسم</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الأدوار</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md">
+                    {allAdminRoles.map(role => (
+                        <label key={role} className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={roles.includes(role)}
+                                onChange={() => handleRoleChange(role)}
+                                className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500"
+                            />
+                            <span className="text-sm">{role}</span>
+                        </label>
+                    ))}
+                </div>
             </div>
-             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">البريد الإلكتروني</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
-            </div>
-             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الدور</label>
-                <select name="role" value={formData.role} onChange={handleChange} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
-                    {adminRoles.map(role => <option key={role} value={role}>{role}</option>)}
-                </select>
-            </div>
+
             <ImageUploader initialImages={avatar} onImagesChange={setAvatar} multiple={false} label="الصورة الرمزية" />
             <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold bg-slate-100 dark:bg-slate-600 rounded-md hover:bg-slate-200 dark:hover:bg-slate-500">إلغاء</button>
@@ -126,12 +140,17 @@ const AdminForm: React.FC<{
     );
 };
 
+const InputField: React.FC<{ name: string; label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; required?: boolean }> = ({ name, label, value, onChange, required }) => (
+    <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
+        <input type="text" name={name} value={value} onChange={onChange} required={required} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
+    </div>
+);
+
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
     const { users, handleDeleteUser } = useUserManagementContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
-    const [currentPage, setCurrentPage] = useState(1);
-    const USERS_PER_PAGE = 10;
 
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
@@ -141,17 +160,6 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
             return matchesSearch && matchesFilter;
         });
     }, [users, searchTerm, statusFilter]);
-
-    const paginatedUsers = useMemo(() => {
-        const startIndex = (currentPage - 1) * USERS_PER_PAGE;
-        return filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
-    }, [filteredUsers, currentPage]);
-
-    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [searchTerm, statusFilter]);
 
     return (
         <div className="animate-fade-in">
@@ -184,7 +192,7 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                         </tr>
                     </thead>
                     <tbody>
-                        {paginatedUsers.map(user => (
+                        {filteredUsers.map(user => (
                             <tr key={user.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
@@ -209,13 +217,6 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                 </table>
                  {filteredUsers.length === 0 && <p className="text-center py-8">لا يوجد مستخدمون يطابقون البحث.</p>}
             </div>
-            {totalPages > 1 && (
-                 <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                />
-            )}
         </div>
     )
 };
@@ -235,7 +236,7 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
                         <tr>
                             <th scope="col" className="px-6 py-3">المدير</th>
-                            <th scope="col" className="px-6 py-3">الدور</th>
+                            <th scope="col" className="px-6 py-3">الأدوار</th>
                             <th scope="col" className="px-6 py-3">إجراءات</th>
                         </tr>
                     </thead>
@@ -252,7 +253,11 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{admin.role}</span>
+                                    <div className="flex flex-wrap gap-1">
+                                        {admin.roles.map(role => (
+                                            <span key={role} className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{role}</span>
+                                        ))}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
@@ -272,10 +277,13 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
 const UsersPage: React.FC = () => {
     const navigate = useNavigate();
     const { handleSaveUser, handleSaveAdmin } = useUserManagementContext();
+    const { currentUser } = useAuthContext();
     const [activeTab, setActiveTab] = useState<'users' | 'admins'>('users');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);
     const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
+
+    const canManageAdmins = useMemo(() => currentUser?.roles.includes('مدير عام'), [currentUser]);
 
     const handleOpenUserModal = (user: AppUser | null) => {
         setEditingUser(user);
@@ -310,11 +318,18 @@ const UsersPage: React.FC = () => {
             case 'users':
                 return <RegularUsersTab onAdd={() => handleOpenUserModal(null)} onEdit={handleOpenUserModal} />;
             case 'admins':
-                return <AdminUsersTab onAdd={() => handleOpenAdminModal(null)} onEdit={handleOpenAdminModal} />;
+                return canManageAdmins ? <AdminUsersTab onAdd={() => handleOpenAdminModal(null)} onEdit={handleOpenAdminModal} /> : null;
             default:
                 return null;
         }
     }
+
+    useEffect(() => {
+        // If a non-admin tries to view the admins tab somehow, redirect them
+        if (activeTab === 'admins' && !canManageAdmins) {
+            setActiveTab('users');
+        }
+    }, [activeTab, canManageAdmins]);
 
     return (
         <div className="animate-fade-in">
@@ -327,7 +342,9 @@ const UsersPage: React.FC = () => {
                 
                 <div className="flex gap-2 mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">
                     <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<UserGroupIcon className="w-5 h-5" />}>المستخدمون</TabButton>
-                    <TabButton active={activeTab === 'admins'} onClick={() => setActiveTab('admins')} icon={<UserCircleIcon className="w-5 h-5" />}>المديرون</TabButton>
+                    {canManageAdmins && (
+                        <TabButton active={activeTab === 'admins'} onClick={() => setActiveTab('admins')} icon={<UserCircleIcon className="w-5 h-5" />}>المديرون</TabButton>
+                    )}
                 </div>
 
                 {renderContent()}
@@ -346,7 +363,7 @@ const UsersPage: React.FC = () => {
                 {activeTab === 'users' ? (
                     <UserForm user={editingUser} onSave={handleSaveAndCloseUser} onClose={handleCloseModal} />
                 ) : (
-                    <AdminForm admin={editingAdmin} onSave={handleSaveAndCloseAdmin} onClose={handleCloseModal} />
+                    canManageAdmins && <AdminForm admin={editingAdmin} onSave={handleSaveAndCloseAdmin} onClose={handleCloseModal} />
                 )}
             </Modal>
         </div>

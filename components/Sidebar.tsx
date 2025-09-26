@@ -19,7 +19,8 @@ import {
 } from './Icons';
 import { useServicesContext } from '../context/ServicesContext';
 import { useAuthContext } from '../context/AuthContext';
-import type { AdminUser } from '../types';
+// Fix: Import AdminUserRole to use for typing.
+import type { AdminUser, AdminUserRole } from '../types';
 
 const iconComponents: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
     BuildingLibraryIcon, InformationCircleIcon, DocumentDuplicateIcon, TruckIcon,
@@ -40,7 +41,8 @@ interface NavItemData {
     icon: React.ReactNode;
     to?: string;
     children?: NavItemData[];
-    roles?: (AdminUser['role'])[];
+    // Fix: Correctly type the roles property using AdminUserRole.
+    roles?: AdminUserRole[];
 }
 
 const filterNavItemsBySearch = (items: NavItemData[], query: string): NavItemData[] => {
@@ -81,7 +83,8 @@ const Sidebar: React.FC = () => {
             }))
         }));
         
-        const serviceManagerRoles: AdminUser['role'][] = ['مدير عام', 'مسؤول ادارة الخدمات'];
+        // Fix: Correctly type the serviceManagerRoles variable using AdminUserRole.
+        const serviceManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول ادارة الخدمات'];
 
         const constructedNavItems: NavItemData[] = [
             { name: "نظرة عامة", icon: <HomeIcon className="w-6 h-6" />, to: "/" },
@@ -98,10 +101,13 @@ const Sidebar: React.FC = () => {
 
         constructedNavItems.push(
             { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/properties", roles: ['مدير عام', 'مسؤول العقارات'] },
-            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/transportation", roles: ['مدير عام', 'مسؤول الباصات'] },
+            // Fix: Use correct role name 'مسؤول النقل' instead of 'مسؤول الباصات'.
+            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/transportation", roles: ['مدير عام', 'مسؤول النقل'] },
             { name: "إدارة الطوارئ", icon: <ShieldExclamationIcon className="w-6 h-6" />, to: "/emergency", roles: serviceManagerRoles },
-            { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
-            { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
+            // Fix: Use correct role name 'مسؤول المحتوى' instead of 'مسؤول الاخبار والاعلانات والاشعارات'.
+            { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news", roles: ['مدير عام', 'مسؤول المحتوى'] },
+            // Fix: Use correct role name 'مسؤول المحتوى' instead of 'مسؤول الاخبار والاعلانات والاشعارات'.
+            { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: ['مدير عام', 'مسؤول المحتوى'] },
             { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users", roles: ['مدير عام'] },
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/reports" },
             { name: "الإعدادات", icon: <Cog6ToothIcon className="w-6 h-6" />, to: "/settings" }
@@ -117,11 +123,14 @@ const Sidebar: React.FC = () => {
         if (!currentUser) return [];
 
         const filterByRole = (items: NavItemData[]): NavItemData[] => {
-            const userRole = currentUser.role;
-            if (userRole === 'مدير عام') return items;
+            // Fix: Use 'currentUser.roles' (array) instead of 'currentUser.role'.
+            const userRoles = currentUser.roles;
+            // Fix: Check if 'مدير عام' is included in the roles array.
+            if (userRoles.includes('مدير عام')) return items;
             
             return items
-                .filter(item => !item.roles || item.roles.includes(userRole))
+                // Fix: Check if user has at least one of the required roles.
+                .filter(item => !item.roles || item.roles.some(requiredRole => userRoles.includes(requiredRole)))
                 .map(item => ({
                     ...item,
                     children: item.children ? filterByRole(item.children) : undefined

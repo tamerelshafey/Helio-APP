@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from './common/Icons';
 import { useUserManagementContext } from '../context/UserManagementContext';
-import type { AppUser, AdminUser, UserStatus } from '../types';
+import type { AppUser, AdminUser, UserStatus, AdminUserRole } from '../types';
 import Modal from './Modal';
 import ImageUploader from './ImageUploader';
 
@@ -89,29 +89,43 @@ const AdminForm: React.FC<{
     onSave: (admin: Omit<AdminUser, 'id'> & { id?: number }) => void;
     onClose: () => void;
 }> = ({ admin, onSave, onClose }) => {
+    // Fix: Remove 'role' from formData, manage 'roles' in separate state.
     const [formData, setFormData] = useState({
         name: admin?.name || '',
         email: admin?.email || '',
-        role: admin?.role || 'مسؤول ادارة الخدمات',
     });
+    // Fix: Use 'roles' array state to manage multiple roles.
+    const [roles, setRoles] = useState<AdminUserRole[]>(admin?.roles || []);
     const [avatar, setAvatar] = useState<string[]>(admin?.avatar ? [admin.avatar] : []);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Fix: Add handler for checkbox changes to update roles array.
+    const handleRoleChange = (role: AdminUserRole) => {
+        setRoles(prevRoles =>
+            prevRoles.includes(role)
+                ? prevRoles.filter(r => r !== role)
+                : [...prevRoles, role]
+        );
+    };
+
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        // Fix: Save 'roles' array instead of single 'role'.
         onSave({
             id: admin?.id,
             ...formData,
-            role: formData.role as AdminUser['role'],
+            roles,
             avatar: avatar[0] || `https://picsum.photos/200/200?random=${Date.now()}`,
         });
     };
     
-    const adminRoles: AdminUser['role'][] = ['مسؤول العقارات', 'مسؤول الاخبار والاعلانات والاشعارات', 'مسؤول الباصات', 'مسؤول ادارة الخدمات', 'مسؤول ادارة المجتمع', 'مدير عام'];
+    // Fix: Use correct AdminUserRole type and role names.
+    const allAdminRoles: AdminUserRole[] = ['مدير عام', 'مسؤول ادارة الخدمات', 'مسؤول العقارات', 'مسؤول المحتوى', 'مسؤول النقل', 'مسؤول المجتمع'];
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -123,11 +137,22 @@ const AdminForm: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">البريد الإلكتروني</label>
                 <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
             </div>
+             {/* Fix: Replace select dropdown with checkboxes for multiple roles. */}
              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الدور</label>
-                <select name="role" value={formData.role} onChange={handleChange} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
-                    {adminRoles.map(role => <option key={role} value={role}>{role}</option>)}
-                </select>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الأدوار</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md">
+                    {allAdminRoles.map(role => (
+                        <label key={role} className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={roles.includes(role)}
+                                onChange={() => handleRoleChange(role)}
+                                className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500"
+                            />
+                            <span className="text-sm">{role}</span>
+                        </label>
+                    ))}
+                </div>
             </div>
             <ImageUploader initialImages={avatar} onImagesChange={setAvatar} multiple={false} label="الصورة الرمزية" />
             <div className="flex justify-end gap-3 pt-4">
@@ -244,7 +269,12 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{admin.role}</span>
+                                    {/* Fix: Map over roles array to display multiple role badges. */}
+                                    <div className="flex flex-wrap gap-1">
+                                        {admin.roles.map(role => (
+                                            <span key={role} className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{role}</span>
+                                        ))}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">

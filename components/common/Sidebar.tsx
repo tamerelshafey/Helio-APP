@@ -24,7 +24,7 @@ import {
 } from './Icons';
 import { useServicesContext } from '../../context/ServicesContext';
 import { useAuthContext } from '../../context/AuthContext';
-import type { AdminUser } from '../../types';
+import type { AdminUser, AdminUserRole } from '../../types';
 
 const iconComponents: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
     BuildingLibraryIcon, InformationCircleIcon, DocumentDuplicateIcon, TruckIcon,
@@ -45,7 +45,7 @@ interface NavItemData {
     icon: React.ReactNode;
     to?: string;
     children?: NavItemData[];
-    roles?: (AdminUser['role'])[];
+    roles?: AdminUserRole[];
 }
 
 const filterNavItemsBySearch = (items: NavItemData[], query: string): NavItemData[] => {
@@ -86,8 +86,9 @@ const Sidebar: React.FC = () => {
             }))
         }));
         
-        const serviceManagerRoles: AdminUser['role'][] = ['مدير عام', 'مسؤول ادارة الخدمات'];
-        const communityManagerRoles: AdminUser['role'][] = ['مدير عام', 'مسؤول ادارة المجتمع'];
+        const serviceManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول ادارة الخدمات'];
+        const contentManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول المحتوى'];
+        const communityManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول المجتمع'];
 
         const constructedNavItems: NavItemData[] = [
             { name: "نظرة عامة", icon: <HomeIcon className="w-6 h-6" />, to: "/" },
@@ -106,11 +107,11 @@ const Sidebar: React.FC = () => {
 
         constructedNavItems.push(
             { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/properties", roles: ['مدير عام', 'مسؤول العقارات'] },
-            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/transportation", roles: ['مدير عام', 'مسؤول الباصات'] },
+            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/transportation", roles: ['مدير عام', 'مسؤول النقل'] },
             { name: "إدارة الطوارئ", icon: <ShieldExclamationIcon className="w-6 h-6" />, to: "/emergency", roles: serviceManagerRoles },
-            { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
-            { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
-            { name: "إدارة الإعلانات", icon: <NewspaperIcon className="w-6 h-6 text-orange-400" />, to: "/ads", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
+            { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news", roles: contentManagerRoles },
+            { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: contentManagerRoles },
+            { name: "إدارة الإعلانات", icon: <NewspaperIcon className="w-6 h-6 text-orange-400" />, to: "/ads", roles: contentManagerRoles },
             { name: "إدارة المجتمع", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/community", roles: communityManagerRoles },
             { name: "البيع والشراء", icon: <TagIcon className="w-6 h-6" />, to: "/buy-sell", roles: communityManagerRoles },
             { name: "الوظائف", icon: <BriefcaseIcon className="w-6 h-6" />, to: "/jobs", roles: communityManagerRoles },
@@ -131,11 +132,11 @@ const Sidebar: React.FC = () => {
         if (!currentUser) return [];
 
         const filterByRole = (items: NavItemData[]): NavItemData[] => {
-            const userRole = currentUser.role;
-            if (userRole === 'مدير عام') return items;
+            const userRoles = currentUser.roles;
+            if (userRoles.includes('مدير عام')) return items;
             
             return items
-                .filter(item => !item.roles || item.roles.includes(userRole))
+                .filter(item => !item.roles || item.roles.some(requiredRole => userRoles.includes(requiredRole)))
                 .map(item => ({
                     ...item,
                     children: item.children ? filterByRole(item.children) : undefined

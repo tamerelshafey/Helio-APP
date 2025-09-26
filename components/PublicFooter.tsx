@@ -35,6 +35,7 @@ const PublicFooter: React.FC = () => {
                 </div>
                 <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700 text-center text-gray-500 dark:text-gray-400 text-sm">
                     <p>&copy; {new Date().getFullYear()} Helio APP. جميع الحقوق محفوظة.</p>
+                    <Link to="/login" className="text-xs text-gray-400 hover:text-cyan-500 mt-2 inline-block">دخول المسؤولين</Link>
                 </div>
             </div>
         </footer>

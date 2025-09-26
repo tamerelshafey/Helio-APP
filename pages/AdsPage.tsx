@@ -175,7 +175,7 @@ const AdsPage: React.FC = () => {
     const { services, categories } = useServicesContext();
     const { properties } = usePropertiesContext();
     const { showToast } = useUIContext();
-    const canManage = useHasPermission(['مسؤول الاخبار والاعلانات والاشعارات']);
+    const canManage = useHasPermission(['مسؤول المحتوى']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAd, setEditingAd] = useState<Ad | null>(null);
     const [viewingAd, setViewingAd] = useState<Ad | null>(null);

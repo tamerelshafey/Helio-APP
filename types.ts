@@ -147,12 +147,14 @@ export interface AppUser {
   joinDate: string;
 }
 
+export type AdminUserRole = 'مدير عام' | 'مسؤول ادارة الخدمات' | 'مسؤول العقارات' | 'مسؤول المحتوى' | 'مسؤول النقل' | 'مسؤول المجتمع';
+
 export interface AdminUser {
   id: number;
   name: string;
   email: string;
   avatar: string;
-  role: 'مسؤول العقارات' | 'مسؤول الاخبار والاعلانات والاشعارات' | 'مسؤول الباصات' | 'مسؤول ادارة الخدمات' | 'مسؤول ادارة المجتمع' | 'مدير عام';
+  roles: AdminUserRole[];
 }
 
 // Transportation Types

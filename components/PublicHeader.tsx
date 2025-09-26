@@ -59,11 +59,6 @@ const PublicHeader: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <Link to="/login" className="px-4 py-2 bg-cyan-500 text-white font-semibold rounded-lg hover:bg-cyan-600 transition-colors text-sm">
-                            دخول لوحة التحكم
-                        </Link>
-                    </div>
                 </div>
             </nav>
         </header>

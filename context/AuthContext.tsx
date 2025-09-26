@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
-import type { AdminUser, AuthContextType } from '../types';
+import type { AdminUser, AuthContextType, AdminUserRole } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -48,10 +48,16 @@ export const useAuthContext = (): AuthContextType => {
     return context;
 };
 
-export const useHasPermission = (requiredRoles: AdminUser['role'][]) => {
+export const useHasPermission = (requiredRoles: AdminUserRole[]) => {
     const { currentUser } = useAuthContext();
     if (!currentUser) return false;
+    
     // Super admin can do anything
-    if (currentUser.role === 'مدير عام') return true;
-    return requiredRoles.includes(currentUser.role);
+    if (currentUser.roles.includes('مدير عام')) return true;
+    
+    // If no specific roles are required, only the super admin should pass.
+    if (requiredRoles.length === 0) return false;
+
+    // Check if the user has at least one of the required roles
+    return requiredRoles.some(role => currentUser.roles.includes(role));
 };
