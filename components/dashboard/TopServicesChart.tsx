@@ -30,7 +30,7 @@ const TopServicesChart: React.FC = () => {
                         stroke="#9ca3af" 
                         tick={{ fontSize: 12 }} 
                         width={80} 
-                        tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
+                        tickFormatter={(value: string) => value.length > 15 ? `${value.substring(0, 15)}...` : value}
                     />
                     <Tooltip 
                         contentStyle={{ 

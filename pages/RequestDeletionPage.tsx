@@ -49,6 +49,11 @@ const RequestDeletionPage: React.FC = () => {
                         <p>
                             سيقوم فريقنا بمراجعة طلبك ومعالجته في غضون 7-14 يوم عمل. قد نتواصل معك عبر البريد الإلكتروني لتأكيد هويتك قبل المتابعة.
                         </p>
+                         <p className="font-semibold">إذا كان لديك أي أسئلة أو تحتاج إلى مساعدة، يمكنك التواصل معنا عبر:</p>
+                        <ul>
+                            <li><strong>البريد الإلكتروني:</strong> <a href="mailto:HelioAPP@tech-bokra.com">HelioAPP@tech-bokra.com</a></li>
+                            <li><strong>واتساب:</strong> <a href="https://wa.me/201040303547" target="_blank" rel="noopener noreferrer">+20 104 030 3547</a></li>
+                        </ul>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">

@@ -2,17 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import KpiCard from '../components/common/KpiCard';
 import UserActivityChart from '../components/dashboard/UserActivityChart';
-import RecentActivityTable from '../components/dashboard/RecentInquiriesTable';
+import RecentActivityTable from '../components/dashboard/RecentActivityTable';
 import AlertsPanel from '../components/dashboard/AlertsPanel';
 import UsersToVerify from '../components/dashboard/UsersToVerify';
 import Footer from '../components/common/Footer';
-import { UserIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon, MapIcon } from '../components/common/Icons';
+import { UserIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon } from '../components/common/Icons';
 import { useUserManagementContext } from '../context/UserManagementContext';
 import { useServicesContext } from '../context/ServicesContext';
 import { usePropertiesContext } from '../context/PropertiesContext';
 import { useContentContext } from '../context/ContentContext';
-import { useAuthContext } from '../context/AuthContext';
-import PropertyMap from '../components/dashboard/PropertyMap';
+import TopServicesChart from '../components/dashboard/TopServicesChart';
+import CategoryDistributionChart from '../components/dashboard/CategoryDistributionChart';
+
 
 const GeneralDashboard: React.FC = () => {
   const { users } = useUserManagementContext();
@@ -72,10 +73,10 @@ const GeneralDashboard: React.FC = () => {
             <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center"><UserIcon className="w-6 h-6 mr-2" /> نمو المستخدمين الشهري</h3>
             <UserActivityChart />
           </div>
-           <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center"><MapIcon className="w-6 h-6 mr-2" /> خريطة الخدمات والمرافق في هليوبوليس</h3>
-            <PropertyMap />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <TopServicesChart />
+                <CategoryDistributionChart />
+            </div>
         </div>
         
         {/* Right column */}
