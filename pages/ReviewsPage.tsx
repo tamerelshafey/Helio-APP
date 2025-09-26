@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
     ArrowLeftIcon, StarIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon, 
     MagnifyingGlassIcon, ArrowTrendingUpIcon, ChatBubbleOvalLeftIcon, SparklesIcon,
-    CheckCircleIcon, XCircleIcon
+    CheckCircleIcon, 
+    XCircleIcon
 } from '../components/common/Icons';
 import type { Review } from '../types';
 import { useServicesContext } from '../context/ServicesContext';
@@ -306,20 +307,15 @@ const ReviewsPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 max-w-sm">
                                         <Rating rating={review.rating} />
-                                        <p className="whitespace-normal text-gray-600 dark:text-gray-300 mt-1">{review.comment}</p>
-                                        {review.adminReply && (
-                                            <div className="mt-2 p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                                                <p className="font-bold text-xs text-cyan-600 dark:text-cyan-400">رد المدير:</p>
-                                                <p className="text-xs text-gray-700 dark:text-gray-300">{review.adminReply}</p>
-                                            </div>
-                                        )}
+                                        <p className="text-gray-600 dark:text-gray-300 mt-1 truncate">{review.comment}</p>
+                                        {review.adminReply && <p className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 truncate"><strong>رد المدير:</strong> {review.adminReply}</p>}
                                     </td>
-                                    <td className="px-6 py-4 font-medium">{review.serviceName}</td>
+                                    <td className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">{review.serviceName}</td>
                                     <td className="px-6 py-4">{review.date}</td>
                                     {canManage && (
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={() => handleOpenReplyModal(review)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-900/50 rounded-md" title="الرد على التقييم"><ChatBubbleLeftRightIcon className="w-5 h-5" /></button>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => handleOpenReplyModal(review)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="الرد"><ChatBubbleLeftRightIcon className="w-5 h-5" /></button>
                                                 <button onClick={() => handleOpenEditModal(review)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
                                                 <button onClick={() => handleDeleteReview(review.serviceId, review.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
                                             </div>
@@ -329,20 +325,16 @@ const ReviewsPage: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
-                     {filteredReviews.length === 0 && (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            لا توجد تقييمات تطابق البحث.
-                        </div>
-                    )}
                 </div>
             </div>
+
             {selectedReview && (
                 <>
-                    <Modal isOpen={isReplyModalOpen} onClose={() => setReplyModalOpen(false)} title={`الرد على تقييم ${selectedReview.username}`}>
-                        <ReplyForm review={selectedReview} onClose={() => setReplyModalOpen(false)} onSave={handleSaveReply} />
-                    </Modal>
                     <Modal isOpen={isEditModalOpen} onClose={() => setEditModalOpen(false)} title={`تعديل تقييم ${selectedReview.username}`}>
                         <EditReviewForm review={selectedReview} onClose={() => setEditModalOpen(false)} onSave={handleSaveReview} />
+                    </Modal>
+                    <Modal isOpen={isReplyModalOpen} onClose={() => setReplyModalOpen(false)} title={`الرد على تقييم ${selectedReview.username}`}>
+                        <ReplyForm review={selectedReview} onClose={() => setReplyModalOpen(false)} onSave={handleSaveReply} />
                     </Modal>
                 </>
             )}

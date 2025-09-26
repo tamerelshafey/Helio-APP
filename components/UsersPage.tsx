@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from './common/Icons';
-// FIX: Replace useAppContext with useUserManagementContext to get user and admin data.
 import { useUserManagementContext } from '../context/UserManagementContext';
 import type { AppUser, AdminUser, UserStatus } from '../types';
 import Modal from './Modal';
@@ -140,7 +139,6 @@ const AdminForm: React.FC<{
 };
 
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
-    // FIX: Use useUserManagementContext to get user data and handlers.
     const { users, handleDeleteUser } = useUserManagementContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
@@ -215,7 +213,6 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
 };
 
 const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) => void; }> = ({ onAdd, onEdit }) => {
-    // FIX: Use useUserManagementContext to get admin data and handlers.
     const { admins, handleDeleteAdmin } = useUserManagementContext();
     return (
         <div className="animate-fade-in">
@@ -266,7 +263,6 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
 
 const UsersPage: React.FC = () => {
     const navigate = useNavigate();
-    // FIX: Use useUserManagementContext to get save handlers.
     const { handleSaveUser, handleSaveAdmin } = useUserManagementContext();
     const [activeTab, setActiveTab] = useState<'users' | 'admins'>('users');
     const [isModalOpen, setIsModalOpen] = useState(false);

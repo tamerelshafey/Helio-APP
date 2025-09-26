@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon, WrenchScrewdriverIcon } from '../components/common/Icons';
-import type { Service } from '../types';
-// FIX: Import useServicesContext for service-related data
+import type { Service, Category } from '../types';
 import { useServicesContext } from '../context/ServicesContext';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
@@ -25,66 +24,114 @@ const ServiceForm: React.FC<{
     onSave: (service: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => void;
     onClose: () => void;
     service: Service | null;
-    subCategoryId: number;
-}> = ({ onSave, onClose, service, subCategoryId }) => {
+    initialSubCategoryId: number;
+    categories: Category[];
+}> = ({ onSave, onClose, service, initialSubCategoryId, categories }) => {
 
     const [formData, setFormData] = useState({
-        name: '', address: '', phone: '', whatsapp: '', about: '',
-        facebookUrl: '', instagramUrl: '',
+        name: '', address: '', phone: '', phone2: '', whatsapp: '', about: '',
+        facebookUrl: '', instagramUrl: '', workingHours: '',
     });
     const [images, setImages] = useState<string[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>();
+    const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<number>(initialSubCategoryId);
 
     useEffect(() => {
+        let currentSubCategoryId = initialSubCategoryId;
         if (service) {
             setFormData({
                 name: service.name,
                 address: service.address,
                 phone: service.phone,
+                phone2: service.phone2 || '',
                 whatsapp: service.whatsapp,
                 about: service.about,
                 facebookUrl: service.facebookUrl || '',
                 instagramUrl: service.instagramUrl || '',
+                workingHours: service.workingHours || '',
             });
             setImages(service.images);
+            currentSubCategoryId = service.subCategoryId;
         } else {
-            setFormData({
-                name: '', address: '', phone: '', whatsapp: '', about: '',
-                facebookUrl: '', instagramUrl: '',
-            });
+            // Reset form for new service
+            setFormData({ name: '', address: '', phone: '', phone2: '', whatsapp: '', about: '', facebookUrl: '', instagramUrl: '', workingHours: '' });
             setImages([]);
         }
-    }, [service]);
+        
+        const parentCategory = categories.find(cat => 
+            cat.subCategories.some(sub => sub.id === currentSubCategoryId)
+        );
+
+        if (parentCategory) {
+            setSelectedCategoryId(parentCategory.id);
+            setSelectedSubCategoryId(currentSubCategoryId);
+        }
+    }, [service, initialSubCategoryId, categories]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newCatId = Number(e.target.value);
+        setSelectedCategoryId(newCatId);
+        const firstSubCategory = categories.find(c => c.id === newCatId)?.subCategories[0];
+        setSelectedSubCategoryId(firstSubCategory?.id || 0);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const serviceData = {
             id: service?.id,
-            subCategoryId: service ? service.subCategoryId : subCategoryId,
+            subCategoryId: selectedSubCategoryId,
             ...formData,
             images,
         };
         onSave(serviceData);
     };
+    
+    const availableSubCategories = useMemo(() => {
+        if (!selectedCategoryId) return [];
+        return categories.find(c => c.id === selectedCategoryId)?.subCategories || [];
+    }, [selectedCategoryId, categories]);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <InputField name="name" label="اسم الخدمة" value={formData.name} onChange={handleChange} required />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الفئة الرئيسية</label>
+                    <select value={selectedCategoryId || ''} onChange={handleCategoryChange} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
+                        <option value="" disabled>اختر فئة رئيسية</option>
+                        {categories.filter(c => c.name !== "المدينة والجهاز").map(cat => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الفئة الفرعية</label>
+                    <select value={selectedSubCategoryId || ''} onChange={e => setSelectedSubCategoryId(Number(e.target.value))} disabled={!selectedCategoryId} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500 disabled:bg-slate-200 dark:disabled:bg-slate-600">
+                        <option value="" disabled>اختر فئة فرعية</option>
+                        {availableSubCategories.map(sub => (
+                            <option key={sub.id} value={sub.id}>{sub.name}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
             <InputField name="address" label="العنوان" value={formData.address} onChange={handleChange} required />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField name="phone" label="رقم الهاتف" value={formData.phone} onChange={handleChange} required />
-                <InputField name="whatsapp" label="رقم الواتساب" value={formData.whatsapp} onChange={handleChange} />
+                <InputField name="phone2" label="رقم هاتف إضافي (اختياري)" value={formData.phone2} onChange={handleChange} />
             </div>
-            <TextareaField name="about" label="حول الخدمة" value={formData.about} onChange={handleChange} required />
-            <ImageUploader initialImages={images} onImagesChange={setImages} multiple maxFiles={8} />
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InputField name="whatsapp" label="رقم الواتساب" value={formData.whatsapp} onChange={handleChange} />
                 <InputField name="facebookUrl" label="رابط فيسبوك (اختياري)" value={formData.facebookUrl} onChange={handleChange} />
-                <InputField name="instagramUrl" label="رابط انستغرام (اختياري)" value={formData.instagramUrl} onChange={handleChange} />
             </div>
+            <InputField name="instagramUrl" label="رابط انستغرام (اختياري)" value={formData.instagramUrl} onChange={handleChange} />
+            <TextareaField name="about" label="حول الخدمة" value={formData.about} onChange={handleChange} required />
+            <TextareaField name="workingHours" label="ساعات العمل (اختياري)" value={formData.workingHours} onChange={handleChange} />
+            <ImageUploader initialImages={images} onImagesChange={setImages} multiple maxFiles={8} />
             <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold bg-slate-100 dark:bg-slate-600 rounded-md hover:bg-slate-200 dark:hover:bg-slate-500">إلغاء</button>
                 <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">حفظ</button>
@@ -111,7 +158,6 @@ const ServicePage: React.FC = () => {
     const { subCategoryId: subCategoryIdStr } = useParams<{ subCategoryId: string }>();
     const subCategoryId = Number(subCategoryIdStr);
     
-    // FIX: Use useServicesContext for service-related data
     const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite } = useServicesContext();
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
@@ -256,7 +302,8 @@ const ServicePage: React.FC = () => {
                     onSave={handleSaveAndClose}
                     onClose={() => setIsModalOpen(false)}
                     service={editingService}
-                    subCategoryId={subCategoryId}
+                    initialSubCategoryId={subCategoryId}
+                    categories={categories}
                 />
             </Modal>
         </div>

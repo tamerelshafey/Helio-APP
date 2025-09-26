@@ -42,12 +42,14 @@ export interface Service {
   images: string[];
   address: string;
   phone: string;
+  phone2?: string;
   whatsapp: string;
   about: string;
   rating: number; // This would typically be calculated
   reviews: Review[];
   facebookUrl?: string;
   instagramUrl?: string;
+  workingHours?: string;
   isFavorite: boolean;
   views: number;
   creationDate: string;
@@ -293,6 +295,39 @@ export interface SearchResult {
   icon: ReactNode;
 }
 
+export type MarketplaceItemStatus = 'pending' | 'approved' | 'rejected' | 'expired';
+
+export interface ForSaleItem {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  category: string;
+  images: string[];
+  contactName: string;
+  contactPhone: string;
+  authorId: number; // Links to AppUser
+  status: MarketplaceItemStatus;
+  creationDate: string;
+  approvalDate?: string;
+  expiryDate?: string;
+}
+
+export interface JobPosting {
+  id: number;
+  title: string;
+  companyName: string;
+  description: string;
+  location: string;
+  jobType: 'دوام كامل' | 'دوام جزئي' | 'عقد' | 'عمل حر';
+  contactInfo: string;
+  authorId: number; // Links to AppUser
+  status: MarketplaceItemStatus;
+  creationDate: string;
+  approvalDate?: string;
+  expiryDate?: string;
+}
+
 export interface AuthContextType {
   currentUser: AdminUser | null;
   isAuthenticated: boolean;
@@ -384,4 +419,12 @@ export interface AppContextType {
   handleDeleteServiceGuide: (id: number) => void;
   publicPagesContent: PublicPagesContent;
   handleUpdatePublicPageContent: <K extends keyof PublicPagesContent>(page: K, newContent: PublicPagesContent[K]) => void;
+}
+
+export interface MarketplaceContextType {
+    forSaleItems: ForSaleItem[];
+    jobs: JobPosting[];
+    handleApproveItem: (type: 'sale' | 'job', id: number, expiryDays: number) => void;
+    handleRejectItem: (type: 'sale' | 'job', id: number) => void;
+    handleDeleteItem: (type: 'sale' | 'job', id: number) => void;
 }

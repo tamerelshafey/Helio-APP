@@ -19,28 +19,29 @@ const EmergencyPage = lazy(() => import('./pages/EmergencyPage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
 const NewsPage = lazy(() => import('./pages/NewsPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
-const AdsPage = lazy(() => import('./pages/AdsPage'));
 const TransportationPage = lazy(() => import('./pages/TransportationPage'));
 const CityServicesGuidePage = lazy(() => import('./pages/CityServicesGuidePage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const AdsPage = lazy(() => import('./pages/AdsPage'));
 const ServicesOverviewPage = lazy(() => import('./pages/ServicesOverviewPage'));
 const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
-const FaqPage = lazy(() => import('./pages/FaqPage'));
-const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const ContentManagementPage = lazy(() => import('./pages/ContentManagementPage'));
 const CommunityPage = lazy(() => import('./pages/CommunityPage'));
-const SettingsPage = lazy(() => import('./pages/SettingsPage'));
-const AboutCityPage = lazy(() => import('./pages/AboutCityPage'));
-const AboutCompanyPage = lazy(() => import('./pages/AboutCompanyPage'));
-const RequestDeletionPage = lazy(() => import('./pages/RequestDeletionPage'));
-
+const BuySellPage = lazy(() => import('./pages/BuySellPage'));
+const JobsPage = lazy(() => import('./pages/JobsPage'));
 
 // Public/Auth Pages
-const PublicHomePage = lazy(() => import('./pages/PublicHomePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const FaqPage = lazy(() => import('./pages/FaqPage'));
+const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'));
+const RequestDeletionPage = lazy(() => import('./pages/RequestDeletionPage'));
+const AboutCityPage = lazy(() => import('./pages/AboutCityPage'));
+const AboutCompanyPage = lazy(() => import('./pages/AboutCompanyPage'));
+const PublicHomePage = lazy(() => import('./pages/PublicHomePage'));
 
 
 const App: React.FC = () => {
@@ -104,15 +105,15 @@ const App: React.FC = () => {
                   <Route path="/audit-log" element={<AuditLogPage />} />
                   <Route path="/content-management" element={<ContentManagementPage />} />
                   <Route path="/community" element={<CommunityPage />} />
+                  <Route path="/buy-sell" element={<BuySellPage />} />
+                  <Route path="/jobs" element={<JobsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/about-city" element={<AboutCityPage />} />
                   <Route path="/about-company" element={<AboutCompanyPage />} />
-
-                  {/* Redirect old public paths to dashboard home if logged in */}
-                  <Route path="/about" element={<Navigate to="/" />} />
-                  <Route path="/privacy-policy" element={<Navigate to="/" />} />
-                  <Route path="/faq" element={<Navigate to="/" />} />
-                  <Route path="/terms-of-use" element={<Navigate to="/" />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                  <Route path="/faq" element={<FaqPage />} />
+                  <Route path="/terms-of-use" element={<TermsOfUsePage />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </Suspense>

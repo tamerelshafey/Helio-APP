@@ -8,6 +8,7 @@ import { ServicesProvider } from './ServicesContext';
 import { PropertiesProvider } from './PropertiesContext';
 import { ContentProvider } from './ContentContext';
 import { UserManagementProvider } from './UserManagementContext';
+import { MarketplaceProvider } from './MarketplaceContext';
 
 interface AppContextProvidersProps {
   children: ReactNode;
@@ -24,7 +25,9 @@ const AppContextProviders: React.FC<AppContextProvidersProps> = ({ children }) =
                 <ServicesProvider>
                   <TransportationProvider>
                     <CommunityProvider>
-                      {children}
+                      <MarketplaceProvider>
+                        {children}
+                      </MarketplaceProvider>
                     </CommunityProvider>
                   </TransportationProvider>
                 </ServicesProvider>

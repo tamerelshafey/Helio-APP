@@ -6,6 +6,7 @@ import type { AppUser, AdminUser, UserStatus } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import TabButton from '../components/common/TabButton';
+import Pagination from '../components/common/Pagination';
 
 const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
     const statusMap = {
@@ -129,6 +130,8 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
     const { users, handleDeleteUser } = useUserManagementContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const USERS_PER_PAGE = 10;
 
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
@@ -138,6 +141,17 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
             return matchesSearch && matchesFilter;
         });
     }, [users, searchTerm, statusFilter]);
+
+    const paginatedUsers = useMemo(() => {
+        const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+        return filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
+    }, [filteredUsers, currentPage]);
+
+    const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilter]);
 
     return (
         <div className="animate-fade-in">
@@ -170,7 +184,7 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredUsers.map(user => (
+                        {paginatedUsers.map(user => (
                             <tr key={user.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
@@ -195,6 +209,13 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                 </table>
                  {filteredUsers.length === 0 && <p className="text-center py-8">لا يوجد مستخدمون يطابقون البحث.</p>}
             </div>
+            {totalPages > 1 && (
+                 <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                />
+            )}
         </div>
     )
 };

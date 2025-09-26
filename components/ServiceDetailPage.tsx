@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { Review } from '../types';
 import { ArrowLeftIcon, StarIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon } from './Icons';
-// FIX: Use useServicesContext for service data and handlers
 import { useServicesContext } from '../context/ServicesContext';
 import Modal from './Modal';
 
@@ -49,7 +48,6 @@ const ServiceDetailPage: React.FC = () => {
     const { serviceId: serviceIdStr } = useParams<{ serviceId: string }>();
     const serviceId = Number(serviceIdStr);
     
-    // FIX: Use useServicesContext for service data and handlers
     const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview } = useServicesContext();
     const service = services.find(s => s.id === serviceId);
 

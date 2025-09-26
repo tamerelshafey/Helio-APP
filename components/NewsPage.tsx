@@ -4,7 +4,6 @@ import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon } from './Icons';
 import type { News } from '../types';
 import Modal from './Modal';
 import ImageUploader from './ImageUploader';
-// FIX: Import useContentContext to access news data and handlers.
 import { useContentContext } from '../context/ContentContext';
 
 const NewsForm: React.FC<{

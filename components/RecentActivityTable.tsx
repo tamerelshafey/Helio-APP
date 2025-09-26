@@ -1,75 +1,67 @@
 import React, { useMemo } from 'react';
 import type { Activity } from '../types';
-import { WrenchScrewdriverIcon, NewspaperIcon, HomeModernIcon } from './Icons';
-// FIX: Import contexts for their respective data
-import { useContentContext } from '../context/ContentContext';
-import { usePropertiesContext } from '../context/PropertiesContext';
+import { WrenchScrewdriverIcon, ShieldExclamationIcon, NewspaperIcon, BuildingOffice2Icon } from './Icons';
 import { useServicesContext } from '../context/ServicesContext';
+import { useAppContext } from '../context/AppContext';
+import { usePropertiesContext } from '../context/PropertiesContext';
+import { useContentContext } from '../context/ContentContext';
 
 const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return `قبل ${seconds} ثانية`;
+    if (seconds < 60) return `قبل ${Math.round(seconds)} ثانية`;
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `قبل ${minutes} دقيقة`;
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `قبل ${hours} ساعة`;
     const days = Math.floor(hours / 24);
-    if (days < 30) return `قبل ${days} يوم`;
-    const months = Math.floor(days / 30);
-    if (months < 12) return `قبل ${months} شهر`;
-    const years = Math.floor(months / 12);
-    return `قبل ${years} سنة`;
+    return `قبل ${days} يوم`;
 };
 
 const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
   const iconClasses = "w-6 h-6";
-  // FIX: Replace JSX.Element with React.ReactNode to resolve namespace issue.
   const typeMap: { [key in Activity['type']]: React.ReactNode } = {
     NEW_SERVICE: <WrenchScrewdriverIcon className={`${iconClasses} text-blue-500`} />,
+    EMERGENCY_REPORT: <ShieldExclamationIcon className={`${iconClasses} text-red-500`} />,
     NEWS_PUBLISHED: <NewspaperIcon className={`${iconClasses} text-purple-500`} />,
-    NEW_PROPERTY: <HomeModernIcon className={`${iconClasses} text-green-500`} />,
-    EMERGENCY_REPORT: <div />, // Placeholder, not used in dynamic data
+    NEW_PROPERTY: <BuildingOffice2Icon className={`${iconClasses} text-green-500`} />,
   };
   return <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-full">{typeMap[type]}</div>;
 };
 
 const RecentActivityTable: React.FC = () => {
-  // FIX: services comes from ServicesContext
-  // FIX: properties comes from PropertiesContext
-  const { properties } = usePropertiesContext();
-  // FIX: news comes from ContentContext
-  const { news } = useContentContext();
-  const { services } = useServicesContext();
+    const { news } = useContentContext();
+    const { services } = useServicesContext();
+    const { properties } = usePropertiesContext();
     
-  const recentActivities = useMemo(() => {
-      const serviceActivities: Activity[] = services.map(s => ({
-          id: `s-${s.id}`,
-          type: 'NEW_SERVICE',
-          description: `تمت إضافة خدمة جديدة: ${s.name}`,
-          time: s.creationDate,
-      }));
-      
-      const propertyActivities: Activity[] = properties.map(p => ({
-          id: `p-${p.id}`,
-          type: 'NEW_PROPERTY',
-          description: `تمت إضافة عقار جديد: ${p.title}`,
-          time: p.creationDate,
-      }));
+    const recentActivities = useMemo(() => {
+        const serviceActivities: Activity[] = services.map(s => ({
+            id: `s-${s.id}`,
+            type: 'NEW_SERVICE',
+            description: `تمت إضافة خدمة جديدة: ${s.name}`,
+            time: s.creationDate,
+        }));
+        
+        const propertyActivities: Activity[] = properties.map(p => ({
+            id: `p-${p.id}`,
+            type: 'NEW_PROPERTY',
+            description: `تمت إضافة عقار جديد: ${p.title}`,
+            time: p.creationDate,
+        }));
 
-      const newsActivities: Activity[] = news.map(n => ({
-          id: `n-${n.id}`,
-          type: 'NEWS_PUBLISHED',
-          description: `تم نشر خبر جديد: ${n.title}`,
-          time: n.date,
-      }));
+        const newsActivities: Activity[] = news.map(n => ({
+            id: `n-${n.id}`,
+            type: 'NEWS_PUBLISHED',
+            description: `تم نشر خبر جديد: ${n.title}`,
+            time: n.date,
+        }));
 
-      return [...serviceActivities, ...propertyActivities, ...newsActivities]
-          .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-          .slice(0, 5);
-  }, [services, properties, news]);
+        return [...serviceActivities, ...propertyActivities, ...newsActivities]
+            .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+            .slice(0, 5);
+    }, [services, properties, news]);
 
   return (
     <div className="overflow-x-auto">

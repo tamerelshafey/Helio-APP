@@ -1,4 +1,4 @@
-import type { Category, Service, Review, News, Notification, Ad, Property, EmergencyContact, ServiceGuide, AppUser, AdminUser, Supervisor, Driver, WeeklyScheduleItem, ExternalRoute, PublicPagesContent, CommunityPost, CommunityComment, ScheduleOverride } from '../types';
+import type { Category, Service, Review, News, Notification, Ad, Property, EmergencyContact, ServiceGuide, AppUser, AdminUser, Supervisor, Driver, WeeklyScheduleItem, ExternalRoute, PublicPagesContent, CommunityPost, CommunityComment, ScheduleOverride, ForSaleItem, JobPosting } from '../types';
 
 export const mockReviews: Review[] = [
     { id: 1, username: 'أحمد محمود', avatar: 'https://picsum.photos/101', rating: 5, comment: 'خدمة ممتازة وتجربة رائعة! أنصح به بشدة.', date: '2024-07-10', adminReply: 'شكراً لتقييمك! نسعد بخدمتك دائماً.' },
@@ -11,29 +11,33 @@ export const mockServices: Service[] = [
     // مطاعم (subCategoryId: 301)
     {
         id: 1, subCategoryId: 301, name: "مطعم ومقهى هيليو", images: ["https://picsum.photos/800/600?random=1", "https://picsum.photos/800/600?random=2", "https://picsum.photos/800/600?random=3", "https://picsum.photos/800/600?random=4"],
-        address: "المنطقة الأولى، هليوبوليس الجديدة", phone: "011-123-4567", whatsapp: "966501234567",
+        address: "المنطقة الأولى، هليوبوليس الجديدة", phone: "011-123-4567", phone2: "02-123-4567", whatsapp: "20111234567",
         about: "نقدم أشهى المأكولات الشرقية والغربية في أجواء عصرية ومريحة. لدينا جلسات داخلية وخارجية لتناسب جميع الأذواق.",
-        rating: 4.5, reviews: mockReviews, facebookUrl: "#", instagramUrl: "#", isFavorite: true, views: 4821, creationDate: '2024-07-20'
+        rating: 4.5, reviews: mockReviews, facebookUrl: "https://facebook.com", instagramUrl: "https://instagram.com", isFavorite: true, views: 4821, creationDate: '2024-07-20',
+        workingHours: "السبت - الخميس: 9ص - 1ص\nالجمعة: 1م - 1ص"
     },
     {
         id: 2, subCategoryId: 301, name: "مطعم أسماك المحيط", images: ["https://picsum.photos/800/600?random=10"],
-        address: "مول سيتي بلازا", phone: "012-987-6543", whatsapp: "966509876543",
+        address: "مول سيتي بلازا", phone: "012-987-6543", whatsapp: "20129876543",
         about: "أفضل المأكولات البحرية الطازجة والمعدة على أيدي أمهر الطهاة.",
-        rating: 4.8, reviews: [], facebookUrl: "#", instagramUrl: "#", isFavorite: false, views: 3560, creationDate: '2024-07-15'
+        rating: 4.8, reviews: [], facebookUrl: "https://facebook.com", isFavorite: false, views: 3560, creationDate: '2024-07-15',
+        workingHours: "يومياً: 12م - 12ص"
     },
     // كافيهات (subCategoryId: 302)
     {
         id: 3, subCategoryId: 302, name: "كافيه روز جاردن", images: ["https://picsum.photos/800/600?random=110"],
-        address: "مول سيتي بلازا، الطابق الأرضي", phone: "012-345-6789", whatsapp: "966509876543",
+        address: "مول سيتي بلازا، الطابق الأرضي", phone: "012-345-6789", whatsapp: "20123456789",
         about: "مكان مثالي للاسترخاء مع الأصدقاء والاستمتاع بأفضل أنواع القهوة والمشروبات المنعشة والحلويات اللذيذة.",
-        rating: 4.7, reviews: [], facebookUrl: "#", instagramUrl: "#", isFavorite: false, views: 5123, creationDate: '2024-06-30'
+        rating: 4.7, reviews: [], instagramUrl: "https://instagram.com", isFavorite: false, views: 5123, creationDate: '2024-06-30',
+        workingHours: "يومياً: 8ص - 11م"
     },
     // مستشفيات (subCategoryId: 201)
      {
         id: 4, subCategoryId: 201, name: "مستشفى هليوبوليس المركزي", images: ["https://picsum.photos/800/600?random=5", "https://picsum.photos/800/600?random=6"],
-        address: "الحي الطبي، هليوبوليس الجديدة", phone: "02-555-0100", whatsapp: "966555010010",
+        address: "الحي الطبي، هليوبوليس الجديدة", phone: "02-555-0100", whatsapp: "2025550100",
         about: "مستشفى متكامل يقدم خدمات طبية على مدار 24 ساعة في جميع التخصصات.",
-        rating: 4.2, reviews: [], facebookUrl: "#", instagramUrl: "#", isFavorite: true, views: 6890, creationDate: '2024-06-10'
+        rating: 4.2, reviews: [], facebookUrl: "https://facebook.com", instagramUrl: "https://instagram.com", isFavorite: true, views: 6890, creationDate: '2024-06-10',
+        workingHours: "متاح 24 ساعة"
     },
 ];
 
@@ -539,6 +543,42 @@ export const mockCommunityPosts: CommunityPost[] = [
         isPinned: false,
         comments: [],
         isReported: true,
+    },
+];
+
+export const mockForSaleItems: ForSaleItem[] = [
+    {
+        id: 1, title: 'كنبة بحالة ممتازة', description: 'كنبة لثلاثة أفراد، استخدام خفيف جداً، اللون رمادي.', price: 2500,
+        category: 'أثاث منزلي', images: ['https://picsum.photos/400/300?random=201'], contactName: 'أحمد محمود', contactPhone: '01234567890',
+        authorId: 1, status: 'approved', creationDate: '2024-07-28', approvalDate: '2024-07-29', expiryDate: '2024-08-28'
+    },
+    {
+        id: 2, title: 'هاتف سامسونج S22 Ultra', description: 'الهاتف كالجديد تماماً مع العلبة وجميع المشتملات، مساحة 256 جيجا.', price: 18000,
+        category: 'إلكترونيات', images: ['https://picsum.photos/400/300?random=202'], contactName: 'سارة إبراهيم', contactPhone: '01098765432',
+        authorId: 4, status: 'pending', creationDate: '2024-07-29'
+    },
+    {
+        id: 3, title: 'دراجة هوائية رياضية', description: 'دراجة Trinx بحالة جيدة، تحتاج لبعض الصيانة البسيطة.', price: 800,
+        category: 'رياضة', images: ['https://picsum.photos/400/300?random=203'], contactName: 'محمد حسين', contactPhone: '01123456789',
+        authorId: 5, status: 'rejected', creationDate: '2024-07-27'
+    },
+    {
+        id: 4, title: 'مكتبة كتب خشب زان', description: 'مكتبة كبيرة بحالة ممتازة، خشب زان أحمر.', price: 1500,
+        category: 'أثاث منزلي', images: ['https://picsum.photos/400/300?random=204'], contactName: 'أحمد المصري', contactPhone: '01234567890',
+        authorId: 1, status: 'expired', creationDate: '2024-06-20', approvalDate: '2024-06-21', expiryDate: '2024-07-21'
+    }
+];
+
+export const mockJobs: JobPosting[] = [
+    {
+        id: 1, title: 'مطلوب محاسب', companyName: 'شركة النور للتجارة', description: 'مطلوب محاسب خبرة من 3-5 سنوات، يجيد التعامل مع برامج المحاسبة.',
+        location: 'هليوبوليس الجديدة', jobType: 'دوام كامل', contactInfo: 'hr@elnour.com', authorId: 2,
+        status: 'approved', creationDate: '2024-07-26', approvalDate: '2024-07-27', expiryDate: '2024-08-26'
+    },
+    {
+        id: 2, title: 'مدرس لغة إنجليزية', companyName: 'مركز تعليمي', description: 'مطلوب مدرس لغة إنجليزية للمرحلة الإعدادية، دوام جزئي مسائي.',
+        location: 'هليوبوليس الجديدة', jobType: 'دوام جزئي', contactInfo: '01012345678', authorId: 3,
+        status: 'pending', creationDate: '2024-07-29'
     },
 ];
 

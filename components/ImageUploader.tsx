@@ -39,7 +39,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             filesToProcess.splice(maxFiles - currentImageCount);
         }
 
-        // FIX: Explicitly type 'file' as File to prevent type error on readAsDataURL.
         const fileReadPromises = filesToProcess.map((file: File) => {
             return new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();

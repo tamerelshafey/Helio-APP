@@ -3,21 +3,16 @@ import { Link } from 'react-router-dom';
 import KpiCard from './KpiCard';
 import UserActivityChart from './UserActivityChart';
 import PropertyMap from './PropertyMap';
-import RecentActivityTable from './RecentInquiriesTable';
+import RecentActivityTable from './RecentActivityTable';
 import AlertsPanel from './AlertsPanel';
 import UsersToVerify from './UsersToVerify';
 import Footer from './Footer';
 import { UserIcon, MapIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon } from './Icons';
-// FIX: Import useContentContext to get news and notifications data
 import { useContentContext } from '../context/ContentContext';
-// FIX: Import useServicesContext to get categories
 import { useServicesContext } from '../context/ServicesContext';
-// FIX: Import usePropertiesContext to get properties data
 import { usePropertiesContext } from '../context/PropertiesContext';
 
 const DashboardView: React.FC = () => {
-  // FIX: 'properties' comes from PropertiesContext
-  // FIX: 'news' and 'notifications' come from ContentContext
   const { news, notifications } = useContentContext();
   const { properties } = usePropertiesContext();
   const { categories } = useServicesContext();

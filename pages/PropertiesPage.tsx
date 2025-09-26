@@ -2,10 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, 
-    MagnifyingGlassIcon, HomeModernIcon, MapPinIcon, PhoneIcon, ShareIcon
+    MagnifyingGlassIcon, HomeModernIcon, MapPinIcon, PhoneIcon,
+    ShareIcon
 } from '../components/common/Icons';
 import type { Property } from '../types';
-// FIX: Use usePropertiesContext for property data and handlers
 import { usePropertiesContext } from '../context/PropertiesContext';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
@@ -96,7 +96,7 @@ const InputField: React.FC<{ label: string; value: string | number; onChange: (v
         <input type={type} value={value} onChange={e => onChange(e.target.value)} required={required} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
     </div>
 );
-const TextareaField: React.FC<{ label: string; value: string; onChange: (val: string) => void; required?: boolean; }> = ({ label, value, onChange, required = false }) => (
+const TextareaField: React.FC<{ label: string; value: string; onChange: (val: string); required?: boolean; }> = ({ label, value, onChange, required = false }) => (
     <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
         <textarea value={value} onChange={e => onChange(e.target.value)} required={required} rows={3} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"></textarea>
@@ -162,7 +162,6 @@ const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete:
 
 const PropertiesPage: React.FC = () => {
     const navigate = useNavigate();
-    // FIX: Use usePropertiesContext for property data and handlers
     const { properties, handleSaveProperty, handleDeleteProperty } = usePropertiesContext();
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول العقارات']);
@@ -181,14 +180,14 @@ const PropertiesPage: React.FC = () => {
         setEditingProperty(property);
         setIsModalOpen(true);
     };
-
+    
     const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => {
         const isNew = !propertyData.id;
         handleSaveProperty(propertyData);
         setIsModalOpen(false);
         showToast(isNew ? 'تم إضافة العقار بنجاح!' : 'تم حفظ التعديلات بنجاح!');
     };
-
+    
     const confirmDelete = (id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا العقار؟')) {
             handleDeleteProperty(id);
@@ -249,16 +248,16 @@ const PropertiesPage: React.FC = () => {
                     </div>
                 ) : (
                     <EmptyState
-                      icon={<HomeModernIcon className="w-16 h-16 text-slate-400" />}
-                      title={properties.length === 0 ? "لا توجد عقارات مضافة بعد" : "لا توجد عقارات تطابق بحثك"}
-                      message={properties.length === 0 ? "ابدأ بإضافة أول عقار لعرضه للمستخدمين في المدينة." : "حاول تغيير الفلاتر أو توسيع نطاق البحث."}
+                        icon={<HomeModernIcon className="w-16 h-16 text-slate-400" />}
+                        title="لا توجد عقارات"
+                        message="لا توجد عقارات تطابق بحثك. حاول تغيير الفلاتر أو أضف عقاراً جديداً."
                     >
-                      {canManage && properties.length === 0 && (
-                        <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                            <PlusIcon className="w-5 h-5" />
-                            <span>إضافة عقار جديد</span>
-                        </button>
-                      )}
+                        {canManage && (
+                             <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                                <PlusIcon className="w-5 h-5" />
+                                <span>إضافة عقار جديد</span>
+                            </button>
+                        )}
                     </EmptyState>
                 )}
             </div>

@@ -17,7 +17,10 @@ import {
     ChatBubbleOvalLeftIcon,
     QuestionMarkCircleIcon,
     ClipboardDocumentListIcon,
-    PencilSquareIcon
+    PencilSquareIcon,
+    TagIcon,
+    BriefcaseIcon,
+    ChatBubbleLeftRightIcon
 } from './Icons';
 import { useServicesContext } from '../../context/ServicesContext';
 import { useAuthContext } from '../../context/AuthContext';
@@ -84,6 +87,7 @@ const Sidebar: React.FC = () => {
         }));
         
         const serviceManagerRoles: AdminUser['role'][] = ['مدير عام', 'مسؤول ادارة الخدمات'];
+        const communityManagerRoles: AdminUser['role'][] = ['مدير عام', 'مسؤول ادارة المجتمع'];
 
         const constructedNavItems: NavItemData[] = [
             { name: "نظرة عامة", icon: <HomeIcon className="w-6 h-6" />, to: "/" },
@@ -107,10 +111,12 @@ const Sidebar: React.FC = () => {
             { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
             { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
             { name: "إدارة الإعلانات", icon: <NewspaperIcon className="w-6 h-6 text-orange-400" />, to: "/ads", roles: ['مدير عام', 'مسؤول الاخبار والاعلانات والاشعارات'] },
-            { name: "إدارة المجتمع", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/community", roles: ['مدير عام', 'مسؤول ادارة المجتمع'] },
+            { name: "إدارة المجتمع", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/community", roles: communityManagerRoles },
+            { name: "البيع والشراء", icon: <TagIcon className="w-6 h-6" />, to: "/buy-sell", roles: communityManagerRoles },
+            { name: "الوظائف", icon: <BriefcaseIcon className="w-6 h-6" />, to: "/jobs", roles: communityManagerRoles },
             { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users", roles: ['مدير عام'] },
             { name: "إدارة المحتوى", icon: <PencilSquareIcon className="w-6 h-6" />, to: "/content-management", roles: ['مدير عام'] },
-            { name: "إدارة التقييمات", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/reviews", roles: serviceManagerRoles },
+            { name: "إدارة التقييمات", icon: <ChatBubbleLeftRightIcon className="w-6 h-6" />, to: "/reviews", roles: serviceManagerRoles },
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/reports" },
             { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/audit-log", roles: ['مدير عام'] }
         );
