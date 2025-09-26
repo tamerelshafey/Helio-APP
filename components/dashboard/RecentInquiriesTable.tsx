@@ -19,7 +19,6 @@ const formatRelativeTime = (dateString: string) => {
     return `قبل ${days} يوم`;
 };
 
-
 const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
   const iconClasses = "w-6 h-6";
   const typeMap: { [key in Activity['type']]: React.ReactNode } = {
@@ -32,36 +31,36 @@ const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
 };
 
 const RecentActivityTable: React.FC = () => {
-  const { news } = useContentContext();
-  const { properties } = usePropertiesContext();
-  const { services } = useServicesContext();
+    const { news } = useContentContext();
+    const { services } = useServicesContext();
+    const { properties } = usePropertiesContext();
     
-  const recentActivities = useMemo(() => {
-      const serviceActivities: Activity[] = services.map(s => ({
-          id: `s-${s.id}`,
-          type: 'NEW_SERVICE',
-          description: `تمت إضافة خدمة جديدة: ${s.name}`,
-          time: s.creationDate,
-      }));
-      
-      const propertyActivities: Activity[] = properties.map(p => ({
-          id: `p-${p.id}`,
-          type: 'NEW_PROPERTY',
-          description: `تمت إضافة عقار جديد: ${p.title}`,
-          time: p.creationDate,
-      }));
+    const recentActivities = useMemo(() => {
+        const serviceActivities: Activity[] = services.map(s => ({
+            id: `s-${s.id}`,
+            type: 'NEW_SERVICE',
+            description: `تمت إضافة خدمة جديدة: ${s.name}`,
+            time: s.creationDate,
+        }));
+        
+        const propertyActivities: Activity[] = properties.map(p => ({
+            id: `p-${p.id}`,
+            type: 'NEW_PROPERTY',
+            description: `تمت إضافة عقار جديد: ${p.title}`,
+            time: p.creationDate,
+        }));
 
-      const newsActivities: Activity[] = news.map(n => ({
-          id: `n-${n.id}`,
-          type: 'NEWS_PUBLISHED',
-          description: `تم نشر خبر جديد: ${n.title}`,
-          time: n.date,
-      }));
+        const newsActivities: Activity[] = news.map(n => ({
+            id: `n-${n.id}`,
+            type: 'NEWS_PUBLISHED',
+            description: `تم نشر خبر جديد: ${n.title}`,
+            time: n.date,
+        }));
 
-      return [...serviceActivities, ...propertyActivities, ...newsActivities]
-          .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-          .slice(0, 5);
-  }, [services, properties, news]);
+        return [...serviceActivities, ...propertyActivities, ...newsActivities]
+            .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+            .slice(0, 5);
+    }, [services, properties, news]);
 
   return (
     <div className="overflow-x-auto">
@@ -75,7 +74,7 @@ const RecentActivityTable: React.FC = () => {
                   <div>
                     <div className="font-medium text-gray-800 dark:text-gray-200">{activity.description}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                       {formatRelativeTime(activity.time)}
+                        {formatRelativeTime(activity.time)}
                     </div>
                   </div>
                 </div>

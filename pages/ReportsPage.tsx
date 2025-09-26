@@ -6,30 +6,8 @@ import { usePropertiesContext } from '../context/PropertiesContext';
 import { ArrowLeftIcon, StarIcon, EyeIcon, ChatBubbleOvalLeftIcon, WrenchScrewdriverIcon, ChartPieIcon, ChartBarIcon, HomeModernIcon, NewspaperIcon, MagnifyingGlassIcon, StarIconOutline } from '../components/common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { Service, Property, News, Category } from '../types';
-
-const KpiCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 rtl:space-x-reverse">
-        <div className="p-3 bg-cyan-100 dark:bg-cyan-900/50 rounded-full">{icon}</div>
-        <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-        </div>
-    </div>
-);
-
-const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode; icon: React.ReactNode }> = ({ active, onClick, children, icon }) => (
-    <button
-        onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-2 font-semibold rounded-md transition-colors focus:outline-none text-sm ${
-            active
-                ? 'bg-cyan-500 text-white shadow'
-                : 'bg-slate-200/50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-        }`}
-    >
-        {icon}
-        {children}
-    </button>
-);
+import KpiCard from '../components/common/KpiCard';
+import TabButton from '../components/common/TabButton';
 
 const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({ data, categories }) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -70,9 +48,9 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KpiCard title="إجمالي الخدمات" value={kpiData.total} icon={<WrenchScrewdriverIcon className="w-6 h-6 text-cyan-500"/>} />
+                <KpiCard title="إجمالي الخدمات" value={kpiData.total.toString()} icon={<WrenchScrewdriverIcon className="w-6 h-6 text-cyan-500"/>} />
                 <KpiCard title="متوسط التقييم" value={kpiData.avgRating} icon={<StarIcon className="w-6 h-6 text-yellow-500"/>} />
-                <KpiCard title="إجمالي التقييمات" value={kpiData.totalReviews} icon={<ChatBubbleOvalLeftIcon className="w-6 h-6 text-purple-500"/>} />
+                <KpiCard title="إجمالي التقييمات" value={kpiData.totalReviews.toString()} icon={<ChatBubbleOvalLeftIcon className="w-6 h-6 text-purple-500"/>} />
                 <KpiCard title="الأكثر تفضيلاً" value={kpiData.topFav} icon={<EyeIcon className="w-6 h-6 text-pink-500"/>} />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -175,7 +153,7 @@ const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
     return (
          <div className="space-y-8 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <KpiCard title="إجمالي العقارات" value={kpiData.total} icon={<HomeModernIcon className="w-6 h-6 text-amber-500"/>} />
+                <KpiCard title="إجمالي العقارات" value={kpiData.total.toString()} icon={<HomeModernIcon className="w-6 h-6 text-amber-500"/>} />
                 <KpiCard title="متوسط سعر البيع" value={kpiData.avgSalePrice} icon={<ChartBarIcon className="w-6 h-6 text-green-500"/>} />
                 <KpiCard title="متوسط سعر الإيجار" value={kpiData.avgRentPrice} icon={<ChartBarIcon className="w-6 h-6 text-indigo-500"/>} />
             </div>
@@ -247,7 +225,7 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <KpiCard title="إجمالي المقالات" value={kpiData.total} icon={<NewspaperIcon className="w-6 h-6 text-sky-500"/>} />
+                <KpiCard title="إجمالي المقالات" value={kpiData.total.toString()} icon={<NewspaperIcon className="w-6 h-6 text-sky-500"/>} />
                 <KpiCard title="مجموع المشاهدات" value={kpiData.totalViews} icon={<EyeIcon className="w-6 h-6 text-red-500"/>} />
                 <KpiCard title="المقال الأكثر قراءة" value={kpiData.mostViewed} icon={<StarIcon className="w-6 h-6 text-yellow-500"/>} />
             </div>

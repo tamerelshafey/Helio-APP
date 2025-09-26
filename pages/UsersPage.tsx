@@ -2,12 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from '../components/common/Icons';
 import { useUserManagementContext } from '../context/UserManagementContext';
-import { useUIContext } from '../context/UIContext';
-import { useHasPermission } from '../context/AuthContext';
 import type { AppUser, AdminUser, UserStatus } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import EmptyState from '../components/common/EmptyState';
+import TabButton from '../components/common/TabButton';
 
 const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
     const statusMap = {
@@ -18,20 +16,6 @@ const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
     const { text, classes } = statusMap[status];
     return <span className={`px-2 py-1 text-xs font-medium rounded-full ${classes}`}>{text}</span>;
 };
-
-const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode; icon: React.ReactNode }> = ({ active, onClick, children, icon }) => (
-    <button
-        onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-2 font-semibold rounded-md transition-colors focus:outline-none text-sm ${
-            active
-                ? 'bg-cyan-500 text-white shadow'
-                : 'bg-slate-200/50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-        }`}
-    >
-        {icon}
-        {children}
-    </button>
-);
 
 const UserForm: React.FC<{
     user: AppUser | null;
@@ -44,16 +28,6 @@ const UserForm: React.FC<{
         status: user?.status || 'active',
     });
     const [avatar, setAvatar] = useState<string[]>(user?.avatar ? [user.avatar] : []);
-
-    useEffect(() => {
-        if (user) {
-            setFormData({ name: user.name, email: user.email, status: user.status });
-            setAvatar(user.avatar ? [user.avatar] : []);
-        } else {
-            setFormData({ name: '', email: '', status: 'active' });
-            setAvatar([]);
-        }
-    }, [user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -109,16 +83,6 @@ const AdminForm: React.FC<{
     });
     const [avatar, setAvatar] = useState<string[]>(admin?.avatar ? [admin.avatar] : []);
 
-    useEffect(() => {
-        if (admin) {
-            setFormData({ name: admin.name, email: admin.email, role: admin.role });
-            setAvatar(admin.avatar ? [admin.avatar] : []);
-        } else {
-            setFormData({ name: '', email: '', role: 'مسؤول ادارة الخدمات' });
-            setAvatar([]);
-        }
-    }, [admin]);
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -163,8 +127,6 @@ const AdminForm: React.FC<{
 
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
     const { users, handleDeleteUser } = useUserManagementContext();
-    const { showToast } = useUIContext();
-    const canManage = useHasPermission(['مدير عام']);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
 
@@ -176,13 +138,6 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
             return matchesSearch && matchesFilter;
         });
     }, [users, searchTerm, statusFilter]);
-
-    const confirmDelete = (id: number) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
-            handleDeleteUser(id);
-            showToast('تم حذف المستخدم بنجاح!');
-        }
-    };
 
     return (
         <div className="animate-fade-in">
@@ -198,12 +153,10 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                         <option value="pending">معلق</option>
                         <option value="banned">محظور</option>
                     </select>
-                     {canManage && (
-                        <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                            <UserPlusIcon className="w-5 h-5" />
-                            <span>إضافة</span>
-                        </button>
-                     )}
+                     <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                        <UserPlusIcon className="w-5 h-5" />
+                        <span>إضافة</span>
+                    </button>
                 </div>
             </div>
              <div className="overflow-x-auto">
@@ -213,7 +166,7 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                             <th scope="col" className="px-6 py-3">المستخدم</th>
                             <th scope="col" className="px-6 py-3">الحالة</th>
                             <th scope="col" className="px-6 py-3">تاريخ الانضمام</th>
-                            {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
+                            <th scope="col" className="px-6 py-3">إجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -230,14 +183,12 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                                 </td>
                                 <td className="px-6 py-4"><StatusBadge status={user.status} /></td>
                                 <td className="px-6 py-4">{user.joinDate}</td>
-                                {canManage && (
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => onEdit(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => confirmDelete(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
-                                        </div>
-                                    </td>
-                                )}
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => onEdit(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
+                                        <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                    </div>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -250,78 +201,49 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
 
 const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) => void; }> = ({ onAdd, onEdit }) => {
     const { admins, handleDeleteAdmin } = useUserManagementContext();
-    const { showToast } = useUIContext();
-    const canManage = useHasPermission(['مدير عام']);
-
-    const confirmDelete = (id: number) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا المدير؟')) {
-            handleDeleteAdmin(id);
-            showToast('تم حذف المدير بنجاح!');
-        }
-    };
-
     return (
         <div className="animate-fade-in">
-             {canManage && (
-                <div className="flex justify-end mb-6">
-                    <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                        <UserPlusIcon className="w-5 h-5" />
-                        <span>إضافة مدير</span>
-                    </button>
-                </div>
-             )}
-             {admins.length > 0 ? (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">المدير</th>
-                                <th scope="col" className="px-6 py-3">الدور</th>
-                                {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {admins.map(admin => (
-                                <tr key={admin.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <img src={admin.avatar} alt={admin.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
-                                            <div>
-                                                <div className="font-semibold text-gray-900 dark:text-white">{admin.name}</div>
-                                                <div className="text-xs">{admin.email}</div>
-                                            </div>
+            <div className="flex justify-end mb-6">
+                <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                    <UserPlusIcon className="w-5 h-5" />
+                    <span>إضافة مدير</span>
+                </button>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                        <tr>
+                            <th scope="col" className="px-6 py-3">المدير</th>
+                            <th scope="col" className="px-6 py-3">الدور</th>
+                            <th scope="col" className="px-6 py-3">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {admins.map(admin => (
+                            <tr key={admin.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <img src={admin.avatar} alt={admin.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
+                                        <div>
+                                            <div className="font-semibold text-gray-900 dark:text-white">{admin.name}</div>
+                                            <div className="text-xs">{admin.email}</div>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{admin.role}</span>
-                                    </td>
-                                    {canManage && (
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => onEdit(admin)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                <button onClick={() => confirmDelete(admin.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
-                                            </div>
-                                        </td>
-                                    )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                 <EmptyState
-                    icon={<UserCircleIcon className="w-16 h-16 text-slate-400" />}
-                    title="لا يوجد مديرون مضافون"
-                    message="يمكنك إضافة مدير جديد من الزر أدناه."
-                >
-                    {canManage && (
-                        <button onClick={onAdd} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                            <UserPlusIcon className="w-5 h-5" />
-                            <span>إضافة مدير</span>
-                        </button>
-                    )}
-                </EmptyState>
-            )}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{admin.role}</span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => onEdit(admin)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
+                                        <button onClick={() => handleDeleteAdmin(admin.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };
@@ -329,7 +251,6 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
 const UsersPage: React.FC = () => {
     const navigate = useNavigate();
     const { handleSaveUser, handleSaveAdmin } = useUserManagementContext();
-    const { showToast } = useUIContext();
     const [activeTab, setActiveTab] = useState<'users' | 'admins'>('users');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);
@@ -354,17 +275,13 @@ const UsersPage: React.FC = () => {
     };
     
     const handleSaveAndCloseUser = (user: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => {
-        const isNew = !user.id;
         handleSaveUser(user);
         handleCloseModal();
-        showToast(isNew ? 'تم إضافة المستخدم بنجاح!' : 'تم حفظ التعديلات بنجاح!');
     };
 
     const handleSaveAndCloseAdmin = (admin: Omit<AdminUser, 'id'> & { id?: number }) => {
-        const isNew = !admin.id;
         handleSaveAdmin(admin);
         handleCloseModal();
-        showToast(isNew ? 'تم إضافة المدير بنجاح!' : 'تم حفظ التعديلات بنجاح!');
     };
 
     const renderContent = () => {

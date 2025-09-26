@@ -2,23 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import KpiCard from '../components/common/KpiCard';
 import UserActivityChart from '../components/dashboard/UserActivityChart';
-import RecentActivityTable from '../components/dashboard/RecentActivityTable';
+import RecentActivityTable from '../components/dashboard/RecentInquiriesTable';
 import AlertsPanel from '../components/dashboard/AlertsPanel';
 import UsersToVerify from '../components/dashboard/UsersToVerify';
 import Footer from '../components/common/Footer';
-import { UserIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon } from '../components/common/Icons';
+import { UserIcon, WrenchScrewdriverIcon, ShieldExclamationIcon, HomeModernIcon, UserGroupIcon, BusIcon, NewspaperIcon, Bars3Icon, MapIcon } from '../components/common/Icons';
 import { useUserManagementContext } from '../context/UserManagementContext';
 import { useServicesContext } from '../context/ServicesContext';
 import { usePropertiesContext } from '../context/PropertiesContext';
 import { useContentContext } from '../context/ContentContext';
-import PropertyManagerDashboard from '../components/dashboard/PropertyManagerDashboard';
-import NewsManagerDashboard from '../components/dashboard/NewsManagerDashboard';
-import TransportationManagerDashboard from '../components/dashboard/TransportationManagerDashboard';
-import ServiceManagerDashboard from '../components/dashboard/ServiceManagerDashboard';
-import CommunityManagerDashboard from '../components/dashboard/CommunityManagerDashboard';
-import TopServicesChart from '../components/dashboard/TopServicesChart';
-import CategoryDistributionChart from '../components/dashboard/CategoryDistributionChart';
 import { useAuthContext } from '../context/AuthContext';
+import PropertyMap from '../components/dashboard/PropertyMap';
 
 const GeneralDashboard: React.FC = () => {
   const { users } = useUserManagementContext();
@@ -55,7 +49,7 @@ const GeneralDashboard: React.FC = () => {
   return (
     <>
       {/* KPI Cards Section */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6 mb-6">
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-6">
         {kpiData.map((kpi, index) => (
           <Link to={kpi.to} key={index} className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-cyan-400 rounded-xl">
             <KpiCard 
@@ -78,9 +72,9 @@ const GeneralDashboard: React.FC = () => {
             <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center"><UserIcon className="w-6 h-6 mr-2" /> نمو المستخدمين الشهري</h3>
             <UserActivityChart />
           </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TopServicesChart />
-              <CategoryDistributionChart />
+           <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center"><MapIcon className="w-6 h-6 mr-2" /> خريطة الخدمات والمرافق في هليوبوليس</h3>
+            <PropertyMap />
           </div>
         </div>
         
@@ -101,29 +95,7 @@ const GeneralDashboard: React.FC = () => {
 };
 
 const DashboardPage: React.FC = () => {
-    const { currentUser } = useAuthContext();
-
-    if (currentUser?.role === 'مسؤول العقارات') {
-        return <PropertyManagerDashboard />;
-    }
-    
-    if (currentUser?.role === 'مسؤول الاخبار والاعلانات والاشعارات') {
-        return <NewsManagerDashboard />;
-    }
-
-    if (currentUser?.role === 'مسؤول الباصات') {
-        return <TransportationManagerDashboard />;
-    }
-    
-    if (currentUser?.role === 'مسؤول ادارة المجتمع') {
-        return <CommunityManagerDashboard />;
-    }
-
-    if (currentUser?.role === 'مسؤول ادارة الخدمات') {
-        return <ServiceManagerDashboard />;
-    }
-
-    // Default to General Dashboard for Super Admin or other roles
+    // For now, only the general dashboard is shown as role-specific dashboards are not implemented.
     return <GeneralDashboard />;
 };
 

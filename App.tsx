@@ -8,6 +8,7 @@ import { useAuthContext } from './context/AuthContext';
 import PublicHeader from './components/PublicHeader';
 import PublicFooter from './components/PublicFooter';
 import ToastContainer from './components/common/Toast';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // Lazy-loaded page components from the 'pages' directory
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -49,6 +50,7 @@ const App: React.FC = () => {
     return (
       <>
         <div className="bg-slate-100 dark:bg-slate-900 text-gray-800 dark:text-gray-900 min-h-screen font-sans flex flex-col" dir="rtl">
+          <ScrollToTop />
           <PublicHeader />
           <main className="flex-grow">
             <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center"><Spinner /></div>}>
@@ -81,6 +83,7 @@ const App: React.FC = () => {
           <Header />
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 dark:bg-slate-900 p-4 sm:p-6">
             <div className="h-full w-full">
+              <ScrollToTop />
               <Breadcrumbs />
               <Suspense fallback={<Spinner />}>
                 <Routes>

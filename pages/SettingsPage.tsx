@@ -135,13 +135,19 @@ const AccountSettings = () => (
 );
 
 const AppearanceSettings = () => {
-     const { isDarkMode, toggleDarkMode } = useUIContext();
+    const { isDarkMode, toggleDarkMode } = useUIContext();
 
     return (
         <div>
             <h2 className="text-2xl font-bold mb-6">المظهر</h2>
             <FormRow label="الوضع الداكن">
                 <ToggleSwitch enabled={isDarkMode} setEnabled={() => toggleDarkMode()} />
+            </FormRow>
+             <FormRow label="لغة الواجهة">
+                 <select className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    <option>العربية</option>
+                    <option disabled>English (Coming Soon)</option>
+                </select>
             </FormRow>
         </div>
     );
