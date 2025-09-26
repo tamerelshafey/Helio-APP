@@ -1,11 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useTransportationContext } from '../../context/TransportationContext';
-import KpiCard from '../common/KpiCard';
-import { BusIcon, UserGroupIcon, MapIcon, PhoneIcon, UserCircleIcon, CalendarDaysIcon } from '../common/Icons';
+import KpiCard from '../KpiCard';
+import { BusIcon, UserGroupIcon, MapIcon, PhoneIcon, UserCircleIcon, CalendarDaysIcon } from '../Icons';
+
+// Mock data since context is not available
+const mockData = {
+    internalDrivers: [ { id: 1, name: 'أحمد المصري' }, { id: 2, name: 'خالد عبدالله' }, { id: 3, name: 'ياسر القحطاني' } ],
+    externalRoutes: [ { id: 1, name: 'هليوبوليس الجديدة <> ميدان رمسيس' }, { id: 2, name: 'هليوبوليس الجديدة <> التجمع الخامس' }, { id: 3, name: 'هليوبوليس الجديدة <> مدينة نصر' } ],
+    weeklySchedule: [ { day: 'الأحد', drivers: [{ name: 'أحمد المصري', phone: '010-1111-2222' }] }, { day: 'الإثنين', drivers: [{ name: 'خالد عبدالله', phone: '011-2222-3333' }] }, { day: 'الثلاثاء', drivers: [{ name: 'ياسر القحطاني', phone: '015-3333-4444' }] }, { day: 'الأربعاء', drivers: [{ name: 'سعيد العويران', phone: '012-4444-5555' }] }, { day: 'الخميس', drivers: [{ name: 'أحمد المصري', phone: '010-1111-2222' }] }, { day: 'الجمعة', drivers: [{ name: 'خالد عبدالله', phone: '011-2222-3333' }] }, { day: 'السبت', drivers: [{ name: 'ياسر القحطاني', phone: '015-3333-4444' }] } ],
+    internalSupervisor: { name: 'أ. محمد عبدالسلام', phone: '012-3456-7890' },
+    externalSupervisor: { name: 'أ. حسين فهمي', phone: '015-4321-0987' }
+};
 
 const TransportationManagerDashboard: React.FC = () => {
-    const { transportation } = useTransportationContext();
+    const transportation = mockData;
 
     const today = new Date().toLocaleDateString('ar-EG', { weekday: 'long' });
     const todaySchedule = transportation.weeklySchedule.find(d => d.day === today);

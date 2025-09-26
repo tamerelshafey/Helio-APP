@@ -96,7 +96,7 @@ const InputField: React.FC<{ label: string; value: string | number; onChange: (v
         <input type={type} value={value} onChange={e => onChange(e.target.value)} required={required} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
     </div>
 );
-const TextareaField: React.FC<{ label: string; value: string; onChange: (val: string); required?: boolean; }> = ({ label, value, onChange, required = false }) => (
+const TextareaField: React.FC<{ label: string; value: string; onChange: (val: string) => void; required?: boolean; }> = ({ label, value, onChange, required = false }) => (
     <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
         <textarea value={value} onChange={e => onChange(e.target.value)} required={required} rows={3} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"></textarea>

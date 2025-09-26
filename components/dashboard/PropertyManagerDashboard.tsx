@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { usePropertiesContext } from '../../context/PropertiesContext';
-import KpiCard from '../common/KpiCard';
-import { HomeModernIcon, ChartPieIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon } from '../common/Icons';
+import KpiCard from '../KpiCard';
+import { HomeModernIcon, ChartPieIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon } from '../Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const PropertyManagerDashboard: React.FC = () => {
@@ -46,9 +46,9 @@ const PropertyManagerDashboard: React.FC = () => {
                 <div className="lg:col-span-3 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
                     <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center gap-2"><ChartBarIcon className="w-6 h-6"/> أكثر 5 عقارات مشاهدة</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={stats.topViewed} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                        <BarChart data={stats.topViewed} margin={{ top: 5, right: 20, left: 0, bottom: 50 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
-                            <XAxis dataKey="title" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" height={50} interval={0} />
+                            <XAxis dataKey="title" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" interval={0} />
                             <YAxis />
                             <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
                             <Legend />

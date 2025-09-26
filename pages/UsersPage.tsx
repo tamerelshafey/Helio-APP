@@ -84,7 +84,14 @@ const AdminForm: React.FC<{
     const [roles, setRoles] = useState<AdminUserRole[]>(admin?.roles || []);
     const [avatar, setAvatar] = useState<string[]>(admin?.avatar ? [admin.avatar] : []);
 
-    const allAdminRoles: AdminUserRole[] = ['مسؤول ادارة الخدمات', 'مسؤول العقارات', 'مسؤول المحتوى', 'مسؤول النقل', 'مسؤول المجتمع', 'مدير عام'];
+    const roleDescriptions: { role: AdminUserRole; description: string }[] = [
+        { role: 'مسؤول ادارة الخدمات', description: 'الخدمات، الفئات، الطوارئ، دليل الخدمات، التقييمات.' },
+        { role: 'مسؤول العقارات', description: 'العقارات المعروضة للبيع أو الإيجار.' },
+        { role: 'مسؤول المحتوى', description: 'الأخبار، الإشعارات، والإعلانات.' },
+        { role: 'مسؤول النقل', description: 'بيانات النقل الداخلي والخارجي.' },
+        { role: 'مسؤول المجتمع', description: 'منشورات المجتمع، البيع والشراء، الوظائف.' },
+        { role: 'مدير عام', description: 'وصول كامل لجميع الإدارات والمستخدمين.' },
+    ];
 
     const handleRoleChange = (role: AdminUserRole) => {
         setRoles(prevRoles =>
@@ -108,24 +115,27 @@ const AdminForm: React.FC<{
             avatar: avatar[0] || `https://picsum.photos/200/200?random=${Date.now()}`,
         });
     };
-
+    
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <InputField name="name" label="الاسم" value={formData.name} onChange={handleChange} required />
             <InputField name="email" label="البريد الإلكتروني" value={formData.email} onChange={handleChange} required />
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الأدوار</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md">
-                    {allAdminRoles.map(role => (
-                        <label key={role} className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">الأدوار والصلاحيات</label>
+                <div className="space-y-3 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md">
+                    {roleDescriptions.map(({ role, description }) => (
+                        <label key={role} className="flex items-start space-x-2 rtl:space-x-reverse cursor-pointer p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
                             <input
                                 type="checkbox"
                                 checked={roles.includes(role)}
                                 onChange={() => handleRoleChange(role)}
-                                className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500"
+                                className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500 mt-1 flex-shrink-0"
                             />
-                            <span className="text-sm">{role}</span>
+                            <div>
+                                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{role}</span>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+                            </div>
                         </label>
                     ))}
                 </div>

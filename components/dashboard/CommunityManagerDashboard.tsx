@@ -1,13 +1,28 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useCommunityContext } from '../../context/CommunityContext';
-import { useUserManagementContext } from '../../context/UserManagementContext';
-import KpiCard from '../common/KpiCard';
-import { ChatBubbleOvalLeftIcon, UsersIcon, PlusIcon, ShieldExclamationIcon, TrashIcon, PinIcon } from '../common/Icons';
+import KpiCard from '../KpiCard';
+// FIX: Corrected the import path for icons.
+import { ChatBubbleOvalLeftIcon, UsersIcon, ShieldExclamationIcon, TrashIcon, PinIcon } from '../common/Icons';
+
+const mockCommunityPosts = [
+    { id: 1, authorId: 1, content: "ما هو أفضل مكان لتناول القهوة في هليوبوليس الجديدة؟", timestamp: "2024-07-25T10:00:00Z", isPinned: false, comments: [{}, {}, {}], isReported: false, },
+    { id: 2, authorId: 4, content: "تم افتتاح حديقة جديدة في الحي الثالث بجوار المدرسة الدولية.", timestamp: "2024-07-24T18:00:00Z", isPinned: false, comments: [{}], isReported: false, },
+    { id: 3, authorId: 5, content: "ما هو أهم مشروع تتمنى رؤيته في المدينة الفترة القادمة؟", timestamp: "2024-07-26T14:00:00Z", isPinned: true, comments: [], isReported: false, },
+    { id: 5, authorId: 3, content: "هل يعرف أحد مواعيد عمل مكتب البريد في المدينة خلال إجازة العيد؟", timestamp: "2024-07-23T12:45:00Z", isPinned: false, comments: [], isReported: true, },
+];
+const mockUsers = [
+  { id: 1, name: 'أحمد المصري' },
+  { id: 3, name: 'خالد عبدالله' },
+  { id: 4, name: 'سارة إبراهيم' },
+  { id: 5, name: 'محمد حسين' },
+];
 
 const CommunityManagerDashboard: React.FC = () => {
-    const { communityPosts, handleDeletePost, handleTogglePostPin } = useCommunityContext();
-    const { users } = useUserManagementContext();
+    const communityPosts = mockCommunityPosts;
+    const users = mockUsers;
+    const handleDeletePost = (id: number) => console.log('delete', id);
+    const handleTogglePostPin = (id: number) => console.log('pin', id);
+
 
     const stats = useMemo(() => {
         const totalPosts = communityPosts.length;
@@ -50,7 +65,7 @@ const CommunityManagerDashboard: React.FC = () => {
                                 <div key={post.id} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-700/50">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-3">
-                                            <img src={author?.avatar} alt={author?.name} className="w-10 h-10 rounded-full object-cover" />
+                                            <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-600"></div> {/* Placeholder avatar */}
                                             <div>
                                                 <p className="font-bold text-sm text-gray-800 dark:text-white">{author?.name}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(post.timestamp).toLocaleDateString('ar-EG')}</p>

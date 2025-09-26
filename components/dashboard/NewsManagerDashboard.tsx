@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useContentContext } from '../../context/ContentContext';
-import KpiCard from '../common/KpiCard';
-import { NewspaperIcon, BellAlertIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon, ChartPieIcon } from '../common/Icons';
+import KpiCard from '../KpiCard';
+import { NewspaperIcon, BellAlertIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon, ChartPieIcon } from '../Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDate, endDate }) => {
@@ -81,9 +81,9 @@ const NewsManagerDashboard: React.FC = () => {
                 <div className="lg:col-span-3 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
                     <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center gap-2"><ChartBarIcon className="w-6 h-6"/> أكثر 5 أخبار مشاهدة</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={stats.topViewedNews} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                        <BarChart data={stats.topViewedNews} margin={{ top: 5, right: 20, left: 0, bottom: 50 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
-                            <XAxis dataKey="title" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" height={50} interval={0} />
+                            <XAxis dataKey="title" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" interval={0} />
                             <YAxis />
                             <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
                             <Legend />
@@ -145,7 +145,7 @@ const NewsManagerDashboard: React.FC = () => {
                 </div>
             </div>
              {/* Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                  <Link to="/news" className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                     <div className="p-4 bg-cyan-100 dark:bg-cyan-900/50 rounded-full mb-3">
                         <PlusIcon className="w-8 h-8 text-cyan-500"/>
@@ -157,6 +157,12 @@ const NewsManagerDashboard: React.FC = () => {
                         <PlusIcon className="w-8 h-8 text-amber-500"/>
                     </div>
                     <h3 className="font-semibold text-gray-800 dark:text-white">إضافة إشعار جديد</h3>
+                </Link>
+                 <Link to="/ads" className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                    <div className="p-4 bg-indigo-100 dark:bg-indigo-900/50 rounded-full mb-3">
+                        <PlusIcon className="w-8 h-8 text-indigo-500"/>
+                    </div>
+                    <h3 className="font-semibold text-gray-800 dark:text-white">إضافة إعلان جديد</h3>
                 </Link>
             </div>
         </div>
