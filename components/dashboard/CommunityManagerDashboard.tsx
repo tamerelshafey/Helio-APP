@@ -1,28 +1,15 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import KpiCard from '../KpiCard';
-// FIX: Corrected the import path for icons.
+import KpiCard from '../common/KpiCard';
 import { ChatBubbleOvalLeftIcon, UsersIcon, ShieldExclamationIcon, TrashIcon, PinIcon } from '../common/Icons';
-
-const mockCommunityPosts = [
-    { id: 1, authorId: 1, content: "ما هو أفضل مكان لتناول القهوة في هليوبوليس الجديدة؟", timestamp: "2024-07-25T10:00:00Z", isPinned: false, comments: [{}, {}, {}], isReported: false, },
-    { id: 2, authorId: 4, content: "تم افتتاح حديقة جديدة في الحي الثالث بجوار المدرسة الدولية.", timestamp: "2024-07-24T18:00:00Z", isPinned: false, comments: [{}], isReported: false, },
-    { id: 3, authorId: 5, content: "ما هو أهم مشروع تتمنى رؤيته في المدينة الفترة القادمة؟", timestamp: "2024-07-26T14:00:00Z", isPinned: true, comments: [], isReported: false, },
-    { id: 5, authorId: 3, content: "هل يعرف أحد مواعيد عمل مكتب البريد في المدينة خلال إجازة العيد؟", timestamp: "2024-07-23T12:45:00Z", isPinned: false, comments: [], isReported: true, },
-];
-const mockUsers = [
-  { id: 1, name: 'أحمد المصري' },
-  { id: 3, name: 'خالد عبدالله' },
-  { id: 4, name: 'سارة إبراهيم' },
-  { id: 5, name: 'محمد حسين' },
-];
+import { useCommunityContext } from '../../context/CommunityContext';
+import { useUserManagementContext } from '../../context/UserManagementContext';
+import { useUIContext } from '../../context/UIContext';
 
 const CommunityManagerDashboard: React.FC = () => {
-    const communityPosts = mockCommunityPosts;
-    const users = mockUsers;
-    const handleDeletePost = (id: number) => console.log('delete', id);
-    const handleTogglePostPin = (id: number) => console.log('pin', id);
-
+    const { communityPosts, handleDeletePost, handleTogglePostPin } = useCommunityContext();
+    const { users } = useUserManagementContext();
+    const { showToast } = useUIContext();
 
     const stats = useMemo(() => {
         const totalPosts = communityPosts.length;
@@ -40,6 +27,20 @@ const CommunityManagerDashboard: React.FC = () => {
     }, [communityPosts]);
 
     const getUserById = (id: number) => users.find(u => u.id === id);
+    
+    const confirmDeletePost = (postId: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا المنشور؟')) {
+            handleDeletePost(postId);
+            showToast('تم حذف المنشور بنجاح!');
+        }
+    };
+
+    const togglePin = (postId: number) => {
+        const isPinned = communityPosts.find(p => p.id === postId)?.isPinned;
+        handleTogglePostPin(postId);
+        showToast(isPinned ? 'تم إلغاء تثبيت المنشور.' : 'تم تثبيت المنشور بنجاح!');
+    };
+
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -65,17 +66,17 @@ const CommunityManagerDashboard: React.FC = () => {
                                 <div key={post.id} className="p-4 rounded-lg bg-slate-50 dark:bg-slate-700/50">
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-600"></div> {/* Placeholder avatar */}
+                                            <img src={author?.avatar} alt={author?.name} className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-600 object-cover" />
                                             <div>
-                                                <p className="font-bold text-sm text-gray-800 dark:text-white">{author?.name}</p>
+                                                <p className="font-bold text-sm text-gray-800 dark:text-white">{author?.name || 'مستخدم محذوف'}</p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(post.timestamp).toLocaleDateString('ar-EG')}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <button onClick={() => handleTogglePostPin(post.id)} className={`p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 ${post.isPinned ? 'text-yellow-500' : 'text-gray-400'}`} title={post.isPinned ? "إلغاء التثبيت" : "تثبيت"}>
+                                            <button onClick={() => togglePin(post.id)} className={`p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 ${post.isPinned ? 'text-cyan-500' : 'text-gray-400'}`} title={post.isPinned ? "إلغاء التثبيت" : "تثبيت"}>
                                                 <PinIcon className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => handleDeletePost(post.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full" title="حذف المنشور">
+                                            <button onClick={() => confirmDeletePost(post.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full" title="حذف المنشور">
                                                 <TrashIcon className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -96,7 +97,7 @@ const CommunityManagerDashboard: React.FC = () => {
                                 return (
                                 <li key={post.id} className="text-sm text-gray-600 dark:text-gray-300 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20">
                                     <p className="truncate">{post.content}</p>
-                                    <p className="text-xs text-gray-400">بواسطة: {author?.name}</p>
+                                    <p className="text-xs text-gray-400">بواسطة: {author?.name || 'مستخدم محذوف'}</p>
                                 </li>
                                 )
                             })}

@@ -1,25 +1,27 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import type { UIContextType, ToastMessage } from '../types';
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
-        if (typeof window === 'undefined') return false;
+        if (typeof window === 'undefined') return true;
         const storedTheme = window.localStorage.getItem('theme');
-        if (storedTheme) {
-            return storedTheme === 'dark';
-        }
-        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        // Default to dark if not explicitly set to light
+        return storedTheme !== 'light';
     });
 
     useEffect(() => {
+        const theme = isDarkMode ? 'dark' : 'light';
         if (isDarkMode) {
             document.documentElement.classList.add('dark');
-            window.localStorage.setItem('theme', 'dark');
         } else {
             document.documentElement.classList.remove('dark');
-            window.localStorage.setItem('theme', 'light');
+        }
+        try {
+            window.localStorage.setItem('theme', theme);
+        } catch (e) {
+            console.warn('Could not save theme preference.', e);
         }
     }, [isDarkMode]);
 
@@ -36,13 +38,14 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
         setToasts(prev => prev.filter(t => t.id !== id));
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         isDarkMode,
         toggleDarkMode,
         toasts,
         showToast,
         dismissToast,
-    };
+    }), [isDarkMode, toggleDarkMode, toasts, showToast, dismissToast]);
+
 
     return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
 };

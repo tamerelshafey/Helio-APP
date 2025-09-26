@@ -4,6 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Helio APP Dashboard</title>
+    <script>
+      // IIFE to prevent global scope pollution.
+      // Sets theme based on localStorage or defaults to dark to prevent FOUC.
+      (function() {
+        if (localStorage.getItem('theme') === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+    <script>
+      // Configure Tailwind to use class-based dark mode
+      window.tailwind = {
+        config: {
+          darkMode: 'class',
+        },
+      };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       /* Custom scrollbar for better aesthetics */
