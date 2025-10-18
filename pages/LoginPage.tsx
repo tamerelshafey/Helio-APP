@@ -11,8 +11,8 @@ const LoginPage: React.FC = () => {
     const { showToast } = useUIContext();
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('super@helio.com');
+    const [password, setPassword] = useState('password123');
     const [error, setError] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {

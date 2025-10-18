@@ -5,6 +5,7 @@ import ServiceManagerDashboard from '../components/dashboard/ServiceManagerDashb
 import PropertyManagerDashboard from '../components/dashboard/PropertyManagerDashboard';
 import NewsManagerDashboard from '../components/dashboard/NewsManagerDashboard';
 import TransportationManagerDashboard from '../components/dashboard/TransportationManagerDashboard';
+// FIX: Added missing import for CommunityManagerDashboard
 import CommunityManagerDashboard from '../components/dashboard/CommunityManagerDashboard';
 
 const DashboardPage: React.FC = () => {

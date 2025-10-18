@@ -10,7 +10,8 @@ export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ childre
     const [forSaleItems, setForSaleItems] = useState<ForSaleItem[]>(mockForSaleItems);
     const [jobs, setJobs] = useState<JobPosting[]>(mockJobs);
 
-    const updateItemStatus = useCallback(<T extends ForSaleItem | JobPosting>(
+    // FIX: Corrected generic constraint to ensure type safety for shared properties.
+    const updateItemStatus = useCallback(<T extends { id: number; status: MarketplaceItemStatus; approvalDate?: string; expiryDate?: string; }>(
         items: T[], 
         id: number, 
         status: MarketplaceItemStatus, 

@@ -2,11 +2,11 @@ import React, { createContext, useContext, useState, ReactNode, useCallback, use
 import { useAuthContext } from './AuthContext';
 import { 
     mockEmergencyContacts, mockServiceGuides,
-    mockPublicPagesContent
+    mockPublicPagesContent, mockLostAndFoundItems
 } from '../data/mock-data';
 import type { 
     EmergencyContact, ServiceGuide, AppContextType,
-    AuditLog, PublicPagesContent
+    AuditLog, PublicPagesContent, LostAndFoundItem
 } from '../types';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -18,6 +18,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [serviceGuides, setServiceGuides] = useState<ServiceGuide[]>(mockServiceGuides);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [publicPagesContent, setPublicPagesContent] = useState<PublicPagesContent>(mockPublicPagesContent);
+    const [lostAndFoundItems, setLostAndFoundItems] = useState<LostAndFoundItem[]>(mockLostAndFoundItems);
+
     
     const logActivity = useCallback((action: string, details: string) => {
         const newLog: AuditLog = {
@@ -30,7 +32,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setAuditLogs(prevLogs => [newLog, ...prevLogs]);
     }, [currentUser]);
     
-    const handleSaveEmergencyContact = useCallback((contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }) => {
+    // FIX: Updated function signature to align with the corrected type in AppContextType. The logic inside already handles type correctly for new vs. existing contacts.
+    const handleSaveEmergencyContact = useCallback((contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }, newContactType: 'city' | 'national' = 'city') => {
         const isNew = !contactData.id;
         setEmergencyContacts(prevContacts => {
             if (contactData.id) {
@@ -40,7 +43,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     id: Math.max(...prevContacts.map(c => c.id), 0) + 1,
                     title: contactData.title,
                     number: contactData.number,
-                    type: 'city',
+                    type: newContactType,
                 };
                 return [newContact, ...prevContacts];
             }
@@ -87,8 +90,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...prev,
             [page]: newContent
         }));
-        logActivity('تحديث محتوى الموقع العام', `تم تحديث محتوى صفحة "${page}"`);
+        // FIX: Explicitly convert page key to string to prevent potential runtime errors with symbols.
+        logActivity('تحديث محتوى الموقع العام', `تم تحديث محتوى صفحة "${String(page)}"`);
     }, [logActivity]);
+
+    const handleSaveLostAndFoundItem = useCallback((itemData: Omit<LostAndFoundItem, 'id'> & { id?: number }) => {
+        const isNew = !itemData.id;
+        setLostAndFoundItems(prev => {
+            if (itemData.id) {
+                return prev.map(item => item.id === itemData.id ? { ...item, ...itemData, id: item.id } : item);
+            } else {
+                const newItem: LostAndFoundItem = {
+                    ...itemData,
+                    id: Math.max(...prev.map(i => i.id), 0) + 1,
+                };
+                return [newItem, ...prev];
+            }
+        });
+        const action = isNew ? 'إضافة عنصر مفقودات' : 'تحديث عنصر مفقودات';
+        logActivity(action, `تم حفظ العنصر: "${itemData.itemName}"`);
+    }, [logActivity]);
+
+    const handleDeleteLostAndFoundItem = useCallback((id: number) => {
+        const item = lostAndFoundItems.find(i => i.id === id);
+        setLostAndFoundItems(prev => prev.filter(i => i.id !== id));
+        if (item) {
+            logActivity('حذف عنصر مفقودات', `تم حذف العنصر: "${item.itemName}"`);
+        }
+    }, [lostAndFoundItems, logActivity]);
 
 
     const value = useMemo(() => ({
@@ -97,12 +126,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         handleSaveEmergencyContact, handleDeleteEmergencyContact,
         handleSaveServiceGuide, handleDeleteServiceGuide,
         publicPagesContent, handleUpdatePublicPageContent,
+        lostAndFoundItems, handleSaveLostAndFoundItem, handleDeleteLostAndFoundItem,
     }), [
         emergencyContacts, serviceGuides,
         auditLogs, logActivity,
         handleSaveEmergencyContact, handleDeleteEmergencyContact,
         handleSaveServiceGuide, handleDeleteServiceGuide,
-        publicPagesContent, handleUpdatePublicPageContent
+        publicPagesContent, handleUpdatePublicPageContent,
+        lostAndFoundItems, handleSaveLostAndFoundItem, handleDeleteLostAndFoundItem
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

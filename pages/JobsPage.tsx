@@ -82,11 +82,11 @@ const JobCard: React.FC<{
         <div className="p-2 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center gap-2">
             {job.status === 'pending' && (
                 <>
-                    <button onClick={() => onApprove(job.id)} className="flex-1 text-sm flex items-center justify-center gap-2 bg-green-100 text-green-700 hover:bg-green-200 p-2 rounded-md"><CheckCircleIcon className="w-5 h-5"/> موافقة</button>
-                    <button onClick={() => onReject(job.id)} className="flex-1 text-sm flex items-center justify-center gap-2 bg-orange-100 text-orange-700 hover:bg-orange-200 p-2 rounded-md"><XCircleIcon className="w-5 h-5"/> رفض</button>
+                    <button onClick={() => onApprove(job.id)} className="flex-1 text-sm flex items-center justify-center gap-2 bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900 p-2 rounded-md"><CheckCircleIcon className="w-5 h-5"/> موافقة</button>
+                    <button onClick={() => onReject(job.id)} className="flex-1 text-sm flex items-center justify-center gap-2 bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900 p-2 rounded-md"><XCircleIcon className="w-5 h-5"/> رفض</button>
                 </>
             )}
-            <button onClick={() => onDelete(job.id)} className="flex-1 text-sm flex items-center justify-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 p-2 rounded-md"><TrashIcon className="w-5 h-5"/> حذف</button>
+            <button onClick={() => onDelete(job.id)} className="flex-1 text-sm flex items-center justify-center gap-2 bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900 p-2 rounded-md"><TrashIcon className="w-5 h-5"/> حذف</button>
         </div>
     </div>
 );

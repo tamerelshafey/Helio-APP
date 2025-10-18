@@ -3,7 +3,7 @@ import type { Service } from '../../types';
 import {
     ClockIcon, MapPinIcon, PhoneIcon, ShareIcon,
     FacebookIcon, InstagramIcon, WhatsappIcon
-} from './Icons';
+} from '../Icons';
 import { useUIContext } from '../../context/UIContext';
 
 const ServiceInfoCard: React.FC<{ service: Service }> = ({ service }) => {

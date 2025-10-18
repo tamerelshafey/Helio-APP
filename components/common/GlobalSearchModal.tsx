@@ -5,7 +5,7 @@ import { useServicesContext } from '../../context/ServicesContext';
 import { usePropertiesContext } from '../../context/PropertiesContext';
 import { useContentContext } from '../../context/ContentContext';
 import type { SearchResult } from '../../types';
-import { MagnifyingGlassIcon, XMarkIcon, WrenchScrewdriverIcon, HomeModernIcon, NewspaperIcon, UserGroupIcon } from './Icons';
+import { MagnifyingGlassIcon, XMarkIcon, WrenchScrewdriverIcon, HomeModernIcon, NewspaperIcon, UserGroupIcon } from '../Icons';
 
 interface GlobalSearchModalProps {
     isOpen: boolean;

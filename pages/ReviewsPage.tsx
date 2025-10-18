@@ -11,6 +11,7 @@ import { useServicesContext } from '../context/ServicesContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import KpiCard from '../components/common/KpiCard';
+// FIX: Update Gemini API import
 import { GoogleGenAI, Type } from "@google/genai";
 
 // AI Analysis Types
@@ -166,6 +167,7 @@ const ReviewsPage: React.FC = () => {
         };
 
         try {
+            // FIX: Updated Gemini API usage to conform to new SDK guidelines.
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash",

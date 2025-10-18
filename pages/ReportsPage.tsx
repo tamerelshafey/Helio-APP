@@ -8,8 +8,10 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import type { Service, Property, News, Category } from '../types';
 import KpiCard from '../components/common/KpiCard';
 import TabButton from '../components/common/TabButton';
+import { useUIContext } from '../context/UIContext';
 
 const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({ data, categories }) => {
+    const { isDarkMode } = useUIContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<number>(0); // 0 for 'All'
     
@@ -25,6 +27,7 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
         const servicesWithReviews = filteredData.filter(s => s.reviews.length > 0);
         const avgRating = servicesWithReviews.length > 0 ? (servicesWithReviews.reduce((acc, s) => acc + s.rating, 0) / servicesWithReviews.length).toFixed(1) : '0.0';
         const totalReviews = filteredData.reduce((acc, s) => acc + s.reviews.length, 0);
+        // FIX: Completed the line to provide a fallback value if no favorite service is found.
         const topFav = [...filteredData].filter(s => s.isFavorite).sort((a,b) => b.rating - a.rating)[0]?.name || 'لا يوجد';
         return { total, avgRating, totalReviews, topFav };
     }, [filteredData]);
@@ -36,6 +39,10 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
         if (!searchTerm) return filteredData;
         return filteredData.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [filteredData, searchTerm]);
+
+    const tooltipStyle = isDarkMode 
+        ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
+        : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
 
     const Rating: React.FC<{ rating: number }> = ({ rating }) => (
         <div className="flex items-center">
@@ -61,7 +68,7 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
                             <XAxis type="number" stroke="#9ca3af" />
                             <YAxis type="category" dataKey="name" stroke="#9ca3af" tick={{ fontSize: 12 }} width={80} />
-                            <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
+                            <Tooltip contentStyle={tooltipStyle}/>
                             <Bar dataKey="التقييم" fill="#06b6d4" barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
@@ -73,7 +80,7 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
                             <XAxis type="number" stroke="#9ca3af" />
                             <YAxis type="category" dataKey="name" stroke="#9ca3af" tick={{ fontSize: 12 }} width={80} />
-                            <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
+                            <Tooltip contentStyle={tooltipStyle}/>
                             <Bar dataKey="المشاهدات" fill="#8b5cf6" barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
@@ -124,7 +131,9 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
 };
 
 const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
-     const [searchTerm, setSearchTerm] = useState('');
+    const { isDarkMode } = useUIContext();
+    const [searchTerm, setSearchTerm] = useState('');
+    
     const kpiData = useMemo(() => {
         const total = data.length;
         const forSale = data.filter(p => p.type === 'sale');
@@ -143,6 +152,10 @@ const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
         if (!searchTerm) return data;
         return data.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [data, searchTerm]);
+    
+    const tooltipStyle = isDarkMode 
+        ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
+        : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
 
     const TypeBadge: React.FC<{ type: 'sale' | 'rent' }> = ({ type }) => (
         <span className={`px-2 py-1 text-xs font-medium rounded-full ${ type === 'sale' ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'}`}>
@@ -165,7 +178,7 @@ const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
                             <Cell fill="#06b6d4" />
                             <Cell fill="#8b5cf6" />
                         </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
+                        <Tooltip contentStyle={tooltipStyle}/>
                         <Legend />
                     </PieChart>
                 </ResponsiveContainer>
@@ -207,7 +220,9 @@ const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
 };
 
 const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
+    const { isDarkMode } = useUIContext();
     const [searchTerm, setSearchTerm] = useState('');
+    
     const kpiData = useMemo(() => {
         const total = data.length;
         const totalViews = data.reduce((acc, n) => acc + n.views, 0);
@@ -221,6 +236,10 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
         if (!searchTerm) return data;
         return data.filter(n => n.title.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [data, searchTerm]);
+
+    const tooltipStyle = isDarkMode 
+        ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
+        : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -236,7 +255,7 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
                         <XAxis type="number" stroke="#9ca3af" />
                         <YAxis type="category" dataKey="name" stroke="#9ca3af" tick={{ fontSize: 12 }} width={150} />
-                        <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
+                        <Tooltip contentStyle={tooltipStyle}/>
                         <Bar dataKey="المشاهدات" fill="#ef4444" barSize={20} />
                     </BarChart>
                 </ResponsiveContainer>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, NewspaperIcon, EyeIcon } from '../components/common/Icons';
-import type { Ad, Service, Category, Property } from '../types';
+import type { Ad, Service, Category, Property, AdPlacement } from '../types';
 import { useContentContext } from '../context/ContentContext';
 import { useServicesContext } from '../context/ServicesContext';
 import { usePropertiesContext } from '../context/PropertiesContext';
@@ -42,6 +42,8 @@ const AdForm: React.FC<{
     const [externalUrl, setExternalUrl] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [placement, setPlacement] = useState<AdPlacement>('الرئيسية');
+
 
     // Referral state
     const [referralType, setReferralType] = useState<'none' | 'service' | 'property'>('none');
@@ -57,6 +59,7 @@ const AdForm: React.FC<{
             setExternalUrl(ad.externalUrl || '');
             setStartDate(ad.startDate || '');
             setEndDate(ad.endDate || '');
+            setPlacement(ad.placement || 'الرئيسية');
 
             const refType = ad.referralType || 'none';
             setReferralType(refType);
@@ -85,6 +88,7 @@ const AdForm: React.FC<{
             setSelectedCategory(undefined); setSelectedSubCategory(undefined);
             const today = new Date().toISOString().split('T')[0];
             setStartDate(today); setEndDate(today);
+            setPlacement('الرئيسية');
         }
     }, [ad, services, categories]);
 
@@ -103,6 +107,7 @@ const AdForm: React.FC<{
             imageUrl: images.length > 0 ? images[0] : undefined, 
             externalUrl, 
             startDate, endDate,
+            placement,
             referralType: referralType === 'none' ? undefined : referralType,
             referralId: referralType !== 'none' ? referralId : undefined,
         });
@@ -124,6 +129,14 @@ const AdForm: React.FC<{
             <div><label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">العنوان</label><input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"/></div>
             <div><label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">المحتوى</label><textarea id="content" value={content} onChange={(e) => setContent(e.target.value)} required rows={3} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"></textarea></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">تاريخ البدء</label><input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" /></div><div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">تاريخ الانتهاء</label><input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" /></div></div>
+            <div>
+                <label htmlFor="placement" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">مكان عرض الإعلان</label>
+                <select id="placement" value={placement} onChange={e => setPlacement(e.target.value as AdPlacement)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
+                    <option value="الرئيسية">الرئيسية</option>
+                    <option value="المجتمع">المجتمع</option>
+                    <option value="الخدمات">الخدمات</option>
+                </select>
+            </div>
             <ImageUploader initialImages={images} onImagesChange={setImages} multiple={false} label="صورة الإعلان (اختياري)" />
             <div><label htmlFor="externalUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">رابط خارجي (اختياري)</label><input type="url" id="externalUrl" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"/></div>
 
@@ -219,6 +232,7 @@ const AdsPage: React.FC = () => {
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
                                 <tr>
                                     <th scope="col" className="px-6 py-3">الإعلان</th>
+                                    <th scope="col" className="px-6 py-3">مكان العرض</th>
                                     <th scope="col" className="px-6 py-3">الحالة</th>
                                     <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
                                     <th scope="col" className="px-6 py-3">الإحالة</th>
@@ -229,6 +243,9 @@ const AdsPage: React.FC = () => {
                                 {ads.map(ad => (
                                     <tr key={ad.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                         <td className="px-6 py-4 max-w-sm"><div className="font-semibold text-gray-900 dark:text-white truncate">{ad.title}</div><div className="text-xs text-gray-500 dark:text-gray-400 truncate">{ad.content}</div></td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300">{ad.placement}</span>
+                                        </td>
                                         <td className="px-6 py-4"><StatusBadge startDate={ad.startDate} endDate={ad.endDate} /></td>
                                         <td className="px-6 py-4 text-xs font-mono">{ad.startDate} <br/> {ad.endDate}</td>
                                         <td className="px-6 py-4 text-xs">{getReferralInfo(ad)}</td>

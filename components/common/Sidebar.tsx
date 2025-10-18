@@ -1,7 +1,7 @@
 import React, { useState, memo, useMemo, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-    HomeIcon, UserGroupIcon, Cog6ToothIcon, MagnifyingGlassIcon, ArrowLeftOnRectangleIcon, Bars3Icon, XMarkIcon, 
+    HomeIcon, UserGroupIcon, Cog6ToothIcon, MagnifyingGlassIcon, Bars3Icon, XMarkIcon, 
     WrenchScrewdriverIcon, TruckIcon, ShieldExclamationIcon, NewspaperIcon, ChevronDownIcon, HeartIcon, ShoppingBagIcon, 
     BuildingStorefrontIcon, AcademicCapIcon, DevicePhoneMobileIcon, BoltIcon, SparklesIcon, CarIcon, Squares2X2Icon, 
     PaintBrushIcon, HomeModernIcon, BuildingLibraryIcon, InformationCircleIcon,
@@ -20,9 +20,9 @@ import {
     PencilSquareIcon,
     TagIcon,
     BriefcaseIcon,
-    ChatBubbleLeftRightIcon
+    ChatBubbleLeftRightIcon,
+    ArchiveBoxIcon
 } from './Icons';
-import { useServicesContext } from '../../context/ServicesContext';
 import { useAuthContext } from '../../context/AuthContext';
 import type { AdminUser, AdminUserRole } from '../../types';
 
@@ -66,46 +66,21 @@ const filterNavItemsBySearch = (items: NavItemData[], query: string): NavItemDat
 };
 
 const Sidebar: React.FC = () => {
-    const { categories } = useServicesContext();
-    const { logout, currentUser } = useAuthContext();
+    const { currentUser } = useAuthContext();
     const [isOpen, setIsOpen] = useState(false);
-    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ 'الخدمات الرئيسية': true });
+    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
     const [searchQuery, setSearchQuery] = useState('');
     const location = useLocation();
 
     const navItems = useMemo(() => {
-        const serviceCategories = categories.filter(c => c.name !== "المدينة والجهاز");
-
-        const serviceNavItems: NavItemData[] = serviceCategories.map(category => ({
-            name: category.name,
-            icon: getIcon(category.icon, { className: "w-5 h-5" }),
-            children: category.subCategories.map(sub => ({
-                name: sub.name,
-                icon: <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>, // Dot icon for sub-items
-                to: `/services/subcategory/${sub.id}`,
-            }))
-        }));
-        
         const serviceManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول ادارة الخدمات'];
         const contentManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول المحتوى'];
         const communityManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول المجتمع'];
 
-        const constructedNavItems: NavItemData[] = [
+        return [
             { name: "نظرة عامة", icon: <HomeIcon className="w-6 h-6" />, to: "/" },
             { name: "هيكل الخدمات", icon: <RectangleGroupIcon className="w-6 h-6" />, to: "/services-overview", roles: serviceManagerRoles },
             { name: "دليل خدمات جهاز المدينة", icon: <DocumentDuplicateIcon className="w-6 h-6 text-sky-400" />, to: "/city-services-guide", roles: serviceManagerRoles },
-        ];
-        
-        if (serviceNavItems.length > 0) {
-            constructedNavItems.push({
-                name: "الخدمات الرئيسية",
-                icon: <WrenchScrewdriverIcon className="w-6 h-6" />,
-                children: serviceNavItems,
-                roles: serviceManagerRoles
-            });
-        }
-
-        constructedNavItems.push(
             { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/properties", roles: ['مدير عام', 'مسؤول العقارات'] },
             { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/transportation", roles: ['مدير عام', 'مسؤول النقل'] },
             { name: "إدارة الطوارئ", icon: <ShieldExclamationIcon className="w-6 h-6" />, to: "/emergency", roles: serviceManagerRoles },
@@ -113,16 +88,13 @@ const Sidebar: React.FC = () => {
             { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: contentManagerRoles },
             { name: "إدارة الإعلانات", icon: <NewspaperIcon className="w-6 h-6 text-orange-400" />, to: "/ads", roles: contentManagerRoles },
             { name: "إدارة المجتمع", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/community", roles: communityManagerRoles },
-            { name: "البيع والشراء", icon: <TagIcon className="w-6 h-6" />, to: "/buy-sell", roles: communityManagerRoles },
-            { name: "الوظائف", icon: <BriefcaseIcon className="w-6 h-6" />, to: "/jobs", roles: communityManagerRoles },
             { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users", roles: ['مدير عام'] },
             { name: "إدارة المحتوى", icon: <PencilSquareIcon className="w-6 h-6" />, to: "/content-management", roles: ['مدير عام'] },
             { name: "إدارة التقييمات", icon: <ChatBubbleLeftRightIcon className="w-6 h-6" />, to: "/reviews", roles: serviceManagerRoles },
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/reports" },
             { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/audit-log", roles: ['مدير عام'] }
-        );
-        return constructedNavItems;
-    }, [categories]);
+        ];
+    }, []);
 
     useEffect(() => {
         if (isOpen) setIsOpen(false);
@@ -199,7 +171,7 @@ const Sidebar: React.FC = () => {
             );
         }
 
-        const linkClasses = `flex items-center space-x-3 rtl:space-x-reverse w-full px-3 py-2 rounded-md transition-colors text-sm font-medium ${paddingRightClass} text-right ${isActive ? 'bg-cyan-500 text-white font-semibold shadow' : `text-gray-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white`}`;
+        const linkClasses = `flex items-center space-x-3 rtl:space-x-reverse w-full px-3 py-3 rounded-md transition-colors text-sm font-medium ${paddingRightClass} text-right ${isActive ? 'bg-cyan-500 text-white font-semibold shadow' : `text-gray-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white`}`;
         
         return <Link ref={linkRef} to={item.to || '#'} className={linkClasses}>{item.icon}<span>{item.name}</span></Link>;
     };
@@ -212,32 +184,16 @@ const Sidebar: React.FC = () => {
             <div className="p-4">
                 <div className="relative"><span className="absolute inset-y-0 right-3 flex items-center pl-3"><MagnifyingGlassIcon className="w-5 h-5 text-gray-400" /></span><input type="text" placeholder="بحث..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-slate-100 dark:bg-slate-800 text-gray-800 dark:text-white rounded-lg py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"/></div>
             </div>
-            <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
+            <nav className="flex-1 px-2 py-2 space-y-1.5 overflow-y-auto">
                  {visibleNavItems.map((item) => <NavItem key={item.name} item={item} level={0} />)}
                  {visibleNavItems.length === 0 && searchQuery && <p className="text-center text-gray-400 p-4">لا توجد نتائج بحث.</p>}
             </nav>
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-                {currentUser && (
-                    <div className="flex items-center space-x-4 rtl:space-x-reverse">
-                        <img className="w-12 h-12 rounded-full object-cover" src={currentUser.avatar} alt={currentUser.name} loading="lazy" />
-                        <div><p className="font-semibold text-gray-800 dark:text-white">{currentUser.name}</p><p className="text-sm text-gray-500 dark:text-gray-400">{currentUser.email}</p></div>
-                    </div>
-                )}
-                 <button
-                    onClick={logout}
-                    className="w-full mt-4 flex items-center justify-center gap-2 bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 font-semibold px-4 py-2 rounded-lg hover:bg-cyan-500/20 transition-colors"
-                    title="العودة للصفحة الرئيسية وتسجيل الخروج"
-                >
-                    <ArrowLeftOnRectangleIcon className="w-5 h-5" />
-                    <span>العودة للموقع العام</span>
-                </button>
-            </div>
         </div>
     );
 
     return (
         <>
-            <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-800 text-white rounded-md">
+            <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-slate-800 text-gray-800 dark:text-white rounded-md shadow-lg">
                 {isOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
             </button>
             <aside className="w-72 hidden lg:block flex-shrink-0"><SidebarContent /></aside>

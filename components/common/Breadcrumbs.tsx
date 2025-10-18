@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { HomeIcon } from './Icons';
+import { HomeIcon } from '../Icons';
 
 const breadcrumbNameMap: { [key: string]: string } = {
   'services': 'الخدمات',
@@ -27,6 +27,9 @@ const breadcrumbNameMap: { [key: string]: string } = {
   'audit-log': 'سجل التدقيق',
   'content-management': 'إدارة المحتوى',
   'community': 'إدارة المجتمع',
+  'buy-sell': 'البيع والشراء',
+  'jobs': 'الوظائف',
+  'lost-and-found': 'المفقودات',
 };
 
 const Breadcrumbs: React.FC = () => {
@@ -55,11 +58,11 @@ const Breadcrumbs: React.FC = () => {
                 return (
                     <React.Fragment key={to}>
                         {isLast ? (
-                            <span className="font-semibold text-gray-700" aria-current="page">
+                            <span className="font-semibold text-gray-700 dark:text-gray-200" aria-current="page">
                                 {displayName}
                             </span>
                         ) : (
-                            <Link to={to} className="text-gray-500 hover:text-cyan-500 transition-colors">
+                            <Link to={to} className="text-gray-500 dark:text-gray-400 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">
                                 {displayName}
                             </Link>
                         )}

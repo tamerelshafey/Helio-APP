@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 import { useAppContext } from './AppContext';
+import { useUIContext } from './UIContext';
 import { mockCategories, mockServices } from '../data/mock-data';
-import type { Category, Service, ServicesContextType } from '../types';
+import type { Category, Service, ServicesContextType, SubCategory } from '../types';
 
 const ServicesContext = createContext<ServicesContextType | undefined>(undefined);
 
 export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { logActivity } = useAppContext();
+    const { showToast } = useUIContext();
 
     const [categories, setCategories] = useState<Category[]>(mockCategories);
     const [services, setServices] = useState<Service[]>(mockServices);
@@ -96,6 +98,85 @@ export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }
             s.id === serviceId ? { ...s, isFavorite: !s.isFavorite } : s
         ));
     }, []);
+    
+    const handleSaveCategory = useCallback((categoryData: Omit<Category, 'id' | 'subCategories'> & { id?: number }) => {
+        const isNew = !categoryData.id;
+        setCategories(prev => {
+            if (categoryData.id) {
+                return prev.map(c => c.id === categoryData.id ? { ...c, name: categoryData.name, icon: categoryData.icon } : c);
+            } else {
+                const newCategory: Category = {
+                    ...categoryData,
+                    id: Math.max(...prev.map(c => c.id), 0) + 1,
+                    subCategories: [],
+                };
+                return [...prev, newCategory];
+            }
+        });
+        logActivity(isNew ? 'إضافة فئة رئيسية' : 'تعديل فئة رئيسية', `تم حفظ الفئة: "${categoryData.name}"`);
+    }, [logActivity]);
+
+    const handleDeleteCategory = useCallback((categoryId: number) => {
+        const category = categories.find(c => c.id === categoryId);
+        if (!category) return;
+        if (category.subCategories.length > 0) {
+            showToast('لا يمكن حذف الفئة لأنها تحتوي على فئات فرعية. يرجى حذف الفئات الفرعية أولاً.', 'error');
+            return;
+        }
+        setCategories(prev => prev.filter(c => c.id !== categoryId));
+        logActivity('حذف فئة رئيسية', `تم حذف الفئة: "${category.name}"`);
+    }, [categories, logActivity, showToast]);
+    
+    const handleSaveSubCategory = useCallback((categoryId: number, subCategoryData: Omit<SubCategory, 'id'> & { id?: number }) => {
+        const isNew = !subCategoryData.id;
+        setCategories(prev => prev.map(cat => {
+            if (cat.id === categoryId) {
+                if (subCategoryData.id) { // Edit
+                    return { ...cat, subCategories: cat.subCategories.map(sub => sub.id === subCategoryData.id ? { ...sub, ...subCategoryData } : sub) };
+                } else { // Add
+                    const newSubCategory: SubCategory = { ...subCategoryData, id: Date.now() }; // Using Date.now for simplicity
+                    return { ...cat, subCategories: [...cat.subCategories, newSubCategory] };
+                }
+            }
+            return cat;
+        }));
+        const categoryName = categories.find(c => c.id === categoryId)?.name;
+        logActivity(isNew ? 'إضافة فئة فرعية' : 'تعديل فئة فرعية', `تم حفظ الفئة الفرعية "${subCategoryData.name}" في "${categoryName}"`);
+    }, [categories, logActivity]);
+    
+    const handleDeleteSubCategory = useCallback((categoryId: number, subCategoryId: number) => {
+        const hasServices = services.some(s => s.subCategoryId === subCategoryId);
+        if (hasServices) {
+            showToast('لا يمكن حذف الفئة الفرعية لأنها تحتوي على خدمات. يرجى نقل أو حذف الخدمات أولاً.', 'error');
+            return;
+        }
+        const subCategory = categories.find(c => c.id === categoryId)?.subCategories.find(sc => sc.id === subCategoryId);
+        setCategories(prev => prev.map(cat => {
+            if (cat.id === categoryId) {
+                return { ...cat, subCategories: cat.subCategories.filter(sub => sub.id !== subCategoryId) };
+            }
+            return cat;
+        }));
+        if (subCategory) {
+            logActivity('حذف فئة فرعية', `تم حذف الفئة الفرعية: "${subCategory.name}"`);
+        }
+    }, [services, categories, logActivity, showToast]);
+
+    const handleReorderCategories = useCallback((reorderedCategories: Category[]) => {
+        setCategories(reorderedCategories);
+        logActivity('إعادة ترتيب الفئات', 'تم تغيير ترتيب الفئات الرئيسية.');
+    }, [logActivity]);
+
+    const handleReorderSubCategories = useCallback((categoryId: number, reorderedSubCategories: SubCategory[]) => {
+        setCategories(prev => prev.map(cat => 
+            cat.id === categoryId 
+            ? { ...cat, subCategories: reorderedSubCategories }
+            : cat
+        ));
+        const categoryName = categories.find(c => c.id === categoryId)?.name;
+        logActivity('إعادة ترتيب الفئات الفرعية', `تم تغيير ترتيب الفئات الفرعية داخل "${categoryName}".`);
+    }, [categories, logActivity]);
+
 
     const value = useMemo(() => ({
         categories,
@@ -106,6 +187,12 @@ export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }
         handleSaveService,
         handleDeleteService,
         handleToggleFavorite,
+        handleSaveCategory,
+        handleDeleteCategory,
+        handleSaveSubCategory,
+        handleDeleteSubCategory,
+        handleReorderCategories,
+        handleReorderSubCategories,
     }), [
         categories,
         services,
@@ -115,6 +202,12 @@ export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }
         handleSaveService,
         handleDeleteService,
         handleToggleFavorite,
+        handleSaveCategory,
+        handleDeleteCategory,
+        handleSaveSubCategory,
+        handleDeleteSubCategory,
+        handleReorderCategories,
+        handleReorderSubCategories,
     ]);
 
     return <ServicesContext.Provider value={value}>{children}</ServicesContext.Provider>;

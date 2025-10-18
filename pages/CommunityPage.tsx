@@ -1,249 +1,199 @@
 import React, { useState, useMemo } from 'react';
+import { useCommunityContext } from '../context/CommunityContext';
 import { useUserManagementContext } from '../context/UserManagementContext';
 import { useUIContext } from '../context/UIContext';
-import { useCommunityContext } from '../context/CommunityContext';
-import type { CommunityPost, CommunityComment, AppUser } from '../types';
-import {
-    ArrowLeftIcon,
-    ChatBubbleOvalLeftIcon,
-    UsersIcon,
-    TrashIcon,
-    PinIcon,
-    MapPinSolidIcon,
-    ChatBubbleLeftRightIcon,
-    ShareIcon
-} from '../components/common/Icons';
-import { useNavigate } from 'react-router-dom';
+import type { CommunityPost, DiscussionCircle, CommunityComment, DiscussionCircleCategory } from '../types';
+import { ChatBubbleOvalLeftIcon, UserGroupIcon, PlusIcon, PencilSquareIcon, TrashIcon, ArrowLeftIcon } from '../components/common/Icons';
 import KpiCard from '../components/common/KpiCard';
 import Modal from '../components/common/Modal';
 
-const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString('ar-EG', {
-        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
-};
+// Main Page Component
+const CommunityPage: React.FC = () => {
+    const { discussionCircles, communityPosts, handleSaveCircle, handleDeleteCircle, handleSavePost, handleDeletePost } = useCommunityContext();
+    const [selectedCircle, setSelectedCircle] = useState<DiscussionCircle | null>(null);
+    const [modal, setModal] = useState<{ type: 'circle' | 'post'; data: any } | null>(null);
+    const { showToast } = useUIContext();
 
-const CommentsModal: React.FC<{
-    post: CommunityPost;
-    isOpen: boolean;
-    onClose: () => void;
-    onDeleteComment: (postId: number, commentId: number) => void;
-    getUserById: (id: number) => AppUser | undefined;
-}> = ({ post, isOpen, onClose, onDeleteComment, getUserById }) => {
+    const postCounts = useMemo(() => {
+        const counts: Record<number, number> = {};
+        for (const post of communityPosts) {
+            counts[post.circleId] = (counts[post.circleId] || 0) + 1;
+        }
+        return counts;
+    }, [communityPosts]);
+
+    const categorizedCircles = useMemo(() => {
+        const categories: Record<DiscussionCircleCategory, DiscussionCircle[]> = {
+            'عام': [],
+            'خدمات مجتمعية': [],
+            'أحياء سكنية': [],
+            'كمبوندات': [],
+        };
+        discussionCircles.forEach(circle => {
+            if (categories[circle.category]) {
+                categories[circle.category].push(circle);
+            }
+        });
+        return categories;
+    }, [discussionCircles]);
+
+    const confirmDeleteCircle = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذه الدائرة؟ سيتم نقل منشوراتها إلى "نقاش عام".')) {
+            handleDeleteCircle(id);
+            showToast('تم حذف الدائرة بنجاح!');
+        }
+    };
+    
+    if (selectedCircle) {
+        return <PostsView circle={selectedCircle} onBack={() => setSelectedCircle(null)} />;
+    }
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`تعليقات على منشور "${post.content.substring(0, 20)}..."`}>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
-                {post.comments.length > 0 ? post.comments.map(comment => {
-                    const author = getUserById(comment.authorId);
-                    return (
-                        <div key={comment.id} className="flex items-start gap-3 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg">
-                            <img src={author?.avatar} alt={author?.name} className="w-8 h-8 rounded-full object-cover" />
-                            <div className="flex-grow">
-                                <div className="flex justify-between items-center">
-                                    <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">{author?.name || 'مستخدم محذوف'}</p>
-                                    <button onClick={() => onDeleteComment(post.id, comment.id)} className="p-1 text-red-500 opacity-50 hover:opacity-100" title="حذف التعليق">
-                                        <TrashIcon className="w-4 h-4" />
-                                    </button>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">{comment.content}</p>
+        <div className="animate-fade-in space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+                    <ChatBubbleOvalLeftIcon className="w-8 h-8" />
+                    دوائر النقاش
+                </h1>
+                <button onClick={() => setModal({ type: 'circle', data: null })} className="flex items-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600">
+                    <PlusIcon className="w-5 h-5"/> إضافة دائرة
+                </button>
+            </div>
+            
+            <div className="space-y-8">
+                {(Object.keys(categorizedCircles) as DiscussionCircleCategory[]).map(category => (
+                    categorizedCircles[category].length > 0 && (
+                        <div key={category}>
+                            <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-4 border-r-4 border-cyan-500 pr-4">{category}</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {categorizedCircles[category].map(circle => (
+                                    <div key={circle.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg group relative">
+                                        <div onClick={() => setSelectedCircle(circle)} className="cursor-pointer">
+                                            <h3 className="font-bold text-lg text-gray-800 dark:text-white">{circle.name}</h3>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 h-10">{circle.description}</p>
+                                            <p className="text-xs font-semibold text-cyan-500 mt-2">{postCounts[circle.id] || 0} منشور</p>
+                                        </div>
+                                        <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => setModal({ type: 'circle', data: circle })} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-blue-500"><PencilSquareIcon className="w-4 h-4" /></button>
+                                            <button onClick={() => confirmDeleteCircle(circle.id)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-red-500"><TrashIcon className="w-4 h-4" /></button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )
-                }) : <p className="text-center text-gray-500 py-8">لا توجد تعليقات على هذا المنشور.</p>}
+                ))}
             </div>
-        </Modal>
+
+            {modal?.type === 'circle' && (
+                <Modal isOpen={true} onClose={() => setModal(null)} title={modal.data ? 'تعديل دائرة النقاش' : 'إضافة دائرة نقاش'}>
+                    <CircleForm
+                        circle={modal.data}
+                        onSave={(data) => {
+                            handleSaveCircle(data);
+                            showToast('تم حفظ الدائرة بنجاح!');
+                            setModal(null);
+                        }}
+                        onClose={() => setModal(null)}
+                    />
+                </Modal>
+            )}
+        </div>
     );
 };
 
-
-const PollDisplay: React.FC<{ post: CommunityPost }> = ({ post }) => {
-    const { handleVote } = useCommunityContext();
-    const totalVotes = useMemo(() => post.pollOptions?.reduce((sum, option) => sum + option.votes, 0) || 0, [post.pollOptions]);
-
-    return (
-        <div className="my-4 space-y-3">
-            {post.pollOptions?.map((option, index) => {
-                const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
-                return (
-                    <div key={index}>
-                        <div className="flex justify-between items-center mb-1 text-sm font-medium">
-                            <span className="text-gray-700 dark:text-gray-200">{option.text}</span>
-                            <span className="text-gray-500 dark:text-gray-400">{option.votes} صوت</span>
-                        </div>
-                        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-6 relative overflow-hidden">
-                            <div className="bg-cyan-500 h-6 rounded-full transition-all duration-500" style={{ width: `${percentage}%` }}></div>
-                             <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white mix-blend-lighten">{Math.round(percentage)}%</span>
-                        </div>
-                         <button onClick={() => handleVote(post.id, index)} className="mt-2 text-xs text-cyan-600 dark:text-cyan-400 font-semibold hover:underline">
-                            صوّت لهذا الخيار
-                        </button>
-                    </div>
-                )
-            })}
-        </div>
-    );
-}
-
-const CommunityPage: React.FC = () => {
-    const navigate = useNavigate();
+// Posts View for a selected circle
+const PostsView: React.FC<{ circle: DiscussionCircle; onBack: () => void }> = ({ circle, onBack }) => {
+    const { communityPosts, handleDeletePost } = useCommunityContext();
     const { users } = useUserManagementContext();
-    const { communityPosts, handleDeletePost, handleTogglePostPin, handleDeleteComment } = useCommunityContext();
     const { showToast } = useUIContext();
 
-    const [isCommentsModalOpen, setCommentsModalOpen] = useState(false);
-    const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
+    const postsInCircle = useMemo(() => 
+        communityPosts
+            .filter(p => p.circleId === circle.id)
+            .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()), 
+        [communityPosts, circle.id]
+    );
+    const getUser = (id: number) => users.find(u => u.id === id);
 
-    const getUserById = (id: number): AppUser | undefined => users.find(u => u.id === id);
-
-    const sortedPosts = useMemo(() => {
-        return [...communityPosts].sort((a, b) => {
-            if (a.isPinned && !b.isPinned) return -1;
-            if (!a.isPinned && b.isPinned) return 1;
-            return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-        });
-    }, [communityPosts]);
-    
-    const stats = useMemo(() => {
-        const totalPosts = communityPosts.length;
-        const totalComments = communityPosts.reduce((acc, post) => acc + post.comments.length, 0);
-
-        const activity = communityPosts.reduce((acc, post) => {
-            acc[post.authorId] = (acc[post.authorId] || 0) + 1; // 1 point for a post
-            post.comments.forEach(c => {
-                 acc[c.authorId] = (acc[c.authorId] || 0) + 0.5; // 0.5 points for a comment
-            });
-            return acc;
-        }, {} as Record<number, number>);
-
-        const mostActiveUserId = Object.keys(activity).length > 0 ? parseInt(Object.keys(activity).reduce((a, b) => activity[parseInt(a)] > activity[parseInt(b)] ? a : b)) : null;
-        const mostActiveUser = mostActiveUserId ? getUserById(mostActiveUserId)?.name : 'لا يوجد';
-
-        return { totalPosts, totalComments, mostActiveUser };
-    }, [communityPosts, users]);
-
-
-    const confirmDeletePost = (postId: number) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا المنشور؟')) {
-            handleDeletePost(postId);
-            showToast('تم حذف المنشور بنجاح!');
-        }
-    };
-
-    const togglePin = (postId: number) => {
-        const isPinned = communityPosts.find(p => p.id === postId)?.isPinned;
-        handleTogglePostPin(postId);
-        showToast(isPinned ? 'تم إلغاء تثبيت المنشور.' : 'تم تثبيت المنشور بنجاح!');
-    };
-
-    const confirmDeleteComment = (postId: number, commentId: number) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا التعليق؟')) {
-            handleDeleteComment(postId, commentId);
-            showToast('تم حذف التعليق بنجاح!');
-        }
-    };
-
-    const handleOpenCommentsModal = (post: CommunityPost) => {
-        setSelectedPost(post);
-        setCommentsModalOpen(true);
-    };
-
-    const handleShare = async (post: CommunityPost) => {
-        const shareData = {
-            title: `منشور من مجتمع هيليو`,
-            text: `${post.content.substring(0, 150)}...`,
-            url: `https://helio.app/post/${post.id}` // Simulated public URL
-        };
-        try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                await navigator.clipboard.writeText(shareData.url);
-                showToast('تم نسخ رابط المنشور بنجاح!');
-            }
-        } catch (error) {
-            console.error('Error sharing post:', error);
-            showToast('فشلت المشاركة.', 'error');
+    const confirmDeletePost = (id: number) => {
+        if(window.confirm('هل أنت متأكد من حذف هذا المنشور؟')) {
+            handleDeletePost(id);
+            showToast("تم حذف المنشور.");
         }
     };
 
     return (
-        <div className="animate-fade-in">
-            <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
-                <ArrowLeftIcon className="w-5 h-5" />
-                <span>العودة إلى لوحة التحكم</span>
-            </button>
-            
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">إدارة المجتمع</h1>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <KpiCard title="إجمالي المنشورات" value={stats.totalPosts.toString()} icon={<ChatBubbleOvalLeftIcon className="w-8 h-8 text-cyan-400" />} />
-                <KpiCard title="إجمالي التعليقات" value={stats.totalComments.toString()} icon={<ChatBubbleLeftRightIcon className="w-8 h-8 text-purple-400" />} />
-                <KpiCard title="المستخدم الأكثر تفاعلاً" value={stats.mostActiveUser} icon={<UsersIcon className="w-8 h-8 text-amber-400" />} />
-            </div>
-
-            <div className="space-y-6">
-                {sortedPosts.map(post => {
-                    const author = getUserById(post.authorId);
+        <div className="animate-fade-in space-y-6">
+            <button onClick={onBack} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline"><ArrowLeftIcon className="w-5 h-5"/><span>العودة لدوائر النقاش</span></button>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">منشورات: {circle.name}</h1>
+            <div className="space-y-4">
+                {postsInCircle.map(post => {
+                    const author = getUser(post.authorId);
                     return (
-                        <div key={post.id} className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 relative border-2 ${post.isPinned ? 'border-cyan-500' : 'border-transparent'}`}>
-                            {post.isPinned && (
-                                <div className="absolute top-4 left-4 flex items-center gap-1 text-xs text-cyan-600 dark:text-cyan-400 font-semibold bg-cyan-100 dark:bg-cyan-900/50 px-2 py-1 rounded-full">
-                                    <MapPinSolidIcon className="w-4 h-4" />
-                                    <span>مثبت</span>
-                                </div>
-                            )}
-
-                            <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-4">
-                                    <img src={author?.avatar} alt={author?.name} className="w-12 h-12 rounded-full object-cover" />
+                        <div key={post.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md">
+                            <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-3">
+                                    <img src={author?.avatar} alt={author?.name} className="w-10 h-10 rounded-full object-cover" />
                                     <div>
-                                        <p className="font-bold text-gray-900 dark:text-white">{author?.name || 'مستخدم محذوف'}</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">{formatTimestamp(post.timestamp)}</p>
+                                        <p className="font-semibold text-gray-800 dark:text-white">{author?.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(post.timestamp).toLocaleString()}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => handleShare(post)} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-full" title="مشاركة">
-                                        <ShareIcon className="w-5 h-5" />
-                                    </button>
-                                    <button onClick={() => togglePin(post.id)} className={`p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 ${post.isPinned ? 'text-cyan-500' : 'text-gray-400'}`} title={post.isPinned ? "إلغاء التثبيت" : "تثبيت"}>
-                                        <PinIcon className="w-5 h-5" />
-                                    </button>
-                                    <button onClick={() => confirmDeletePost(post.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full" title="حذف المنشور">
-                                        <TrashIcon className="w-5 h-5" />
-                                    </button>
-                                </div>
+                                <button onClick={() => confirmDeletePost(post.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full"><TrashIcon className="w-5 h-5"/></button>
                             </div>
-                            
-                            <p className="my-4 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{post.content}</p>
-
-                             {post.type === 'poll' && <PollDisplay post={post} />}
-
-                            {post.imageUrl && (
-                                <div className="my-4">
-                                    <img src={post.imageUrl} alt="مرفق المنشور" className="max-w-full md:max-w-md mx-auto rounded-lg shadow-md" />
-                                </div>
-                            )}
-
-                            <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4 flex justify-between items-center">
-                                <span className="text-sm text-gray-500">{post.comments.length} تعليقات</span>
-                                <button onClick={() => handleOpenCommentsModal(post)} className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 hover:underline">
-                                    إدارة التعليقات
-                                </button>
+                            <p className="mt-3 text-gray-700 dark:text-gray-300">{post.content}</p>
+                            {post.imageUrl && <img src={post.imageUrl} className="mt-2 rounded-lg max-h-80 w-auto"/>}
+                            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 flex gap-4">
+                                <span>{post.likes} إعجاب</span>
+                                <span>{post.comments.length} تعليق</span>
+                                {post.reports && post.reports.length > 0 && <span className="text-red-500 font-bold">{post.reports.length} بلاغ</span>}
                             </div>
                         </div>
                     );
                 })}
+                 {postsInCircle.length === 0 && <p className="text-center py-10 text-gray-500">لا توجد منشورات في هذه الدائرة بعد.</p>}
             </div>
-
-            {sortedPosts.length === 0 && (
-                <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-lg">
-                    <p className="text-gray-500">لا توجد منشورات في المجتمع حالياً.</p>
-                </div>
-            )}
-            
-            {selectedPost && <CommentsModal post={selectedPost} isOpen={isCommentsModalOpen} onClose={() => setCommentsModalOpen(false)} onDeleteComment={confirmDeleteComment} getUserById={getUserById} />}
         </div>
     );
 };
+
+
+// Form for Circle
+const CircleForm: React.FC<{ circle: DiscussionCircle | null; onSave: (data: any) => void; onClose: () => void; }> = ({ circle, onSave, onClose }) => {
+    const [name, setName] = useState(circle?.name || '');
+    const [description, setDescription] = useState(circle?.description || '');
+    const [category, setCategory] = useState<DiscussionCircleCategory>(circle?.category || 'عام');
+    const categories: DiscussionCircleCategory[] = ['عام', 'خدمات مجتمعية', 'أحياء سكنية', 'كمبوندات'];
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave({ id: circle?.id, name, description, category });
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium mb-1">اسم الدائرة</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2" />
+            </div>
+            <div>
+                <label className="block text-sm font-medium mb-1">الوصف</label>
+                <textarea value={description} onChange={e => setDescription(e.target.value)} required rows={3} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2" />
+            </div>
+             <div>
+                <label className="block text-sm font-medium mb-1">التصنيف</label>
+                <select value={category} onChange={e => setCategory(e.target.value as DiscussionCircleCategory)} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2">
+                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+                <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold bg-slate-200 dark:bg-slate-600 rounded-md">إلغاء</button>
+                <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md">حفظ</button>
+            </div>
+        </form>
+    );
+};
+
 
 export default CommunityPage;
