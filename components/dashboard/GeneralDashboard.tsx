@@ -20,7 +20,7 @@ const GeneralDashboard: React.FC = () => {
   const { properties } = usePropertiesContext();
   const { services, categories } = useServicesContext();
   const { users } = useUserManagementContext();
-  const { communityPosts, discussionCircles } = useCommunityContext();
+  const { communityPosts } = useCommunityContext();
   
   const thirtyDaysAgo = React.useMemo(() => {
       const date = new Date();
@@ -39,25 +39,20 @@ const GeneralDashboard: React.FC = () => {
       const newNewsAndNotifsCount = news.filter(n => new Date(n.date) >= thirtyDaysAgo).length + notifications.filter(n => new Date(n.startDate) >= thirtyDaysAgo).length;
       const newPostsCount = communityPosts.filter(p => new Date(p.timestamp) >= thirtyDaysAgo).length;
       
-      const buySellCircle = discussionCircles.find(c => c.name === 'البيع والشراء');
-      const buySellPosts = buySellCircle ? communityPosts.filter(p => p.circleId === buySellCircle.id) : [];
-      const newBuySellPostsCount = buySellCircle ? buySellPosts.filter(p => new Date(p.timestamp) >= thirtyDaysAgo).length : 0;
-      
       return [
         { title: "إجمالي الخدمات", value: services.length.toString(), change: `+${newServicesCount}`, changeLabel: "آخر 30 يوم", icon: <WrenchScrewdriverIcon className="w-8 h-8 text-cyan-400" />, to: firstServiceLink, changeType: 'positive' as const },
         { title: "إجمالي العقارات", value: properties.length.toString(), change: `+${newPropertiesCount}`, changeLabel: "آخر 30 يوم", icon: <HomeModernIcon className="w-8 h-8 text-amber-400" />, to: "/properties", changeType: 'positive' as const },
         { title: "إجمالي المستخدمين", value: users.length.toString(), change: `+${newUsersCount}`, changeLabel: "آخر 30 يوم", icon: <UserGroupIcon className="w-8 h-8 text-lime-400" />, to: "/users", changeType: 'positive' as const },
         { title: "منشورات المجتمع", value: communityPosts.length.toString(), change: `+${newPostsCount}`, changeLabel: "آخر 30 يوم", icon: <ChatBubbleOvalLeftIcon className="w-8 h-8 text-fuchsia-400" />, to: "/community", changeType: 'positive' as const },
-        { title: "البيع والشراء", value: buySellPosts.length.toString(), change: `+${newBuySellPostsCount}`, changeLabel: "آخر 30 يوم", icon: <TagIcon className="w-8 h-8 text-teal-400" />, to: "/community", changeType: 'positive' as const },
         { title: "الأخبار والإشعارات", value: (news.length + notifications.length).toString(), change: `+${newNewsAndNotifsCount}`, changeLabel: "آخر 30 يوم", icon: <NewspaperIcon className="w-8 h-8 text-indigo-400" />, to: "/news", changeType: 'positive' as const },
       ];
-  }, [categories, properties, news, notifications, services, users, communityPosts, discussionCircles, thirtyDaysAgo, firstServiceLink]);
+  }, [categories, properties, news, notifications, services, users, communityPosts, thirtyDaysAgo, firstServiceLink]);
 
 
   return (
     <>
       {/* KPI Cards Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
         {kpiData.map((kpi, index) => (
           <Link to={kpi.to} key={index} className="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-cyan-400 rounded-xl">
             <KpiCard 

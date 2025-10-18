@@ -1,14 +1,21 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContentContext } from '../context/ContentContext';
 import { useServicesContext } from '../context/ServicesContext';
 import { usePropertiesContext } from '../context/PropertiesContext';
-import { ArrowLeftIcon, StarIcon, EyeIcon, ChatBubbleOvalLeftIcon, WrenchScrewdriverIcon, ChartPieIcon, ChartBarIcon, HomeModernIcon, NewspaperIcon, MagnifyingGlassIcon, StarIconOutline } from '../components/common/Icons';
+import { useAuthContext } from '../context/AuthContext';
+import { useTransportationContext } from '../context/TransportationContext';
+import { 
+    ArrowLeftIcon, StarIcon, EyeIcon, ChatBubbleOvalLeftIcon, WrenchScrewdriverIcon, ChartPieIcon, 
+    ChartBarIcon, HomeModernIcon, NewspaperIcon, MagnifyingGlassIcon, StarIconOutline, DocumentChartBarIcon,
+    TruckIcon, UserGroupIcon, MapPinIcon, CalendarDaysIcon
+} from '../components/common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import type { Service, Property, News, Category } from '../types';
+import type { Service, Property, News, Category, AdminUserRole, Driver, ExternalRoute } from '../types';
 import KpiCard from '../components/common/KpiCard';
 import TabButton from '../components/common/TabButton';
 import { useUIContext } from '../context/UIContext';
+import EmptyState from '../components/common/EmptyState';
 
 const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({ data, categories }) => {
     const { isDarkMode } = useUIContext();
@@ -16,10 +23,14 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
     const [categoryFilter, setCategoryFilter] = useState<number>(0); // 0 for 'All'
     
     const filteredData = useMemo(() => {
-        if (categoryFilter === 0) return data;
-        const subCategoryIds = categories.find(c => c.id === categoryFilter)?.subCategories.map(sc => sc.id) || [];
-        return data.filter(s => subCategoryIds.includes(s.subCategoryId));
-    }, [data, categoryFilter, categories]);
+        let servicesToFilter = data;
+        if (categoryFilter !== 0) {
+            const subCategoryIds = categories.find(c => c.id === categoryFilter)?.subCategories.map(sc => sc.id) || [];
+            servicesToFilter = data.filter(s => subCategoryIds.includes(s.subCategoryId));
+        }
+        if (!searchTerm) return servicesToFilter;
+        return servicesToFilter.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }, [data, categoryFilter, searchTerm, categories]);
 
     const kpiData = useMemo(() => {
         if (filteredData.length === 0) return { total: 0, avgRating: 'N/A', totalReviews: 0, topFav: 'N/A' };
@@ -27,18 +38,12 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
         const servicesWithReviews = filteredData.filter(s => s.reviews.length > 0);
         const avgRating = servicesWithReviews.length > 0 ? (servicesWithReviews.reduce((acc, s) => acc + s.rating, 0) / servicesWithReviews.length).toFixed(1) : '0.0';
         const totalReviews = filteredData.reduce((acc, s) => acc + s.reviews.length, 0);
-        // FIX: Completed the line to provide a fallback value if no favorite service is found.
         const topFav = [...filteredData].filter(s => s.isFavorite).sort((a,b) => b.rating - a.rating)[0]?.name || 'لا يوجد';
         return { total, avgRating, totalReviews, topFav };
     }, [filteredData]);
 
     const topRated = useMemo(() => [...filteredData].sort((a, b) => b.rating - a.rating).slice(0, 5).map(s => ({ name: s.name, التقييم: s.rating })), [filteredData]);
     const mostViewed = useMemo(() => [...filteredData].sort((a, b) => b.views - a.views).slice(0, 5).map(s => ({ name: s.name, المشاهدات: s.views })), [filteredData]);
-
-    const searchedData = useMemo(() => {
-        if (!searchTerm) return filteredData;
-        return filteredData.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }, [filteredData, searchTerm]);
 
     const tooltipStyle = isDarkMode 
         ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
@@ -112,7 +117,7 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
                             </tr>
                         </thead>
                         <tbody>
-                            {searchedData.map(service => (
+                            {filteredData.map(service => (
                                 <tr key={service.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                     <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{service.name}</td>
                                     <td className="px-6 py-4"><Rating rating={service.rating} /></td>
@@ -123,7 +128,7 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
                             ))}
                         </tbody>
                     </table>
-                    {searchedData.length === 0 && <div className="text-center py-8 text-gray-500 dark:text-gray-400">لا توجد بيانات تطابق البحث.</div>}
+                    {filteredData.length === 0 && <div className="text-center py-8 text-gray-500 dark:text-gray-400">لا توجد بيانات تطابق البحث.</div>}
                 </div>
             </div>
         </div>
@@ -296,13 +301,142 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
     );
 };
 
+const TransportationReports: React.FC = () => {
+    const { transportation } = useTransportationContext();
+    const { internalDrivers, externalRoutes, weeklySchedule, scheduleOverrides } = transportation;
+    const { isDarkMode } = useUIContext();
+    const [driverSearch, setDriverSearch] = useState('');
+
+    const kpiData = useMemo(() => {
+        const totalDrivers = internalDrivers.length;
+        const totalRoutes = externalRoutes.length;
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const recentOverrides = scheduleOverrides.filter(o => new Date(o.date) >= thirtyDaysAgo).length;
+        return { totalDrivers, totalRoutes, recentOverrides };
+    }, [internalDrivers, externalRoutes, scheduleOverrides]);
+
+    const weeklyDistribution = useMemo(() => {
+        return weeklySchedule.map(day => ({
+            name: day.day,
+            'عدد السائقين': day.drivers.length
+        }));
+    }, [weeklySchedule]);
+
+    const filteredDrivers = useMemo(() => {
+        if (!driverSearch) return internalDrivers;
+        return internalDrivers.filter(d => 
+            d.name.toLowerCase().includes(driverSearch.toLowerCase()) ||
+            d.phone.includes(driverSearch)
+        );
+    }, [internalDrivers, driverSearch]);
+    
+    const tooltipStyle = isDarkMode 
+        ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
+        : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <KpiCard title="إجمالي السائقين الداخليين" value={kpiData.totalDrivers.toString()} icon={<UserGroupIcon className="w-6 h-6 text-cyan-500"/>} />
+                <KpiCard title="إجمالي الخطوط الخارجية" value={kpiData.totalRoutes.toString()} icon={<MapPinIcon className="w-6 h-6 text-purple-500"/>} />
+                <KpiCard title="أيام الجداول المخصصة (آخر 30 يوم)" value={kpiData.recentOverrides.toString()} icon={<CalendarDaysIcon className="w-6 h-6 text-amber-500"/>} />
+            </div>
+            
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300">توزيع السائقين على مدار الأسبوع (القالب)</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={weeklyDistribution} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
+                        <XAxis dataKey="name" stroke="#9ca3af" />
+                        <YAxis stroke="#9ca3af" allowDecimals={false} />
+                        <Tooltip contentStyle={tooltipStyle}/>
+                        <Legend />
+                        <Bar dataKey="عدد السائقين" fill="#16a34a" />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-semibold text-gray-700 dark:text-gray-300">قائمة السائقين</h3>
+                        <div className="relative">
+                            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2" />
+                            <input type="text" placeholder="بحث..." value={driverSearch} onChange={(e) => setDriverSearch(e.target.value)} className="w-full sm:w-48 bg-slate-100 dark:bg-slate-700 rounded-lg py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
+                        </div>
+                    </div>
+                    <div className="overflow-y-auto max-h-80">
+                        <table className="w-full text-sm text-right">
+                            <tbody>
+                                {filteredDrivers.map(driver => (
+                                    <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
+                                        <td className="p-3">
+                                            <div className="flex items-center gap-3">
+                                                <img src={driver.avatar} alt={driver.name} className="w-8 h-8 rounded-full" />
+                                                <span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-3 text-left font-mono">{driver.phone}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {filteredDrivers.length === 0 && <p className="text-center py-4 text-gray-500">لا يوجد سائقون.</p>}
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                    <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300">قائمة الخطوط الخارجية</h3>
+                    <div className="overflow-y-auto max-h-80">
+                       <ul className="space-y-3">
+                         {externalRoutes.map(route => (
+                            <li key={route.id} className="p-3 rounded-md bg-slate-50 dark:bg-slate-700/50">
+                                <p className="font-bold text-gray-800 dark:text-white">{route.name}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">المواعيد: {route.timings.join(' | ')}</p>
+                            </li>
+                         ))}
+                       </ul>
+                        {externalRoutes.length === 0 && <p className="text-center py-4 text-gray-500">لا توجد خطوط خارجية.</p>}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+type ReportTab = 'services' | 'properties' | 'news' | 'transportation';
+
+const tabConfig: { key: ReportTab; label: string; icon: React.ReactNode; roles: AdminUserRole[] }[] = [
+    { key: 'services', label: 'الخدمات', icon: <WrenchScrewdriverIcon className="w-5 h-5"/>, roles: ['مسؤول ادارة الخدمات'] },
+    { key: 'properties', label: 'العقارات', icon: <HomeModernIcon className="w-5 h-5"/>, roles: ['مسؤول العقارات'] },
+    { key: 'news', label: 'الأخبار', icon: <NewspaperIcon className="w-5 h-5"/>, roles: ['مسؤول المحتوى'] },
+    { key: 'transportation', label: 'النقل', icon: <TruckIcon className="w-5 h-5"/>, roles: ['مسؤول النقل'] },
+];
+
 const ReportsPage: React.FC = () => {
     const navigate = useNavigate();
+    const { currentUser } = useAuthContext();
     const { news } = useContentContext();
     const { services, categories } = useServicesContext();
     const { properties } = usePropertiesContext();
-    const [activeTab, setActiveTab] = useState<'services' | 'properties' | 'news'>('services');
+
+    const availableTabs = useMemo(() => {
+        if (!currentUser) return [];
+        if (currentUser.roles.includes('مدير عام')) return tabConfig;
+        return tabConfig.filter(tab => tab.roles.some(role => currentUser.roles.includes(role)));
+    }, [currentUser]);
+
+    const [activeTab, setActiveTab] = useState<ReportTab | undefined>(availableTabs[0]?.key);
     
+    useEffect(() => {
+        if (availableTabs.length > 0 && !availableTabs.find(t => t.key === activeTab)) {
+            setActiveTab(availableTabs[0].key);
+        } else if (availableTabs.length === 0) {
+            setActiveTab(undefined);
+        }
+    }, [availableTabs, activeTab]);
+
     const today = useMemo(() => new Date().toISOString().split('T')[0], []);
     const thirtyDaysAgo = useMemo(() => {
         const date = new Date();
@@ -318,10 +452,12 @@ const ReportsPage: React.FC = () => {
     const filteredNews = useMemo(() => news.filter(n => n.date >= startDate && n.date <= endDate), [news, startDate, endDate]);
 
     const renderContent = () => {
+        if (!activeTab) return null;
         switch (activeTab) {
             case 'services': return <ServiceReports data={filteredServices} categories={categories} />;
             case 'properties': return <PropertyReports data={filteredProperties} />;
             case 'news': return <NewsReports data={filteredNews} />;
+            case 'transportation': return <TransportationReports />;
             default: return null;
         }
     };
@@ -335,23 +471,35 @@ const ReportsPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800 dark:text-white">تقارير مخصصة</h1>
 
             <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-lg space-y-6">
-                 <div className="flex flex-col md:flex-row gap-4 items-center">
-                    <div className="flex gap-2">
-                        <TabButton active={activeTab === 'services'} onClick={() => setActiveTab('services')} icon={<WrenchScrewdriverIcon className="w-5 h-5"/>}>الخدمات</TabButton>
-                        <TabButton active={activeTab === 'properties'} onClick={() => setActiveTab('properties')} icon={<HomeModernIcon className="w-5 h-5"/>}>العقارات</TabButton>
-                        <TabButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<NewspaperIcon className="w-5 h-5"/>}>الأخبار</TabButton>
-                    </div>
-                    <div className="flex-grow border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-700 mt-4 pt-4 md:mt-0 md:pt-0 md:mr-4 md:pr-4 flex flex-col sm:flex-row gap-4 items-center">
-                         <label className="text-sm font-semibold">عرض البيانات من:</label>
-                         <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-slate-100 dark:bg-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500"/>
-                         <label className="text-sm font-semibold">إلى:</label>
-                         <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full bg-slate-100 dark:bg-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500"/>
-                    </div>
-                </div>
-                
-                <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
-                    {renderContent()}
-                </div>
+                 {availableTabs.length > 0 ? (
+                    <>
+                        <div className="flex flex-col md:flex-row gap-4 items-center">
+                            <div className="flex gap-2">
+                                {availableTabs.map(tab => (
+                                    <TabButton key={tab.key} active={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} icon={tab.icon}>
+                                        {tab.label}
+                                    </TabButton>
+                                ))}
+                            </div>
+                            <div className="flex-grow border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-700 mt-4 pt-4 md:mt-0 md:pt-0 md:mr-4 md:pr-4 flex flex-col sm:flex-row gap-4 items-center">
+                                <label className="text-sm font-semibold">عرض البيانات من:</label>
+                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full sm:w-auto bg-slate-100 dark:bg-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500"/>
+                                <label className="text-sm font-semibold">إلى:</label>
+                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-auto bg-slate-100 dark:bg-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-cyan-500"/>
+                            </div>
+                        </div>
+                        
+                        <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
+                            {renderContent()}
+                        </div>
+                    </>
+                ) : (
+                    <EmptyState
+                        icon={<DocumentChartBarIcon className="w-16 h-16 text-slate-400" />}
+                        title="لا توجد تقارير متاحة"
+                        message="لا تملك الصلاحيات اللازمة لعرض أي تقارير."
+                    />
+                )}
             </div>
         </div>
     );

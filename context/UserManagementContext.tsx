@@ -33,6 +33,11 @@ export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ chil
         setUsers(prev => prev.filter(u => u.id !== id));
         logActivity('حذف مستخدم', `حذف المستخدم: "${userName}"`);
     }, [users, logActivity]);
+    
+    const handleDeleteUsers = useCallback((ids: number[]) => {
+        setUsers(prev => prev.filter(u => !ids.includes(u.id)));
+        logActivity('حذف جماعي للمستخدمين', `تم حذف ${ids.length} مستخدمين.`);
+    }, [logActivity]);
 
     const handleSaveAdmin = useCallback((adminData: Omit<AdminUser, 'id'> & { id?: number }) => {
         const isNew = !adminData.id;
@@ -60,10 +65,11 @@ export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ chil
     const value = useMemo(() => ({
         users, admins,
         handleSaveUser, handleDeleteUser,
+        handleDeleteUsers,
         handleSaveAdmin, handleDeleteAdmin,
     }), [
         users, admins,
-        handleSaveUser, handleDeleteUser,
+        handleSaveUser, handleDeleteUser, handleDeleteUsers,
         handleSaveAdmin, handleDeleteAdmin
     ]);
 

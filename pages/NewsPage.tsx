@@ -7,6 +7,7 @@ import ImageUploader from '../components/common/ImageUploader';
 import { useContentContext } from '../context/ContentContext';
 import { useHasPermission } from '../context/AuthContext';
 import { useUIContext } from '../context/UIContext';
+import RichTextEditor from '../components/common/RichTextEditor';
 
 const NewsForm: React.FC<{
     onSave: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
@@ -52,8 +53,8 @@ const NewsForm: React.FC<{
                     <input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full bg-slate-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none" />
                 </div>
                 <div>
-                    <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">المحتوى</label>
-                    <textarea id="content" value={content} onChange={(e) => setContent(e.target.value)} required rows={4} className="w-full bg-slate-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none"></textarea>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">المحتوى</label>
+                    <RichTextEditor value={content} onChange={setContent} />
                 </div>
                 <ImageUploader 
                     initialImages={images} 
@@ -89,7 +90,10 @@ const NewsCard: React.FC<{ newsItem: News; onEdit: () => void; onDelete: () => v
             <div className="p-6">
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{new Date(newsItem.date).toLocaleDateString('ar-EG')} • {newsItem.author}</p>
                 <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3 h-14 overflow-hidden">{newsItem.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm h-20 overflow-hidden">{newsItem.content}</p>
+                <div 
+                    className="prose prose-sm dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 h-20 overflow-hidden text-ellipsis"
+                    dangerouslySetInnerHTML={{ __html: newsItem.content }} 
+                />
                 {newsItem.externalUrl ? 
                     <a href={newsItem.externalUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-500 dark:text-cyan-400 hover:underline font-semibold mt-4 inline-block">اقرأ المزيد...</a>
                     : <div className="mt-4 h-6"></div>

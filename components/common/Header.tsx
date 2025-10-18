@@ -69,7 +69,6 @@ const Header: React.FC = () => {
                   </Link>
                   <button onClick={() => { logout(); setIsMenuOpen(false); }} className="w-full text-right flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-700" role="menuitem">
                     <ArrowLeftOnRectangleIcon className="w-5 h-5"/>
-                    {/* FIX: Corrected text to "Logout" for clarity. */}
                     <span>تسجيل الخروج</span>
                   </button>
                 </div>

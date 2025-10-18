@@ -111,7 +111,6 @@ const AdForm: React.FC<{
             referralType: referralType === 'none' ? undefined : referralType,
             referralId: referralType !== 'none' ? referralId : undefined,
         });
-        onClose();
     };
 
     const availableSubCategories = useMemo(() => {

@@ -55,7 +55,7 @@ export const useHasPermission = (requiredRoles: AdminUserRole[]) => {
     // Super admin can do anything
     if (currentUser.roles.includes('مدير عام')) return true;
     
-    // If no specific roles are required, only the super admin should pass.
+    // If no specific roles are required, and the user is not a super admin, deny.
     if (requiredRoles.length === 0) return false;
 
     // Check if the user has at least one of the required roles

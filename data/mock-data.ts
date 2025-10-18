@@ -55,8 +55,8 @@ export const mockNotifications: Notification[] = [
 ];
 
 export const mockAds: Ad[] = [
-    { id: 1, title: "إعلان ممول: عيادة د.أحمد لطب الأسنان", content: "خصم 20% على خدمات التبييض.", startDate: "2023-08-01", endDate: "2023-08-15", imageUrl: "https://picsum.photos/seed/ad1/600/400", referralType: 'service', referralId: 1, placement: 'الرئيسية' },
-    { id: 2, title: "خصومات الصيف في مول سيتي بلازا", content: "تخفيضات هائلة على جميع الماركات.", startDate: "2023-08-05", endDate: "2023-08-25", imageUrl: "https://picsum.photos/seed/ad2/600/400", placement: 'المجتمع' },
+    { id: 1, title: "إعلان ممول: سباك محترف", content: "خصم 20% على خدمات الصيانة.", startDate: "2023-08-01", endDate: "2023-08-15", imageUrl: "https://picsum.photos/seed/ad1/600/400", referralType: 'service', referralId: 1, placement: 'الرئيسية' },
+    { id: 2, title: "خصومات الصيف في مطعم المأكولات الشرقية", content: "تخفيضات هائلة على جميع الوجبات.", startDate: "2023-08-05", endDate: "2023-08-25", imageUrl: "https://picsum.photos/seed/ad2/600/400", placement: 'المجتمع' },
 ];
 
 export const mockProperties: Property[] = [
@@ -113,25 +113,11 @@ export const mockLostAndFoundItems: LostAndFoundItem[] = [
 export const mockDiscussionCircles: DiscussionCircle[] = [
     // General
     { id: 1, name: 'نقاش عام', description: 'مناقشات وأخبار عامة لكل سكان المدينة.', category: 'عام' },
-    // Community Services
-    { id: 2, name: 'البيع والشراء', description: 'لعرض وطلب المنتجات والخدمات بين السكان.', category: 'خدمات مجتمعية' },
-    { id: 3, name: 'المفقودات والمعثورات', description: 'للمساعدة في العثور على المفقودات والإبلاغ عن المعثورات.', category: 'خدمات مجتمعية' },
     // Neighborhoods
     { id: 101, name: 'الحي الأول', description: 'كل ما يخص سكان الحي الأول.', category: 'أحياء سكنية' },
     { id: 102, name: 'الحي الثاني', description: 'كل ما يخص سكان الحي الثاني.', category: 'أحياء سكنية' },
-    { id: 103, name: 'الحي الثالث', description: 'كل ما يخص سكان الحي الثالث.', category: 'أحياء سكنية' },
-    { id: 104, name: 'الحي الرابع', description: 'كل ما يخص سكان الحي الرابع.', category: 'أحياء سكنية' },
-    { id: 105, name: 'الحي الخامس', description: 'كل ما يخص سكان الحي الخامس.', category: 'أحياء سكنية' },
-    { id: 106, name: 'الحي السادس', description: 'كل ما يخص سكان الحي السادس.', category: 'أحياء سكنية' },
-    { id: 107, name: 'الحي السابع', description: 'كل ما يخص سكان الحي السابع.', category: 'أحياء سكنية' },
-    { id: 108, name: 'الحي الثامن', description: 'كل ما يخص سكان الحي الثامن.', category: 'أحياء سكنية' },
-    { id: 109, name: 'الحي التاسع', description: 'كل ما يخص سكان الحي التاسع.', category: 'أحياء سكنية' },
     // Compounds
     { id: 201, name: 'كمبوند الياسمين', description: 'خاص بسكان كمبوند الياسمين.', category: 'كمبوندات' },
-    { id: 202, name: 'كمبوند الزهور', description: 'خاص بسكان كمبوند الزهور.', category: 'كمبوندات' },
-    { id: 203, name: 'كمبوند الربوة', description: 'خاص بسكان كمبوند الربوة.', category: 'كمبوندات' },
-    { id: 204, name: 'كمبوند النخيل', description: 'خاص بسكان كمبوند النخيل.', category: 'كمبوندات' },
-    { id: 205, name: 'كمبوند الصفوة', description: 'خاص بسكان كمبوند الصفوة.', category: 'كمبوندات' },
 ];
 
 export const mockCommunityPosts: CommunityPost[] = [
@@ -156,16 +142,6 @@ export const mockCommunityPosts: CommunityPost[] = [
         ] 
     },
     { 
-        id: 2,
-        circleId: 2,
-        authorId: 4, 
-        content: 'للبيع: أريكة بحالة ممتازة. السعر 1500 جنيه. التواصل على الخاص.', 
-        imageUrl: 'https://picsum.photos/seed/cp2/800/600',
-        timestamp: '2023-08-01T15:20:00Z', 
-        likes: 12, 
-        comments: [] 
-    },
-    { 
         id: 3, 
         circleId: 1,
         authorId: 2, 
@@ -177,15 +153,6 @@ export const mockCommunityPosts: CommunityPost[] = [
             { reporterId: 1, reason: 'spam', timestamp: '2023-07-31T09:00:00Z' },
             { reporterId: 3, reason: 'spam', timestamp: '2023-07-31T09:05:00Z' }
         ]
-    },
-     { 
-        id: 4, 
-        circleId: 3,
-        authorId: 3, 
-        content: 'تم العثور على مفاتيح سيارة بجوار مول سيتي بلازا. يرجى التواصل للتعرف عليها.', 
-        timestamp: '2023-08-03T12:00:00Z', 
-        likes: 8, 
-        comments: []
     },
 ];
 

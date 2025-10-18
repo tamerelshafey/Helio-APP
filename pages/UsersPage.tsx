@@ -2,9 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from '../components/common/Icons';
 import { useUserManagementContext } from '../context/UserManagementContext';
+import { useUIContext } from '../context/UIContext';
 import type { AppUser, AdminUser, UserStatus, AdminUserRole } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
+import TabButton from '../components/common/TabButton';
 
 const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
     const statusMap = {
@@ -15,20 +17,6 @@ const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
     const { text, classes } = statusMap[status];
     return <span className={`px-2 py-1 text-xs font-medium rounded-full ${classes}`}>{text}</span>;
 };
-
-const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode; icon: React.ReactNode }> = ({ active, onClick, children, icon }) => (
-    <button
-        onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-2 font-semibold rounded-md transition-colors focus:outline-none text-sm ${
-            active
-                ? 'bg-cyan-500 text-white shadow'
-                : 'bg-slate-200/50 dark:bg-slate-700/50 text-gray-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-        }`}
-    >
-        {icon}
-        {children}
-    </button>
-);
 
 const UserForm: React.FC<{
     user: AppUser | null;
@@ -89,12 +77,10 @@ const AdminForm: React.FC<{
     onSave: (admin: Omit<AdminUser, 'id'> & { id?: number }) => void;
     onClose: () => void;
 }> = ({ admin, onSave, onClose }) => {
-    // Fix: Remove 'role' from formData, manage 'roles' in separate state.
     const [formData, setFormData] = useState({
         name: admin?.name || '',
         email: admin?.email || '',
     });
-    // Fix: Use 'roles' array state to manage multiple roles.
     const [roles, setRoles] = useState<AdminUserRole[]>(admin?.roles || []);
     const [avatar, setAvatar] = useState<string[]>(admin?.avatar ? [admin.avatar] : []);
 
@@ -103,7 +89,6 @@ const AdminForm: React.FC<{
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Fix: Add handler for checkbox changes to update roles array.
     const handleRoleChange = (role: AdminUserRole) => {
         setRoles(prevRoles =>
             prevRoles.includes(role)
@@ -115,7 +100,6 @@ const AdminForm: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Fix: Save 'roles' array instead of single 'role'.
         onSave({
             id: admin?.id,
             ...formData,
@@ -124,7 +108,6 @@ const AdminForm: React.FC<{
         });
     };
     
-    // Fix: Use correct AdminUserRole type and role names.
     const allAdminRoles: AdminUserRole[] = ['مدير عام', 'مسؤول ادارة الخدمات', 'مسؤول العقارات', 'مسؤول المحتوى', 'مسؤول النقل', 'مسؤول المجتمع'];
 
     return (
@@ -137,7 +120,6 @@ const AdminForm: React.FC<{
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">البريد الإلكتروني</label>
                 <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
             </div>
-             {/* Fix: Replace select dropdown with checkboxes for multiple roles. */}
              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">الأدوار</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md">
@@ -164,9 +146,11 @@ const AdminForm: React.FC<{
 };
 
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
-    const { users, handleDeleteUser } = useUserManagementContext();
+    const { users, handleDeleteUser, handleDeleteUsers } = useUserManagementContext();
+    const { showToast } = useUIContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
+    const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
 
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
@@ -176,6 +160,36 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
             return matchesSearch && matchesFilter;
         });
     }, [users, searchTerm, statusFilter]);
+    
+    useEffect(() => {
+        setSelectedUserIds([]);
+    }, [searchTerm, statusFilter]);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedUserIds(filteredUsers.map(u => u.id));
+        } else {
+            setSelectedUserIds([]);
+        }
+    };
+
+    const handleSelectOne = (e: React.ChangeEvent<HTMLInputElement>, id: number) => {
+        if (e.target.checked) {
+            setSelectedUserIds(prev => [...prev, id]);
+        } else {
+            setSelectedUserIds(prev => prev.filter(userId => userId !== id));
+        }
+    };
+    
+    const handleBulkDelete = () => {
+        if (window.confirm(`هل أنت متأكد من حذف ${selectedUserIds.length} مستخدمين؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
+            handleDeleteUsers(selectedUserIds);
+            showToast(`تم حذف ${selectedUserIds.length} مستخدمين بنجاح.`);
+            setSelectedUserIds([]);
+        }
+    };
+
+    const isAllSelected = filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length;
 
     return (
         <div className="animate-fade-in">
@@ -197,10 +211,24 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                     </button>
                 </div>
             </div>
+
+            {selectedUserIds.length > 0 && (
+                <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-700/50 rounded-lg mb-4 animate-fade-in">
+                    <span className="font-semibold text-sm">{selectedUserIds.length} مستخدمين محددين</span>
+                    <button onClick={handleBulkDelete} className="flex items-center gap-2 text-sm font-semibold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 px-3 py-1 rounded-md hover:bg-red-200">
+                        <TrashIcon className="w-4 h-4" />
+                        حذف المحدد
+                    </button>
+                </div>
+            )}
+
              <div className="overflow-x-auto">
                 <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
                         <tr>
+                             <th scope="col" className="p-4">
+                                <input type="checkbox" checked={isAllSelected} onChange={handleSelectAll} className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500" />
+                            </th>
                             <th scope="col" className="px-6 py-3">المستخدم</th>
                             <th scope="col" className="px-6 py-3">الحالة</th>
                             <th scope="col" className="px-6 py-3">تاريخ الانضمام</th>
@@ -209,7 +237,10 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                     </thead>
                     <tbody>
                         {filteredUsers.map(user => (
-                            <tr key={user.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                            <tr key={user.id} className={`bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 ${selectedUserIds.includes(user.id) ? 'bg-slate-50 dark:bg-slate-700/50' : ''}`}>
+                                 <td className="w-4 p-4">
+                                    <input type="checkbox" checked={selectedUserIds.includes(user.id)} onChange={(e) => handleSelectOne(e, user.id)} className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500" />
+                                </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
@@ -269,7 +300,6 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    {/* Fix: Map over roles array to display multiple role badges. */}
                                     <div className="flex flex-wrap gap-1">
                                         {admin.roles.map(role => (
                                             <span key={role} className="px-2 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300">{role}</span>
@@ -294,6 +324,7 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
 const UsersPage: React.FC = () => {
     const navigate = useNavigate();
     const { handleSaveUser, handleSaveAdmin } = useUserManagementContext();
+    const { showToast } = useUIContext();
     const [activeTab, setActiveTab] = useState<'users' | 'admins'>('users');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);
@@ -320,11 +351,13 @@ const UsersPage: React.FC = () => {
     const handleSaveAndCloseUser = (user: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => {
         handleSaveUser(user);
         handleCloseModal();
+        showToast(user.id ? 'تم تعديل بيانات المستخدم بنجاح!' : 'تم إضافة المستخدم بنجاح!');
     };
 
     const handleSaveAndCloseAdmin = (admin: Omit<AdminUser, 'id'> & { id?: number }) => {
         handleSaveAdmin(admin);
         handleCloseModal();
+        showToast(admin.id ? 'تم تعديل بيانات المدير بنجاح!' : 'تم إضافة المدير بنجاح!');
     };
 
     const renderContent = () => {

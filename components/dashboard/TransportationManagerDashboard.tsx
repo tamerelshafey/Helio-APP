@@ -13,7 +13,9 @@ const TransportationManagerDashboard: React.FC = () => {
         const todayDateString = today.toISOString().split('T')[0];
         
         const override = transportation.scheduleOverrides.find(o => o.date === todayDateString);
-        const driversOnDuty = override ? override.drivers : transportation.weeklySchedule.find(d => d.day === dayOfWeek)?.drivers || [];
+        const driversOnDuty = override 
+            ? override.drivers 
+            : transportation.weeklySchedule.find(d => d.day === dayOfWeek)?.drivers || [];
 
         return {
             internalDriversCount: transportation.internalDrivers.length,

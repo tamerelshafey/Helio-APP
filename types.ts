@@ -1,5 +1,4 @@
 // types.ts
-// FIX: Import React to use React.ReactNode type.
 import React from 'react';
 
 export type AdminUserRole = 'مدير عام' | 'مسؤول ادارة الخدمات' | 'مسؤول العقارات' | 'مسؤول المحتوى' | 'مسؤول النقل' | 'مسؤول المجتمع';
@@ -173,7 +172,7 @@ export interface CommunityComment {
     reports?: Report[];
 }
 
-export type DiscussionCircleCategory = 'عام' | 'خدمات مجتمعية' | 'أحياء سكنية' | 'كمبوندات';
+export type DiscussionCircleCategory = 'عام' | 'أحياء سكنية' | 'كمبوندات';
 
 export interface DiscussionCircle {
     id: number;
@@ -184,7 +183,7 @@ export interface DiscussionCircle {
 
 export interface CommunityPost {
     id: number;
-    circleId: number; // Renamed from groupId
+    circleId: number;
     authorId: number;
     content: string;
     imageUrl?: string;
@@ -359,7 +358,6 @@ export interface UIContextType {
 
 export interface AppContextType {
     emergencyContacts: EmergencyContact[];
-    // FIX: Changed type of contactData to not require 'type' property, aligning with EmergencyForm's output.
     handleSaveEmergencyContact: (contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }, newContactType?: 'city' | 'national') => void;
     handleDeleteEmergencyContact: (id: number) => void;
     serviceGuides: ServiceGuide[];
@@ -414,6 +412,7 @@ export interface UserManagementContextType {
     admins: AdminUser[];
     handleSaveUser: (userData: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => void;
     handleDeleteUser: (id: number) => void;
+    handleDeleteUsers: (ids: number[]) => void;
     handleSaveAdmin: (adminData: Omit<AdminUser, 'id'> & { id?: number }) => void;
     handleDeleteAdmin: (id: number) => void;
 }

@@ -57,7 +57,6 @@ const PropertyForm: React.FC<{
             amenities: amenities.split(',').map(s => s.trim()).filter(Boolean),
         };
         onSave(propertyData);
-        onClose();
     };
 
     return (
@@ -96,7 +95,7 @@ const InputField: React.FC<{ label: string; value: string | number; onChange: (v
         <input type={type} value={value} onChange={e => onChange(e.target.value)} required={required} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
     </div>
 );
-const TextareaField: React.FC<{ label: string; value: string; onChange: (val: string) => void; required?: boolean; }> = ({ label, value, onChange, required = false }) => (
+const TextareaField: React.FC<{ label: string; value: string; onChange: (val: string); required?: boolean; }> = ({ label, value, onChange, required = false }) => (
     <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
         <textarea value={value} onChange={e => onChange(e.target.value)} required={required} rows={3} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"></textarea>
@@ -113,7 +112,7 @@ const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete:
         const shareData = {
             title: property.title,
             text: `${property.title}\n${property.description.substring(0, 100)}...`,
-            url: `https://helio.app/property/${property.id}`
+            url: window.location.href.replace(window.location.hash, `#/properties/${property.id}`)
         };
         try {
             if (navigator.share) {
@@ -141,7 +140,7 @@ const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete:
                         <button onClick={onEdit} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50" title="تعديل العقار"><PencilSquareIcon className="w-5 h-5" /></button>
                         <button onClick={onDelete} className="p-2 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="حذف العقار"><TrashIcon className="w-5 h-5" /></button>
                     </div>
-                 )}
+                )}
             </div>
             <div className="p-4">
                 <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2 truncate">{property.title}</h3>
@@ -180,7 +179,7 @@ const PropertiesPage: React.FC = () => {
         setEditingProperty(property);
         setIsModalOpen(true);
     };
-    
+
     const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => {
         const isNew = !propertyData.id;
         handleSaveProperty(propertyData);
