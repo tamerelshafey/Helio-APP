@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useContentContext } from '../../context/ContentContext';
-import KpiCard from '../KpiCard';
-import { NewspaperIcon, BellAlertIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon, ChartPieIcon } from '../Icons';
+import KpiCard from '../common/KpiCard';
+import { NewspaperIcon, BellAlertIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon, ChartPieIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useUIContext } from '../../context/UIContext';
 
 const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDate, endDate }) => {
     const today = new Date();
@@ -22,6 +23,7 @@ const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDa
 
 const NewsManagerDashboard: React.FC = () => {
     const { news, notifications } = useContentContext();
+    const { isDarkMode } = useUIContext();
 
     const stats = useMemo(() => {
         // News Stats
@@ -65,6 +67,10 @@ const NewsManagerDashboard: React.FC = () => {
     }, [news, notifications]);
 
     const COLORS = ['#10b981', '#3b82f6', '#ef4444']; // Green, Blue, Red for Active, Scheduled, Expired
+    
+    const tooltipStyle = isDarkMode 
+        ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
+        : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -85,7 +91,7 @@ const NewsManagerDashboard: React.FC = () => {
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
                             <XAxis dataKey="title" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" interval={0} />
                             <YAxis />
-                            <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
+                            <Tooltip contentStyle={tooltipStyle}/>
                             <Legend />
                             <Bar dataKey="views" name="المشاهدات" fill="#22d3ee" />
                         </BarChart>
@@ -100,7 +106,7 @@ const NewsManagerDashboard: React.FC = () => {
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
+                            <Tooltip contentStyle={tooltipStyle}/>
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>

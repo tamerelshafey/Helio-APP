@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useUIContext } from '../../context/UIContext';
-import { CheckCircleIcon, XCircleIcon } from '../Icons';
+import { CheckCircleIcon, XCircleIcon } from './Icons';
 import type { ToastMessage } from '../../types';
 
 const Toast: React.FC<{ message: ToastMessage; onDismiss: (id: number) => void }> = ({ message, onDismiss }) => {
@@ -18,12 +18,12 @@ const Toast: React.FC<{ message: ToastMessage; onDismiss: (id: number) => void }
 
     return (
         <div 
-            className="flex items-center bg-white shadow-lg rounded-lg p-4 w-full max-w-sm pointer-events-auto ring-1 ring-black ring-opacity-5"
+            className="flex items-center bg-white dark:bg-slate-800 shadow-lg rounded-lg p-4 w-full max-w-sm pointer-events-auto ring-1 ring-black ring-opacity-5"
             style={{ animation: 'toast-in 0.5s forwards' }}
         >
             <div className="flex-shrink-0">{icon}</div>
-            <div className="mr-3 flex-1">
-                <p className="text-sm font-medium text-gray-900">{message.message}</p>
+            <div className="mr-3 flex-1 text-right">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{message.message}</p>
             </div>
             <button
                 onClick={() => onDismiss(message.id)}
@@ -51,7 +51,7 @@ const ToastContainer: React.FC = () => {
                 to { opacity: 1; transform: translateY(0); }
             }
         `}</style>
-        <div className="fixed top-5 left-5 z-[100] w-full max-w-sm space-y-4" dir="ltr">
+        <div className="fixed top-5 right-5 z-[100] w-full max-w-sm space-y-4" dir="rtl">
             {toasts.map((toast) => (
                 <Toast key={toast.id} message={toast} onDismiss={dismissToast} />
             ))}

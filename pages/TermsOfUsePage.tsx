@@ -28,18 +28,7 @@ const TermsOfUsePage: React.FC = () => {
                        {content.sections.map((section, index) => (
                             <React.Fragment key={index}>
                                 <h2>{section.title}</h2>
-                                {section.content.map((item, itemIndex) => {
-                                    if (typeof item === 'string') {
-                                        return <p key={itemIndex}>{item}</p>;
-                                    } else if (item.list) {
-                                        return (
-                                            <ul key={itemIndex}>
-                                                {item.list.map((li, liIndex) => <li key={liIndex}>{li}</li>)}
-                                            </ul>
-                                        );
-                                    }
-                                    return null;
-                                })}
+                                <div dangerouslySetInnerHTML={{ __html: section.content }} />
                             </React.Fragment>
                         ))}
                     </div>

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Alert } from '../../types';
-import { BellAlertIcon, UserPlusIcon, BuildingStorefrontIcon } from '../common/Icons';
+// FIX: Replaced non-existent 'BuildingStorefrontIcon' with 'BuildingOffice2Icon'.
+import { BellAlertIcon, UserPlusIcon, BuildingOffice2Icon } from '../common/Icons';
 import { useUserManagementContext } from '../../context/UserManagementContext';
 import { usePropertiesContext } from '../../context/PropertiesContext';
 
@@ -17,6 +18,7 @@ const formatRelativeTime = (dateString: string) => {
     return `قبل ${days} يوم`;
 };
 
+
 const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
     const iconClasses = "w-5 h-5";
     switch(type) {
@@ -25,7 +27,7 @@ const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
         case 'user_registered':
             return <UserPlusIcon className={`${iconClasses} text-blue-500`} />;
         case 'property_listed':
-            return <BuildingStorefrontIcon className={`${iconClasses} text-green-500`} />;
+            return <BuildingOffice2Icon className={`${iconClasses} text-green-500`} />;
         default:
             return <BellAlertIcon className={iconClasses} />;
     }
@@ -53,10 +55,11 @@ const AlertsPanel: React.FC = () => {
             type: 'property_listed'
         }));
         
-        return [...userAlerts, ...propertyAlerts].sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        return [...userAlerts, ...propertyAlerts]
+            .sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
     }, [users, properties]);
-
+    
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
             <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">تنبيهات فورية</h3>

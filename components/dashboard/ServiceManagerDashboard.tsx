@@ -2,13 +2,15 @@ import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import { useServicesContext } from '../../context/ServicesContext';
-import KpiCard from '../KpiCard';
-import { WrenchScrewdriverIcon, StarIcon, ChatBubbleOvalLeftIcon, ShieldExclamationIcon, RectangleGroupIcon, DocumentDuplicateIcon, EyeIcon, ChartPieIcon } from '../Icons';
+import KpiCard from '../common/KpiCard';
+import { WrenchScrewdriverIcon, StarIcon, ChatBubbleOvalLeftIcon, ShieldExclamationIcon, RectangleGroupIcon, DocumentDuplicateIcon, EyeIcon, ChartPieIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useUIContext } from '../../context/UIContext';
 
 const ServiceManagerDashboard: React.FC = () => {
     const { emergencyContacts } = useAppContext();
     const { services, categories } = useServicesContext();
+    const { isDarkMode } = useUIContext();
     const allReviews = useMemo(() => services.flatMap(s => s.reviews.map(r => ({...r, serviceName: s.name}))), [services]);
 
     const stats = useMemo(() => {
@@ -41,6 +43,10 @@ const ServiceManagerDashboard: React.FC = () => {
     }, [services, categories, emergencyContacts, allReviews]);
 
     const COLORS = ['#06b6d4', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+    
+    const tooltipStyle = isDarkMode 
+        ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
+        : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -61,7 +67,7 @@ const ServiceManagerDashboard: React.FC = () => {
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
                             <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" interval={0} />
                             <YAxis />
-                            <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
+                            <Tooltip contentStyle={tooltipStyle}/>
                             <Bar dataKey="views" name="المشاهدات" fill="#06b6d4" />
                         </BarChart>
                     </ResponsiveContainer>
@@ -73,7 +79,7 @@ const ServiceManagerDashboard: React.FC = () => {
                             <Pie data={stats.categoryDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false}>
                                 {stats.categoryDistribution.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem' }}/>
+                            <Tooltip contentStyle={tooltipStyle}/>
                         </PieChart>
                     </ResponsiveContainer>
                 </div>

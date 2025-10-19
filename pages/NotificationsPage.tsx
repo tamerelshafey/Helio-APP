@@ -8,6 +8,7 @@ import ImageUploader from '../components/common/ImageUploader';
 import { useContentContext } from '../context/ContentContext';
 import { useHasPermission } from '../context/AuthContext';
 import { useUIContext } from '../context/UIContext';
+import { ContentStatusBadge } from '../components/ServicePage';
 
 const NotificationForm: React.FC<{
     onSave: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
@@ -104,22 +105,6 @@ const NotificationForm: React.FC<{
     );
 };
 
-const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDate, endDate }) => {
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    if (today < start) {
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">مجدول</span>;
-    } else if (today >= start && today <= end) {
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">نشط</span>;
-    } else {
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">منتهي</span>;
-    }
-};
-
-
 const NotificationsPage: React.FC = () => {
     const navigate = useNavigate();
     const { notifications, handleSaveNotification, handleDeleteNotification } = useContentContext();
@@ -190,7 +175,7 @@ const NotificationsPage: React.FC = () => {
                                         <div className="font-semibold text-gray-900 dark:text-white truncate">{notification.title}</div>
                                         <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{notification.content}</div>
                                     </td>
-                                    <td className="px-6 py-4"><StatusBadge startDate={notification.startDate} endDate={notification.endDate} /></td>
+                                    <td className="px-6 py-4"><ContentStatusBadge startDate={notification.startDate} endDate={notification.endDate} /></td>
                                     <td className="px-6 py-4 text-xs font-mono">{notification.startDate} <br/> {notification.endDate}</td>
                                     <td className="px-6 py-4">{notification.serviceId ? services.find(s => s.id === notification.serviceId)?.name : 'لا يوجد'}</td>
                                     {canManage && (

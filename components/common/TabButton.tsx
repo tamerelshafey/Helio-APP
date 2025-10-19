@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 const TabButton: React.FC<{
     active: boolean;
@@ -19,4 +19,4 @@ const TabButton: React.FC<{
     </button>
 );
 
-export default TabButton;
+export default memo(TabButton);

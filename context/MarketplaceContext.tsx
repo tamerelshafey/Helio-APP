@@ -1,78 +1,59 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 import { useAppContext } from './AppContext';
 import { mockForSaleItems, mockJobs } from '../data/mock-data';
-import type { ForSaleItem, JobPosting, MarketplaceContextType, MarketplaceItemStatus } from '../types';
+import type { ForSaleItem, JobPosting, MarketplaceContextType } from '../types';
 
 const MarketplaceContext = createContext<MarketplaceContextType | undefined>(undefined);
 
 export const MarketplaceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { logActivity } = useAppContext();
+
     const [forSaleItems, setForSaleItems] = useState<ForSaleItem[]>(mockForSaleItems);
     const [jobs, setJobs] = useState<JobPosting[]>(mockJobs);
 
-    // FIX: Corrected generic constraint to ensure type safety for shared properties.
-    const updateItemStatus = useCallback(<T extends { id: number; status: MarketplaceItemStatus; approvalDate?: string; expiryDate?: string; }>(
-        items: T[], 
-        id: number, 
-        status: MarketplaceItemStatus, 
-        expiryDays?: number
-    ): T[] => {
-        return items.map(item => {
-            if (item.id === id) {
-                const updatedItem = { ...item, status };
-                if (status === 'approved' && expiryDays) {
-                    const approvalDate = new Date();
-                    const expiryDate = new Date();
-                    expiryDate.setDate(approvalDate.getDate() + expiryDays);
-                    updatedItem.approvalDate = approvalDate.toISOString().split('T')[0];
-                    updatedItem.expiryDate = expiryDate.toISOString().split('T')[0];
-                }
-                return updatedItem;
-            }
-            return item;
-        });
-    }, []);
-    
-    const handleApproveItem = useCallback((type: 'sale' | 'job', id: number, expiryDays: number) => {
+    const handleApproveItem = useCallback((type: 'sale' | 'job', id: number) => {
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+        const expiryDate = thirtyDaysFromNow.toISOString().split('T')[0];
+        const approvalDate = new Date().toISOString().split('T')[0];
+
         if (type === 'sale') {
-            const item = forSaleItems.find(i => i.id === id);
-            setForSaleItems(prev => updateItemStatus(prev, id, 'approved', expiryDays));
-            logActivity('الموافقة على إعلان بيع', `تمت الموافقة على "${item?.title}" لمدة ${expiryDays} يوم.`);
+            setForSaleItems(prev => prev.map(item => item.id === id ? { ...item, status: 'approved', approvalDate, expiryDate } : item));
+            logActivity('الموافقة على إعلان بيع', `تمت الموافقة على إعلان ID: ${id}`);
         } else {
-            const item = jobs.find(i => i.id === id);
-            setJobs(prev => updateItemStatus(prev, id, 'approved', expiryDays));
-            logActivity('الموافقة على إعلان وظيفة', `تمت الموافقة على "${item?.title}" لمدة ${expiryDays} يوم.`);
+            setJobs(prev => prev.map(item => item.id === id ? { ...item, status: 'approved', approvalDate, expiryDate } : item));
+            logActivity('الموافقة على إعلان وظيفة', `تمت الموافقة على إعلان ID: ${id}`);
         }
-    }, [logActivity, updateItemStatus, forSaleItems, jobs]);
+    }, [logActivity]);
 
     const handleRejectItem = useCallback((type: 'sale' | 'job', id: number) => {
         if (type === 'sale') {
-            const item = forSaleItems.find(i => i.id === id);
-            setForSaleItems(prev => updateItemStatus(prev, id, 'rejected'));
-            logActivity('رفض إعلان بيع', `تم رفض الإعلان: "${item?.title}".`);
+            setForSaleItems(prev => prev.map(item => item.id === id ? { ...item, status: 'rejected' } : item));
+            logActivity('رفض إعلان بيع', `تم رفض إعلان ID: ${id}`);
         } else {
-            const item = jobs.find(i => i.id === id);
-            setJobs(prev => updateItemStatus(prev, id, 'rejected'));
-            logActivity('رفض إعلان وظيفة', `تم رفض الوظيفة: "${item?.title}".`);
+            setJobs(prev => prev.map(item => item.id === id ? { ...item, status: 'rejected' } : item));
+            logActivity('رفض إعلان وظيفة', `تم رفض إعلان ID: ${id}`);
         }
-    }, [logActivity, updateItemStatus, forSaleItems, jobs]);
-    
+    }, [logActivity]);
+
     const handleDeleteItem = useCallback((type: 'sale' | 'job', id: number) => {
         if (type === 'sale') {
-            const item = forSaleItems.find(i => i.id === id);
             setForSaleItems(prev => prev.filter(item => item.id !== id));
-            logActivity('حذف إعلان بيع', `تم حذف الإعلان: "${item?.title}".`);
+            logActivity('حذف إعلان بيع', `تم حذف إعلان ID: ${id}`);
         } else {
-            const item = jobs.find(i => i.id === id);
             setJobs(prev => prev.filter(item => item.id !== id));
-            logActivity('حذف إعلان وظيفة', `تم حذف الوظيفة: "${item?.title}".`);
+            logActivity('حذف إعلان وظيفة', `تم حذف إعلان ID: ${id}`);
         }
-    }, [logActivity, forSaleItems, jobs]);
+    }, [logActivity]);
 
     const value = useMemo(() => ({
-        forSaleItems, jobs,
-        handleApproveItem, handleRejectItem, handleDeleteItem,
+        forSaleItems,
+        jobs,
+        handleApproveItem,
+        handleRejectItem,
+        handleDeleteItem,
     }), [forSaleItems, jobs, handleApproveItem, handleRejectItem, handleDeleteItem]);
+
 
     return <MarketplaceContext.Provider value={value}>{children}</MarketplaceContext.Provider>;
 };

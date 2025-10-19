@@ -1,5 +1,6 @@
 // types.ts
-import React from 'react';
+// FIX: Import ReactNode to resolve type error.
+import type { ReactNode } from 'react';
 
 export type AdminUserRole = 'مدير عام' | 'مسؤول ادارة الخدمات' | 'مسؤول العقارات' | 'مسؤول المحتوى' | 'مسؤول النقل' | 'مسؤول المجتمع';
 
@@ -20,6 +21,18 @@ export interface AppUser {
     avatar: string;
     joinDate: string;
     status: UserStatus;
+}
+
+export interface SubCategory {
+    id: number;
+    name: string;
+}
+
+export interface Category {
+    id: number;
+    name: string;
+    icon: string;
+    subCategories: SubCategory[];
 }
 
 export interface Review {
@@ -43,41 +56,13 @@ export interface Service {
     images: string[];
     about: string;
     rating: number;
+    views: number;
     reviews: Review[];
     isFavorite: boolean;
-    views: number;
     creationDate: string;
     facebookUrl?: string;
     instagramUrl?: string;
     workingHours?: string;
-}
-
-export interface SubCategory {
-    id: number;
-    name: string;
-}
-
-export interface Category {
-    id: number;
-    name: string;
-    icon: string;
-    subCategories: SubCategory[];
-}
-
-export interface EmergencyContact {
-    id: number;
-    title: string;
-    number: string;
-    type: 'national' | 'city';
-}
-
-export interface ServiceGuide {
-    id: number;
-    title: string;
-    steps: string[];
-    documents: string[];
-    attachmentUrl?: string;
-    attachmentType?: 'image' | 'pdf';
 }
 
 export interface News {
@@ -91,18 +76,18 @@ export interface News {
     externalUrl?: string;
 }
 
+export type AdPlacement = 'الرئيسية' | 'المجتمع' | 'الخدمات';
+
 export interface Notification {
     id: number;
     title: string;
     content: string;
     startDate: string;
     endDate: string;
+    serviceId?: number;
     imageUrl?: string;
     externalUrl?: string;
-    serviceId?: number;
 }
-
-export type AdPlacement = 'الرئيسية' | 'المجتمع' | 'الخدمات';
 
 export interface Ad {
     id: number;
@@ -110,11 +95,11 @@ export interface Ad {
     content: string;
     startDate: string;
     endDate: string;
-    placement: AdPlacement;
     imageUrl?: string;
     externalUrl?: string;
     referralType?: 'service' | 'property';
     referralId?: number;
+    placement: AdPlacement;
 }
 
 export interface Property {
@@ -136,64 +121,58 @@ export interface Property {
     creationDate: string;
 }
 
-export interface Activity {
-    id: string;
-    type: 'NEW_SERVICE' | 'EMERGENCY_REPORT' | 'NEWS_PUBLISHED' | 'NEW_PROPERTY';
-    description: string;
-    time: string;
-}
-
-export interface Alert {
-    id: string;
-    type: 'new_inquiry' | 'user_registered' | 'property_listed';
-    message: string;
-    time: string;
-}
-
-export interface AuditLog {
+export interface EmergencyContact {
     id: number;
-    timestamp: string;
-    user: string;
-    action: string;
-    details: string;
+    title: string;
+    number: string;
+    type: 'national' | 'city';
 }
 
-export interface Report {
-    reporterId: number;
-    reason: 'spam' | 'inappropriate' | 'harassment' | 'other';
-    timestamp: string;
-}
-
-export interface CommunityComment {
+export interface ServiceGuide {
     id: number;
-    authorId: number;
-    content: string;
-    timestamp: string;
-    reports?: Report[];
+    title: string;
+    steps: string[];
+    documents: string[];
+    attachmentUrl?: string;
+    attachmentType?: 'image' | 'pdf';
 }
 
-export type DiscussionCircleCategory = 'عام' | 'أحياء سكنية' | 'كمبوندات';
+export interface Supervisor {
+    name: string;
+    phone: string;
+}
 
-export interface DiscussionCircle {
+export interface Driver {
     id: number;
     name: string;
-    description: string;
-    category: DiscussionCircleCategory;
+    phone: string;
+    avatar: string;
 }
 
-export interface CommunityPost {
+export interface ScheduleDriver {
+    name: string;
+    phone: string;
+}
+
+export interface WeeklyScheduleItem {
+    day: string;
+    drivers: ScheduleDriver[];
+}
+
+export interface ExternalRoute {
     id: number;
-    circleId: number;
-    authorId: number;
-    content: string;
-    imageUrl?: string;
-    timestamp: string;
-    likes: number;
-    comments: CommunityComment[];
-    reports?: Report[];
+    name: string;
+    timings: string[];
+    waitingPoint: string;
+}
+
+export interface ScheduleOverride {
+    date: string; // YYYY-MM-DD
+    drivers: ScheduleDriver[];
 }
 
 
+// Marketplace Types
 export type MarketplaceItemStatus = 'pending' | 'approved' | 'rejected' | 'expired';
 
 export interface ForSaleItem {
@@ -218,7 +197,7 @@ export interface JobPosting {
     title: string;
     companyName: string;
     location: string;
-    jobType: string;
+    jobType: 'دوام كامل' | 'دوام جزئي' | 'عن بعد' | 'مؤقت';
     description: string;
     contactInfo: string;
     status: MarketplaceItemStatus;
@@ -228,6 +207,7 @@ export interface JobPosting {
 }
 
 export type LostFoundStatus = 'lost' | 'found' | 'returned';
+export type ModerationStatus = 'pending' | 'approved' | 'rejected';
 
 export interface LostAndFoundItem {
     id: number;
@@ -237,12 +217,56 @@ export interface LostAndFoundItem {
     date: string;
     reporterName: string;
     reporterContact: string;
-    imageUrl?: string;
     status: LostFoundStatus;
+    imageUrl?: string;
+    moderationStatus: ModerationStatus;
 }
 
 
-// Public Content Types
+// Community Types
+export type DiscussionCircleCategory = 'عام' | 'أحياء سكنية' | 'كمبوندات';
+
+export interface DiscussionCircle {
+    id: number;
+    name: string;
+    description: string;
+    category: DiscussionCircleCategory;
+}
+
+export interface CommunityCommentReport {
+    reporterId: number;
+    reason: string;
+    timestamp: string;
+}
+
+export interface CommunityComment {
+    id: number;
+    authorId: number;
+    content: string;
+    timestamp: string;
+    reports?: CommunityCommentReport[];
+}
+
+export interface CommunityPostReport {
+    reporterId: number;
+    reason: string;
+    timestamp: string;
+}
+
+export interface CommunityPost {
+    id: number;
+    circleId: number;
+    authorId: number;
+    content: string;
+    imageUrl?: string;
+    timestamp: string;
+    likes: number;
+    comments: CommunityComment[];
+    reports?: CommunityPostReport[];
+}
+
+
+// Public Pages Content Types
 export interface HomePageContent {
     heroTitleLine1: string;
     heroTitleLine2: string;
@@ -252,14 +276,12 @@ export interface HomePageContent {
     features: { title: string; description: string }[];
     infoLinksSectionTitle: string;
 }
-
 export interface AboutPageContent {
     title: string;
     intro: string;
     vision: { title: string; text: string };
     mission: { title: string; text: string };
 }
-
 export interface FaqItem {
     q: string;
     a: string;
@@ -273,10 +295,9 @@ export interface FaqPageContent {
     subtitle: string;
     categories: FaqCategory[];
 }
-
 export interface PolicySection {
     title: string;
-    content: (string | { list: string[] })[];
+    content: string;
 }
 export interface PolicyPageContent {
     title: string;
@@ -291,61 +312,67 @@ export interface PublicPagesContent {
     terms: PolicyPageContent;
 }
 
+export interface AuditLog {
+    id: number;
+    timestamp: string;
+    user: string;
+    action: string;
+    details: string;
+}
+
+export interface Activity {
+    id: string;
+    type: 'NEW_SERVICE' | 'EMERGENCY_REPORT' | 'NEWS_PUBLISHED' | 'NEW_PROPERTY';
+    description: string;
+    time: string;
+}
+
+export interface Alert {
+    id: string;
+    type: 'new_inquiry' | 'user_registered' | 'property_listed';
+    message: string;
+    time: string;
+}
+
 export interface SearchResult {
     id: string;
-    type: 'خدمة' | 'عقار' | 'خبر' | 'مستخدم';
+    type: string;
     title: string;
     subtitle?: string;
     link: string;
-    icon: React.ReactNode;
+    icon: ReactNode;
 }
 
-
-// Transportation Types
-export interface Supervisor {
-    name: string;
-    phone: string;
-}
-
-export interface Driver {
+export interface ToastMessage {
     id: number;
-    name: string;
-    phone: string;
-    avatar: string;
-}
-
-export interface ScheduleDriver {
-    name: string;
-    phone: string;
-}
-export interface WeeklyScheduleItem {
-    day: string; // e.g., 'الأحد'
-    drivers: ScheduleDriver[];
-}
-
-export interface ExternalRoute {
-    id: number;
-    name: string;
-    timings: string[];
-    waitingPoint: string;
-}
-export interface ScheduleOverride {
-    date: string; // YYYY-MM-DD
-    drivers: ScheduleDriver[];
+    message: string;
+    type: 'success' | 'error';
 }
 
 // Context Types
+export interface AppContextType {
+    emergencyContacts: EmergencyContact[];
+    serviceGuides: ServiceGuide[];
+    auditLogs: AuditLog[];
+    publicPagesContent: PublicPagesContent;
+    lostAndFoundItems: LostAndFoundItem[];
+    logActivity: (action: string, details: string) => void;
+    handleSaveEmergencyContact: (contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }, newContactType?: 'city' | 'national') => void;
+    handleDeleteEmergencyContact: (id: number) => void;
+    handleSaveServiceGuide: (guideData: Omit<ServiceGuide, 'id'> & { id?: number }) => void;
+    handleDeleteServiceGuide: (id: number) => void;
+    handleUpdatePublicPageContent: <K extends keyof PublicPagesContent>(page: K, newContent: PublicPagesContent[K]) => void;
+    handleSaveLostAndFoundItem: (itemData: Omit<LostAndFoundItem, 'id'> & { id?: number }) => void;
+    handleDeleteLostAndFoundItem: (id: number) => void;
+    handleApproveLostAndFoundItem: (id: number) => void;
+    handleRejectLostAndFoundItem: (id: number) => void;
+}
+
 export interface AuthContextType {
     currentUser: AdminUser | null;
     isAuthenticated: boolean;
     login: (user: AdminUser) => void;
     logout: () => void;
-}
-
-export interface ToastMessage {
-  id: number;
-  message: string;
-  type: 'success' | 'error';
 }
 
 export interface UIContextType {
@@ -354,22 +381,6 @@ export interface UIContextType {
     toasts: ToastMessage[];
     showToast: (message: string, type?: 'success' | 'error') => void;
     dismissToast: (id: number) => void;
-}
-
-export interface AppContextType {
-    emergencyContacts: EmergencyContact[];
-    handleSaveEmergencyContact: (contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }, newContactType?: 'city' | 'national') => void;
-    handleDeleteEmergencyContact: (id: number) => void;
-    serviceGuides: ServiceGuide[];
-    handleSaveServiceGuide: (guideData: Omit<ServiceGuide, 'id'> & { id?: number }) => void;
-    handleDeleteServiceGuide: (id: number) => void;
-    auditLogs: AuditLog[];
-    logActivity: (action: string, details: string) => void;
-    publicPagesContent: PublicPagesContent;
-    handleUpdatePublicPageContent: <K extends keyof PublicPagesContent>(page: K, newContent: PublicPagesContent[K]) => void;
-    lostAndFoundItems: LostAndFoundItem[];
-    handleSaveLostAndFoundItem: (itemData: Omit<LostAndFoundItem, 'id'> & { id?: number }) => void;
-    handleDeleteLostAndFoundItem: (id: number) => void;
 }
 
 export interface ServicesContextType {
@@ -436,25 +447,24 @@ export interface TransportationContextType {
     handleResetOverride: (date: string) => void;
 }
 
-export interface CommunityContextType {
-    communityPosts: CommunityPost[];
-    discussionCircles: DiscussionCircle[];
-    handleSavePost: (post: Omit<CommunityPost, 'id' | 'authorId' | 'timestamp' | 'likes' | 'comments' | 'reports'> & { id?: number }) => void;
-    handleUpdatePost: (post: CommunityPost) => void;
-    handleDeletePost: (id: number) => void;
-    handleDeleteComment: (postId: number, commentId: number) => void;
-    handleUpdateComment: (postId: number, commentId: number, newContent: string) => void;
-    handleSaveCircle: (circle: Omit<DiscussionCircle, 'id'> & { id?: number }) => void;
-    handleDeleteCircle: (circleId: number) => void;
-    handleDismissPostReports: (postId: number) => void;
-    handleDismissCommentReports: (postId: number, commentId: number) => void;
-}
-
-
 export interface MarketplaceContextType {
     forSaleItems: ForSaleItem[];
     jobs: JobPosting[];
-    handleApproveItem: (type: 'sale' | 'job', id: number, expiryDays: number) => void;
+    handleApproveItem: (type: 'sale' | 'job', id: number) => void;
     handleRejectItem: (type: 'sale' | 'job', id: number) => void;
     handleDeleteItem: (type: 'sale' | 'job', id: number) => void;
+}
+
+export interface CommunityContextType {
+    communityPosts: CommunityPost[];
+    discussionCircles: DiscussionCircle[];
+    handleSavePost: (postData: Omit<CommunityPost, 'id' | 'authorId' | 'timestamp' | 'likes' | 'comments' | 'reports'> & { id?: number }) => void;
+    handleUpdatePost: (updatedPost: CommunityPost) => void;
+    handleDeletePost: (id: number) => void;
+    handleUpdateComment: (postId: number, commentId: number, newContent: string) => void;
+    handleDeleteComment: (postId: number, commentId: number) => void;
+    handleSaveCircle: (circleData: Omit<DiscussionCircle, 'id'> & { id?: number }) => void;
+    handleDeleteCircle: (id: number) => void;
+    handleDismissPostReports: (postId: number) => void;
+    handleDismissCommentReports: (postId: number, commentId: number) => void;
 }

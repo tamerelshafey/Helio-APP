@@ -10,14 +10,7 @@ import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ServiceInfoCard from '../components/common/ServiceInfoCard';
-
-const Rating: React.FC<{ rating: number; size?: string }> = ({ rating, size = 'w-5 h-5' }) => (
-    <div className="flex items-center">
-        {[...Array(5)].map((_, i) => (
-            <StarIcon key={i} className={`${size} ${ i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600' }`} />
-        ))}
-    </div>
-);
+import Rating from '../components/DashboardView';
 
 const ReplyForm: React.FC<{ review: Review; onSave: (reply: string) => void; onClose: () => void; }> = ({ review, onSave, onClose }) => {
     const [reply, setReply] = useState(review.adminReply || '');

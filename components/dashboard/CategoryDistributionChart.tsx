@@ -2,11 +2,13 @@ import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useServicesContext } from '../../context/ServicesContext';
 import { ChartPieIcon } from '../common/Icons';
+import { useUIContext } from '../../context/UIContext';
 
 const COLORS = ['#06b6d4', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
 
 const CategoryDistributionChart: React.FC = () => {
     const { services, categories } = useServicesContext();
+    const { isDarkMode } = useUIContext();
 
     const chartData = useMemo(() => {
         const serviceCounts: { [subCategoryId: number]: number } = {};
@@ -30,6 +32,10 @@ const CategoryDistributionChart: React.FC = () => {
 
     }, [services, categories]);
 
+    const tooltipStyle = isDarkMode 
+        ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
+        : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
+
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 h-full">
             <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -52,13 +58,7 @@ const CategoryDistributionChart: React.FC = () => {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>
-                    <Tooltip 
-                        contentStyle={{ 
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)', 
-                            borderColor: '#334155',
-                            borderRadius: '0.5rem' 
-                        }}
-                    />
+                    <Tooltip contentStyle={tooltipStyle}/>
                     <Legend />
                 </PieChart>
             </ResponsiveContainer>

@@ -12,6 +12,7 @@ import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
+import { InputField, TextareaField } from '../components/common/FormControls';
 
 const PropertyForm: React.FC<{
     onSave: (property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => void;
@@ -61,11 +62,11 @@ const PropertyForm: React.FC<{
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <InputField label="عنوان الإعلان" value={title} onChange={setTitle} required />
-            <TextareaField label="الوصف" value={description} onChange={setDescription} required />
+            <InputField name="title" label="عنوان الإعلان" value={title} onChange={e => setTitle(e.target.value)} required />
+            <TextareaField name="description" label="الوصف" value={description} onChange={e => setDescription(e.target.value)} required />
             <ImageUploader initialImages={images} onImagesChange={setImages} multiple maxFiles={10} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <InputField label="السعر (بالجنيه المصري)" type="number" value={price} onChange={v => setPrice(Number(v))} required />
+                <InputField name="price" label="السعر (بالجنيه المصري)" type="number" value={price} onChange={e => setPrice(Number(e.target.value))} required />
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">نوع العرض</label>
                     <select value={type} onChange={e => setType(e.target.value as 'sale' | 'rent')} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
@@ -74,12 +75,12 @@ const PropertyForm: React.FC<{
                     </select>
                 </div>
             </div>
-            <InputField label="العنوان / المنطقة" value={address} onChange={setAddress} required />
+            <InputField name="address" label="العنوان / المنطقة" value={address} onChange={e => setAddress(e.target.value)} required />
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <InputField label="اسم جهة الاتصال" value={contactName} onChange={setContactName} required />
-                <InputField label="رقم هاتف التواصل" value={contactPhone} onChange={setContactPhone} required />
+                <InputField name="contactName" label="اسم جهة الاتصال" value={contactName} onChange={e => setContactName(e.target.value)} required />
+                <InputField name="contactPhone" label="رقم هاتف التواصل" value={contactPhone} onChange={e => setContactPhone(e.target.value)} required />
             </div>
-            <TextareaField label="وسائل الراحة (مفصولة بفاصلة)" value={amenities} onChange={setAmenities} />
+            <TextareaField name="amenities" label="وسائل الراحة (مفصولة بفاصلة)" value={amenities} onChange={e => setAmenities(e.target.value)} />
 
             <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold bg-slate-100 dark:bg-slate-600 rounded-md hover:bg-slate-200 dark:hover:bg-slate-500">إلغاء</button>
@@ -88,20 +89,6 @@ const PropertyForm: React.FC<{
         </form>
     );
 };
-
-const InputField: React.FC<{ label: string; value: string | number; onChange: (val: string) => void; type?: string; required?: boolean; }> = ({ label, value, onChange, type = 'text', required = false }) => (
-    <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} required={required} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
-    </div>
-);
-const TextareaField: React.FC<{ label: string; value: string; onChange: (val: string); required?: boolean; }> = ({ label, value, onChange, required = false }) => (
-    <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
-        <textarea value={value} onChange={e => onChange(e.target.value)} required={required} rows={3} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"></textarea>
-    </div>
-);
-
 
 const PropertyCard: React.FC<{ property: Property; onEdit: () => void; onDelete: () => void; }> = ({ property, onEdit, onDelete }) => {
     const canManage = useHasPermission(['مسؤول العقارات']);

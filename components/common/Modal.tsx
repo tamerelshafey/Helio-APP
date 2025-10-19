@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { XMarkIcon } from '../Icons';
+import { XMarkIcon } from './Icons';
 
 interface ModalProps {
     isOpen: boolean;

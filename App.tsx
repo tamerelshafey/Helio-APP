@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 import { useAuthContext } from './context/AuthContext';
@@ -8,39 +8,39 @@ import Breadcrumbs from './components/common/Breadcrumbs';
 import ToastContainer from './components/common/Toast';
 import ScrollToTop from './components/common/ScrollToTop';
 
-// Page Imports
-import DashboardPage from './pages/DashboardPage';
-import LoginPage from './pages/LoginPage';
-import ServicesOverviewPage from './pages/ServicesOverviewPage';
-import ServicePage from './pages/ServicePage';
-import ServiceDetailPage from './pages/ServiceDetailPage';
-import PropertiesPage from './pages/PropertiesPage';
-import EmergencyPage from './pages/EmergencyPage';
-import NewsPage from './pages/NewsPage';
-import NotificationsPage from './pages/NotificationsPage';
-import AdsPage from './pages/AdsPage';
-import TransportationPage from './pages/TransportationPage';
-import SettingsPage from './pages/SettingsPage';
-import CityServicesGuidePage from './pages/CityServicesGuidePage';
-import UsersPage from './pages/UsersPage';
-import ReportsPage from './pages/ReportsPage';
-import ReviewsPage from './pages/ReviewsPage';
-import AuditLogPage from './pages/AuditLogPage';
-import ContentManagementPage from './pages/ContentManagementPage';
-import CommunityPage from './pages/CommunityPage';
+// Lazy load all page components
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const ServicesOverviewPage = lazy(() => import('./pages/ServicesOverviewPage'));
+const ServicePage = lazy(() => import('./pages/ServicePage'));
+const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage'));
+const PropertiesPage = lazy(() => import('./pages/PropertiesPage'));
+const EmergencyPage = lazy(() => import('./pages/EmergencyPage'));
+const NewsPage = lazy(() => import('./pages/NewsPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const AdsPage = lazy(() => import('./pages/AdsPage'));
+const TransportationPage = lazy(() => import('./pages/TransportationPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const CityServicesGuidePage = lazy(() => import('./pages/CityServicesGuidePage'));
+const UsersPage = lazy(() => import('./pages/UsersPage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
+const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
+const ContentManagementPage = lazy(() => import('./pages/ContentManagementPage'));
+const CommunityPage = lazy(() => import('./pages/CommunityPage'));
 
+// Lazy load public pages
+const PublicHeader = lazy(() => import('./components/PublicHeader'));
+const PublicFooter = lazy(() => import('./components/PublicFooter'));
+const PublicHomePage = lazy(() => import('./pages/PublicHomePage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const AboutCityPage = lazy(() => import('./pages/AboutCityPage'));
+const AboutCompanyPage = lazy(() => import('./pages/AboutCompanyPage'));
+const FaqPage = lazy(() => import('./pages/FaqPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsOfUsePage = lazy(() => import('./pages/TermsOfUsePage'));
+const RequestDeletionPage = lazy(() => import('./pages/RequestDeletionPage'));
 
-// Public Pages
-import PublicHeader from './components/PublicHeader';
-import PublicFooter from './components/PublicFooter';
-import PublicHomePage from './pages/PublicHomePage';
-import AboutPage from './pages/AboutPage';
-import AboutCityPage from './pages/AboutCityPage';
-import AboutCompanyPage from './pages/AboutCompanyPage';
-import FaqPage from './pages/FaqPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import TermsOfUsePage from './pages/TermsOfUsePage';
-import RequestDeletionPage from './pages/RequestDeletionPage';
 
 const AdminLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
     return (
@@ -80,75 +80,103 @@ const ProtectedRoutesWrapper: React.FC = () => {
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
+    // The Outlet here will render the nested admin routes
     return <AdminLayout><Outlet /></AdminLayout>;
 };
 
 // Wrapper for the login page to redirect if already authenticated
 const LoginPageWrapper: React.FC = () => {
     const { isAuthenticated } = useAuthContext();
-    return isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />;
+    return isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />;
 };
 
-// Wrapper for the root page to decide which component to show based on auth state
-const RootPageWrapper: React.FC = () => {
-    const { isAuthenticated } = useAuthContext();
-    // When authenticated, the root path shows the Dashboard inside the AdminLayout.
-    // When not authenticated, it redirects to the public home page.
-    return isAuthenticated 
-        ? <AdminLayout><DashboardPage /></AdminLayout> 
-        : <Navigate to="/home" replace />;
-};
+const LoadingFallback = () => (
+    <div className="flex justify-center items-center h-screen w-full bg-slate-100 dark:bg-slate-900 text-gray-500 dark:text-gray-400">
+        جاري تحميل الصفحة...
+    </div>
+);
+
 
 const App: React.FC = () => {
+    
+    useEffect(() => {
+        /**
+         * This effect improves mobile UX by ensuring that when a user focuses on an input field,
+         * the on-screen keyboard does not cover it.
+         */
+        const handleFocusIn = (event: FocusEvent) => {
+            const target = event.target as HTMLElement;
+
+            // Check if the focused element is an input, textarea, or contentEditable element.
+            if (
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.isContentEditable
+            ) {
+                // A short delay is necessary to wait for the keyboard to animate into view
+                // before attempting to scroll the element.
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        };
+
+        // 'focusin' event bubbles up, allowing us to use a single listener on the document.
+        document.addEventListener('focusin', handleFocusIn);
+
+        return () => {
+            document.removeEventListener('focusin', handleFocusIn);
+        };
+    }, []);
+
     return (
         <>
             <ScrollToTop />
             <ToastContainer />
-            <Routes>
-                {/* The root route is special and has its own wrapper to handle auth state */}
-                <Route path="/" element={<RootPageWrapper />} />
-                
-                {/* Login page has no layout and redirects if user is already authenticated */}
-                <Route path="/login" element={<LoginPageWrapper />} />
+            <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                    {/* Login page has no layout and redirects if user is already authenticated */}
+                    <Route path="/login" element={<LoginPageWrapper />} />
 
-                {/* Other Public Routes are wrapped in the PublicLayout */}
-                <Route element={<PublicRoutesWrapper />}>
-                    <Route path="/home" element={<PublicHomePage />} />
-                    <Route path="/about" element={<AboutPage />} />
-                    <Route path="/about-city" element={<AboutCityPage />} />
-                    <Route path="/about-company" element={<AboutCompanyPage />} />
-                    <Route path="/faq" element={<FaqPage />} />
-                    <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-                    <Route path="/terms-of-use" element={<TermsOfUsePage />} />
-                    <Route path="/request-deletion" element={<RequestDeletionPage />} />
-                </Route>
-                
-                {/* All Protected Admin Routes are wrapped in the ProtectedRoutesWrapper */}
-                <Route element={<ProtectedRoutesWrapper />}>
-                    {/* The dashboard is now handled at the root path, but we add a redirect for convenience */}
-                    <Route path="/dashboard" element={<Navigate to="/" replace />} />
-                    <Route path="/services-overview" element={<ServicesOverviewPage />} />
-                    <Route path="/services/subcategory/:subCategoryId" element={<ServicePage />} />
-                    <Route path="/services/detail/:serviceId" element={<ServiceDetailPage />} />
-                    <Route path="/properties" element={<PropertiesPage />} />
-                    <Route path="/emergency" element={<EmergencyPage />} />
-                    <Route path="/news" element={<NewsPage />} />
-                    <Route path="/notifications" element={<NotificationsPage />} />
-                    <Route path="/ads" element={<AdsPage />} />
-                    <Route path="/transportation" element={<TransportationPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/city-services-guide" element={<CityServicesGuidePage />} />
-                    <Route path="/users" element={<UsersPage />} />
-                    <Route path="/reports" element={<ReportsPage />} />
-                    <Route path="/reviews" element={<ReviewsPage />} />
-                    <Route path="/audit-log" element={<AuditLogPage />} />
-                    <Route path="/content-management" element={<ContentManagementPage />} />
-                    <Route path="/community" element={<CommunityPage />} />
-                </Route>
-                
-                {/* A fallback for any path that doesn't match will redirect to the root */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                    {/* Public Routes are wrapped in the PublicLayout */}
+                    <Route element={<PublicRoutesWrapper />}>
+                        <Route path="/" element={<PublicHomePage />} />
+                        <Route path="/home" element={<Navigate to="/" replace />} />
+                        <Route path="/about" element={<AboutPage />} />
+                        <Route path="/about-city" element={<AboutCityPage />} />
+                        <Route path="/about-company" element={<AboutCompanyPage />} />
+                        <Route path="/faq" element={<FaqPage />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                        <Route path="/terms-of-use" element={<TermsOfUsePage />} />
+                        <Route path="/request-deletion" element={<RequestDeletionPage />} />
+                    </Route>
+                    
+                    {/* All Protected Admin Routes are wrapped in the ProtectedRoutesWrapper under /dashboard */}
+                    <Route path="/dashboard" element={<ProtectedRoutesWrapper />}>
+                        <Route index element={<DashboardPage />} />
+                        <Route path="services-overview" element={<ServicesOverviewPage />} />
+                        <Route path="services/subcategory/:subCategoryId" element={<ServicePage />} />
+                        <Route path="services/detail/:serviceId" element={<ServiceDetailPage />} />
+                        <Route path="properties" element={<PropertiesPage />} />
+                        <Route path="emergency" element={<EmergencyPage />} />
+                        <Route path="news" element={<NewsPage />} />
+                        <Route path="notifications" element={<NotificationsPage />} />
+                        <Route path="ads" element={<AdsPage />} />
+                        <Route path="transportation" element={<TransportationPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="city-services-guide" element={<CityServicesGuidePage />} />
+                        <Route path="users" element={<UsersPage />} />
+                        <Route path="reports" element={<ReportsPage />} />
+                        <Route path="reviews" element={<ReviewsPage />} />
+                        <Route path="audit-log" element={<AuditLogPage />} />
+                        <Route path="content-management" element={<ContentManagementPage />} />
+                        <Route path="community" element={<CommunityPage />} />
+                    </Route>
+                    
+                    {/* A fallback for any path that doesn't match will redirect to the public home page */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Suspense>
         </>
     );
 };

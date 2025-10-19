@@ -1,38 +1,34 @@
-import React, { ReactNode } from 'react';
-import { AppProvider } from './AppContext';
+import React from 'react';
 import { AuthProvider } from './AuthContext';
 import { UIProvider } from './UIContext';
-import { TransportationProvider } from './TransportationContext';
-import { CommunityProvider } from './CommunityContext';
+import { AppProvider } from './AppContext';
 import { ServicesProvider } from './ServicesContext';
 import { PropertiesProvider } from './PropertiesContext';
 import { ContentProvider } from './ContentContext';
 import { UserManagementProvider } from './UserManagementContext';
+import { TransportationProvider } from './TransportationContext';
+import { CommunityProvider } from './CommunityContext';
 import { MarketplaceProvider } from './MarketplaceContext';
 
-interface AppContextProvidersProps {
-  children: ReactNode;
-}
-
-const AppContextProviders: React.FC<AppContextProvidersProps> = ({ children }) => {
+const AppContextProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <UIProvider>
       <AuthProvider>
         <AppProvider>
           <UserManagementProvider>
-            <ContentProvider>
+            <ServicesProvider>
               <PropertiesProvider>
-                <ServicesProvider>
+                <ContentProvider>
                   <TransportationProvider>
-                    <CommunityProvider>
-                      <MarketplaceProvider>
+                    <MarketplaceProvider>
+                      <CommunityProvider>
                         {children}
-                      </MarketplaceProvider>
-                    </CommunityProvider>
+                      </CommunityProvider>
+                    </MarketplaceProvider>
                   </TransportationProvider>
-                </ServicesProvider>
+                </ContentProvider>
               </PropertiesProvider>
-            </ContentProvider>
+            </ServicesProvider>
           </UserManagementProvider>
         </AppProvider>
       </AuthProvider>

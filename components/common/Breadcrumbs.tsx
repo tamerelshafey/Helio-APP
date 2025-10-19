@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { HomeIcon } from '../Icons';
+import { HomeIcon } from './Icons';
 
 const breadcrumbNameMap: { [key: string]: string } = {
   'services': 'الخدمات',
@@ -34,11 +34,11 @@ const breadcrumbNameMap: { [key: string]: string } = {
 
 const Breadcrumbs: React.FC = () => {
     const location = useLocation();
-    const pathnames = location.pathname.split('/').filter((x) => x);
+    const pathnames = location.pathname.split('/').filter((x) => x && x !== 'dashboard');
 
     return (
         <nav className="mb-6 flex items-center space-x-2 rtl:space-x-reverse text-sm font-sans" aria-label="Breadcrumb">
-            <Link to="/" className="text-gray-500 hover:text-cyan-500 transition-colors flex items-center gap-2">
+            <Link to="/dashboard" className="text-gray-500 hover:text-cyan-500 transition-colors flex items-center gap-2">
                 <HomeIcon className="w-5 h-5" />
                 <span>الرئيسية</span>
             </Link>
@@ -47,7 +47,8 @@ const Breadcrumbs: React.FC = () => {
 
             {pathnames.map((value, index) => {
                 const isLast = index === pathnames.length - 1;
-                const to = `/${pathnames.slice(0, index + 1).join('/')}`;
+                // Prepend /dashboard for correct link generation
+                const to = `/dashboard/${pathnames.slice(0, index + 1).join('/')}`;
                 
                 if (!isNaN(Number(value))) {
                     return null;

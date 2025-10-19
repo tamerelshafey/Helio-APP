@@ -121,21 +121,9 @@ export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ chil
         handleSaveSchedule, handleSaveSupervisor,
         handleSaveOverride, handleResetOverride,
     }), [
-        // FIX: Reformat dependency array to avoid linter error.
-        internalSupervisor,
-        externalSupervisor,
-        internalDrivers,
-        weeklySchedule,
-        externalRoutes,
-        scheduleOverrides,
-        handleSaveDriver,
-        handleDeleteDriver,
-        handleSaveRoute,
-        handleDeleteRoute,
-        handleSaveSchedule,
-        handleSaveSupervisor,
-        handleSaveOverride,
-        handleResetOverride
+        internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes, scheduleOverrides,
+        handleSaveDriver, handleDeleteDriver, handleSaveRoute, handleDeleteRoute, handleSaveSchedule, 
+        handleSaveSupervisor, handleSaveOverride, handleResetOverride
     ]);
 
     return <TransportationContext.Provider value={value}>{children}</TransportationContext.Provider>;

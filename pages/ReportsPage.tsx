@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContentContext } from '../context/ContentContext';
 import { useServicesContext } from '../context/ServicesContext';
@@ -16,6 +16,7 @@ import KpiCard from '../components/common/KpiCard';
 import TabButton from '../components/common/TabButton';
 import { useUIContext } from '../context/UIContext';
 import EmptyState from '../components/common/EmptyState';
+import Rating from '../components/DashboardView';
 
 const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({ data, categories }) => {
     const { isDarkMode } = useUIContext();
@@ -48,14 +49,6 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
     const tooltipStyle = isDarkMode 
         ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
         : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
-
-    const Rating: React.FC<{ rating: number }> = ({ rating }) => (
-        <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-                <StarIcon key={i} className={`w-4 h-4 ${ i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600' }`} />
-            ))}
-        </div>
-    );
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -106,34 +99,49 @@ const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({
                     </div>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">الخدمة</th>
-                                <th scope="col" className="px-6 py-3">التقييم</th>
-                                <th scope="col" className="px-6 py-3">المراجعات</th>
-                                <th scope="col" className="px-6 py-3">المشاهدات</th>
-                                <th scope="col" className="px-6 py-3">مفضلة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredData.map(service => (
-                                <tr key={service.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{service.name}</td>
-                                    <td className="px-6 py-4"><Rating rating={service.rating} /></td>
-                                    <td className="px-6 py-4">{service.reviews.length}</td>
-                                    <td className="px-6 py-4">{service.views}</td>
-                                    <td className="px-6 py-4 text-center">{service.isFavorite ? <StarIcon className="w-5 h-5 text-yellow-400"/> : <StarIconOutline className="w-5 h-5 text-gray-400"/>}</td>
+                    {filteredData.length > 0 ? (
+                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">الخدمة</th>
+                                    <th scope="col" className="px-6 py-3">التقييم</th>
+                                    <th scope="col" className="px-6 py-3">المراجعات</th>
+                                    <th scope="col" className="px-6 py-3">المشاهدات</th>
+                                    <th scope="col" className="px-6 py-3">مفضلة</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {filteredData.length === 0 && <div className="text-center py-8 text-gray-500 dark:text-gray-400">لا توجد بيانات تطابق البحث.</div>}
+                            </thead>
+                            <tbody>
+                                {filteredData.map(service => (
+                                    <tr key={service.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{service.name}</td>
+                                        <td className="px-6 py-4"><Rating rating={service.rating} /></td>
+                                        <td className="px-6 py-4">{service.reviews.length}</td>
+                                        <td className="px-6 py-4">{service.views}</td>
+                                        <td className="px-6 py-4 text-center">{service.isFavorite ? <StarIcon className="w-5 h-5 text-yellow-400"/> : <StarIconOutline className="w-5 h-5 text-gray-400"/>}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div className="py-8">
+                            <EmptyState
+                                icon={<MagnifyingGlassIcon className="w-12 h-12 text-slate-400" />}
+                                title="لا توجد بيانات"
+                                message="لم يتم العثور على خدمات تطابق معايير البحث الحالية."
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
+
+const PropertyTypeBadge: React.FC<{ type: 'sale' | 'rent' }> = memo(({ type }) => (
+    <span className={`px-2 py-1 text-xs font-medium rounded-full ${ type === 'sale' ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'}`}>
+        {type === 'sale' ? 'بيع' : 'إيجار'}
+    </span>
+));
 
 const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
     const { isDarkMode } = useUIContext();
@@ -161,12 +169,6 @@ const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
     const tooltipStyle = isDarkMode 
         ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
         : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
-
-    const TypeBadge: React.FC<{ type: 'sale' | 'rent' }> = ({ type }) => (
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${ type === 'sale' ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'}`}>
-            {type === 'sale' ? 'بيع' : 'إيجار'}
-        </span>
-    );
 
     return (
          <div className="space-y-8 animate-fade-in">
@@ -197,27 +199,36 @@ const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
                     </div>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">العنوان</th>
-                                <th scope="col" className="px-6 py-3">النوع</th>
-                                <th scope="col" className="px-6 py-3">السعر</th>
-                                <th scope="col" className="px-6 py-3">المشاهدات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {searchedData.map(prop => (
-                                <tr key={prop.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{prop.title}</td>
-                                    <td className="px-6 py-4"><TypeBadge type={prop.type} /></td>
-                                    <td className="px-6 py-4 font-mono">{prop.price.toLocaleString()} جنيه</td>
-                                    <td className="px-6 py-4">{prop.views}</td>
+                    {searchedData.length > 0 ? (
+                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">العنوان</th>
+                                    <th scope="col" className="px-6 py-3">النوع</th>
+                                    <th scope="col" className="px-6 py-3">السعر</th>
+                                    <th scope="col" className="px-6 py-3">المشاهدات</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {searchedData.length === 0 && <div className="text-center py-8 text-gray-500 dark:text-gray-400">لا توجد بيانات تطابق البحث.</div>}
+                            </thead>
+                            <tbody>
+                                {searchedData.map(prop => (
+                                    <tr key={prop.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{prop.title}</td>
+                                        <td className="px-6 py-4"><PropertyTypeBadge type={prop.type} /></td>
+                                        <td className="px-6 py-4 font-mono">{prop.price.toLocaleString()} جنيه</td>
+                                        <td className="px-6 py-4">{prop.views}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                         <div className="py-8">
+                            <EmptyState
+                                icon={<MagnifyingGlassIcon className="w-12 h-12 text-slate-400" />}
+                                title="لا توجد بيانات"
+                                message="لم يتم العثور على عقارات تطابق معايير البحث الحالية."
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -274,27 +285,36 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
                     </div>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">العنوان</th>
-                                <th scope="col" className="px-6 py-3">الكاتب</th>
-                                <th scope="col" className="px-6 py-3">التاريخ</th>
-                                <th scope="col" className="px-6 py-3">المشاهدات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {searchedData.map(item => (
-                                <tr key={item.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{item.title}</td>
-                                    <td className="px-6 py-4">{item.author}</td>
-                                    <td className="px-6 py-4">{item.date}</td>
-                                    <td className="px-6 py-4">{item.views}</td>
+                    {searchedData.length > 0 ? (
+                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">العنوان</th>
+                                    <th scope="col" className="px-6 py-3">الكاتب</th>
+                                    <th scope="col" className="px-6 py-3">التاريخ</th>
+                                    <th scope="col" className="px-6 py-3">المشاهدات</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {searchedData.length === 0 && <div className="text-center py-8 text-gray-500 dark:text-gray-400">لا توجد بيانات تطابق البحث.</div>}
+                            </thead>
+                            <tbody>
+                                {searchedData.map(item => (
+                                    <tr key={item.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{item.title}</td>
+                                        <td className="px-6 py-4">{item.author}</td>
+                                        <td className="px-6 py-4">{item.date}</td>
+                                        <td className="px-6 py-4">{item.views}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                         <div className="py-8">
+                            <EmptyState
+                                icon={<MagnifyingGlassIcon className="w-12 h-12 text-slate-400" />}
+                                title="لا توجد بيانات"
+                                message="لم يتم العثور على أخبار تطابق معايير البحث الحالية."
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -367,37 +387,43 @@ const TransportationReports: React.FC = () => {
                         </div>
                     </div>
                     <div className="overflow-y-auto max-h-80">
-                        <table className="w-full text-sm text-right">
-                            <tbody>
-                                {filteredDrivers.map(driver => (
-                                    <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
-                                        <td className="p-3">
-                                            <div className="flex items-center gap-3">
-                                                <img src={driver.avatar} alt={driver.name} className="w-8 h-8 rounded-full" />
-                                                <span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-3 text-left font-mono">{driver.phone}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {filteredDrivers.length === 0 && <p className="text-center py-4 text-gray-500">لا يوجد سائقون.</p>}
+                        {filteredDrivers.length > 0 ? (
+                            <table className="w-full text-sm text-right">
+                                <tbody>
+                                    {filteredDrivers.map(driver => (
+                                        <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
+                                            <td className="p-3">
+                                                <div className="flex items-center gap-3">
+                                                    <img src={driver.avatar} alt={driver.name} className="w-8 h-8 rounded-full" />
+                                                    <span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-3 text-left font-mono">{driver.phone}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <p className="text-center py-4 text-gray-500">لا يوجد سائقون.</p>
+                        )}
                     </div>
                 </div>
 
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
                     <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300">قائمة الخطوط الخارجية</h3>
                     <div className="overflow-y-auto max-h-80">
-                       <ul className="space-y-3">
-                         {externalRoutes.map(route => (
-                            <li key={route.id} className="p-3 rounded-md bg-slate-50 dark:bg-slate-700/50">
-                                <p className="font-bold text-gray-800 dark:text-white">{route.name}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">المواعيد: {route.timings.join(' | ')}</p>
-                            </li>
-                         ))}
-                       </ul>
-                        {externalRoutes.length === 0 && <p className="text-center py-4 text-gray-500">لا توجد خطوط خارجية.</p>}
+                       {externalRoutes.length > 0 ? (
+                           <ul className="space-y-3">
+                             {externalRoutes.map(route => (
+                                <li key={route.id} className="p-3 rounded-md bg-slate-50 dark:bg-slate-700/50">
+                                    <p className="font-bold text-gray-800 dark:text-white">{route.name}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">المواعيد: {route.timings.join(' | ')}</p>
+                                </li>
+                             ))}
+                           </ul>
+                       ) : (
+                           <p className="text-center py-4 text-gray-500">لا توجد خطوط خارجية.</p>
+                       )}
                     </div>
                 </div>
             </div>

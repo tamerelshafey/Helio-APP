@@ -2,11 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import KpiCard from '../common/KpiCard';
 import UserActivityChart from './UserActivityChart';
-import RecentActivityTable from './RecentActivityTable';
+// FIX: Corrected import path for RecentActivityTable component
+import RecentActivityTable from './RecentInquiriesTable';
 import AlertsPanel from './AlertsPanel';
 import UsersToVerify from './UsersToVerify';
 import Footer from '../common/Footer';
-import { UserIcon, WrenchScrewdriverIcon, HomeModernIcon, UserGroupIcon, NewspaperIcon, Bars3Icon, ChatBubbleOvalLeftIcon, TagIcon } from '../common/Icons';
+import { UserIcon, WrenchScrewdriverIcon, HomeModernIcon, UserGroupIcon, NewspaperIcon, Bars3Icon, ChatBubbleOvalLeftIcon } from '../common/Icons';
 import { useContentContext } from '../../context/ContentContext';
 import { useServicesContext } from '../../context/ServicesContext';
 import { usePropertiesContext } from '../../context/PropertiesContext';

@@ -5,7 +5,7 @@ import { useServicesContext } from '../../context/ServicesContext';
 import { usePropertiesContext } from '../../context/PropertiesContext';
 import { useContentContext } from '../../context/ContentContext';
 import type { SearchResult } from '../../types';
-import { MagnifyingGlassIcon, XMarkIcon, WrenchScrewdriverIcon, HomeModernIcon, NewspaperIcon, UserGroupIcon } from '../Icons';
+import { MagnifyingGlassIcon, XMarkIcon, WrenchScrewdriverIcon, HomeModernIcon, NewspaperIcon, UserGroupIcon } from './Icons';
 
 interface GlobalSearchModalProps {
     isOpen: boolean;
@@ -124,28 +124,28 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         autoFocus
-                        className="w-full bg-transparent text-gray-800 dark:text-gray-200 text-lg p-4 pr-12 border-b border-slate-200 dark:border-slate-700 focus:outline-none"
+                        className="w-full bg-transparent text-lg py-4 pr-12 pl-12 focus:outline-none text-gray-800 dark:text-white rounded-t-lg"
                     />
-                    <button onClick={onClose} className="absolute top-1/2 left-4 -translate-y-1/2 p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-slate-700">
+                    <button onClick={onClose} className="absolute top-1/2 left-4 -translate-y-1/2 p-1 text-gray-500 hover:text-gray-800 dark:hover:text-white">
                         <XMarkIcon className="w-6 h-6"/>
                     </button>
                 </div>
-                <div className="max-h-[60vh] overflow-y-auto">
+                <div className="border-t border-slate-200 dark:border-slate-700 max-h-[60vh] overflow-y-auto">
                     {searchTerm.trim().length < 2 ? (
-                        <p className="p-8 text-center text-gray-500 dark:text-gray-400">ابدأ بالكتابة للبحث...</p>
+                        <p className="text-center text-gray-500 p-8">ابدأ بالكتابة للبحث...</p>
                     ) : searchResults.length > 0 ? (
-                        <div className="p-2">
+                        <div>
                             {Object.entries(groupedResults).map(([type, results]) => (
-                                <div key={type} className="mb-2">
-                                    <h3 className="text-xs font-bold uppercase text-gray-400 dark:text-gray-500 px-4 py-2">{type}</h3>
+                                <div key={type}>
+                                    <h3 className="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 bg-slate-100 dark:bg-slate-700/50 px-4 py-1.5 sticky top-0">{type}</h3>
                                     <ul>
                                         {results.map(result => (
                                             <li key={result.id}>
-                                                <button onClick={() => handleLinkClick(result.link)} className="w-full text-right flex items-center gap-4 p-3 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                                <button onClick={() => handleLinkClick(result.link)} className="w-full text-right flex items-center gap-4 px-4 py-3 hover:bg-cyan-50 dark:hover:bg-cyan-900/20">
                                                     <div className="flex-shrink-0">{result.icon}</div>
                                                     <div>
                                                         <p className="font-semibold text-gray-800 dark:text-white">{result.title}</p>
-                                                        {result.subtitle && <p className="text-sm text-gray-500 dark:text-gray-300">{result.subtitle}</p>}
+                                                        {result.subtitle && <p className="text-sm text-gray-500 dark:text-gray-400">{result.subtitle}</p>}
                                                     </div>
                                                 </button>
                                             </li>
@@ -155,7 +155,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                             ))}
                         </div>
                     ) : (
-                        <p className="p-8 text-center text-gray-500 dark:text-gray-400">لا توجد نتائج تطابق بحثك.</p>
+                        <p className="text-center text-gray-500 p-8">لا توجد نتائج بحث لـ "{searchTerm}"</p>
                     )}
                 </div>
             </div>

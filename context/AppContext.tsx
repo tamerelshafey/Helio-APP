@@ -32,7 +32,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setAuditLogs(prevLogs => [newLog, ...prevLogs]);
     }, [currentUser]);
     
-    // FIX: Updated function signature to align with the corrected type in AppContextType. The logic inside already handles type correctly for new vs. existing contacts.
     const handleSaveEmergencyContact = useCallback((contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }, newContactType: 'city' | 'national' = 'city') => {
         const isNew = !contactData.id;
         setEmergencyContacts(prevContacts => {
@@ -90,7 +89,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...prev,
             [page]: newContent
         }));
-        // FIX: Explicitly convert page key to string to prevent potential runtime errors with symbols.
         logActivity('تحديث محتوى الموقع العام', `تم تحديث محتوى صفحة "${String(page)}"`);
     }, [logActivity]);
 
@@ -103,6 +101,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 const newItem: LostAndFoundItem = {
                     ...itemData,
                     id: Math.max(...prev.map(i => i.id), 0) + 1,
+                    moderationStatus: 'pending',
                 };
                 return [newItem, ...prev];
             }
@@ -119,6 +118,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, [lostAndFoundItems, logActivity]);
 
+    const handleApproveLostAndFoundItem = useCallback((id: number) => {
+        setLostAndFoundItems(prev => prev.map(item => item.id === id ? { ...item, moderationStatus: 'approved' } : item));
+        logActivity('الموافقة على عنصر مفقودات', `تمت الموافقة على عنصر ID: ${id}`);
+    }, [logActivity]);
+
+    const handleRejectLostAndFoundItem = useCallback((id: number) => {
+        setLostAndFoundItems(prev => prev.map(item => item.id === id ? { ...item, moderationStatus: 'rejected' } : item));
+        logActivity('رفض عنصر مفقودات', `تم رفض عنصر ID: ${id}`);
+    }, [logActivity]);
+
 
     const value = useMemo(() => ({
         emergencyContacts, serviceGuides,
@@ -127,13 +136,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         handleSaveServiceGuide, handleDeleteServiceGuide,
         publicPagesContent, handleUpdatePublicPageContent,
         lostAndFoundItems, handleSaveLostAndFoundItem, handleDeleteLostAndFoundItem,
+        handleApproveLostAndFoundItem, handleRejectLostAndFoundItem,
     }), [
         emergencyContacts, serviceGuides,
         auditLogs, logActivity,
         handleSaveEmergencyContact, handleDeleteEmergencyContact,
         handleSaveServiceGuide, handleDeleteServiceGuide,
         publicPagesContent, handleUpdatePublicPageContent,
-        lostAndFoundItems, handleSaveLostAndFoundItem, handleDeleteLostAndFoundItem
+        lostAndFoundItems, handleSaveLostAndFoundItem, handleDeleteLostAndFoundItem,
+        handleApproveLostAndFoundItem, handleRejectLostAndFoundItem,
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

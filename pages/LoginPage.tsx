@@ -25,7 +25,7 @@ const LoginPage: React.FC = () => {
         // For demo purposes, we'll use a static password.
         if (admin && password === 'password123') {
             login(admin);
-            navigate('/');
+            navigate('/dashboard');
         } else {
             setError('البريد الإلكتروني أو كلمة المرور غير صحيحة.');
             showToast('البريد الإلكتروني أو كلمة المرور غير صحيحة.', 'error');
@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
         const admin = admins.find(a => a.roles.includes(role));
         if (admin) {
             login(admin);
-            navigate('/');
+            navigate('/dashboard');
         } else {
             showToast(`لم يتم العثور على مدير بالصلاحية: ${role}`, 'error');
         }

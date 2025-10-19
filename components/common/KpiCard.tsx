@@ -27,12 +27,12 @@ const KpiCard: React.FC<KpiCardProps> = ({ title, value, change, changeLabel, ic
       <div className="mt-4 text-right">
         <p className="text-3xl font-bold text-gray-900 dark:text-white">{value}</p>
         {change && changeLabel && (
-          <div className="flex items-baseline space-x-1 rtl:space-x-reverse text-sm mt-1">
-            <span className={`font-semibold ${changeColor}`}>
-              {change}
-            </span>
-            <span className="text-gray-500 dark:text-gray-400">{changeLabel}</span>
-          </div>
+            <div className="flex items-baseline space-x-1 rtl:space-x-reverse text-sm mt-1">
+                <span className={`font-semibold ${changeColor}`}>
+                    {change}
+                </span>
+                <span className="text-gray-500 dark:text-gray-400">{changeLabel}</span>
+            </div>
         )}
       </div>
     </div>

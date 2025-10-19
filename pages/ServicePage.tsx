@@ -8,17 +8,8 @@ import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
-
-const Rating: React.FC<{ rating: number }> = ({ rating }) => (
-    <div className="flex items-center">
-        {[...Array(5)].map((_, i) => (
-            <StarIcon
-                key={i}
-                className={`w-4 h-4 ${ i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600' }`}
-            />
-        ))}
-    </div>
-);
+import Rating from '../components/DashboardView';
+import { InputField, TextareaField } from '../components/common/FormControls';
 
 const ServiceForm: React.FC<{
     onSave: (service: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => void;
@@ -140,19 +131,6 @@ const ServiceForm: React.FC<{
     );
 };
 
-const InputField: React.FC<{ name: string; label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; required?: boolean; }> = ({ name, label, value, onChange, required }) => (
-    <div>
-        <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
-        <input type="text" id={name} name={name} value={value} onChange={onChange} required={required} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" />
-    </div>
-);
-const TextareaField: React.FC<{ name: string; label: string; value: string; onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void; required?: boolean; }> = ({ name, label, value, onChange, required }) => (
-    <div>
-        <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
-        <textarea id={name} name={name} value={value} onChange={onChange} required={required} rows={3} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"></textarea>
-    </div>
-);
-
 const ServicePage: React.FC = () => {
     const navigate = useNavigate();
     const { subCategoryId: subCategoryIdStr } = useParams<{ subCategoryId: string }>();
@@ -201,9 +179,9 @@ const ServicePage: React.FC = () => {
 
     return (
         <div className="animate-fade-in">
-            <button onClick={() => navigate('/')} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
+            <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
                 <ArrowLeftIcon className="w-5 h-5" />
-                <span>العودة إلى لوحة التحكم</span>
+                <span>العودة</span>
             </button>
             <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg">
                 <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
@@ -267,7 +245,7 @@ const ServicePage: React.FC = () => {
                                         <td className="px-6 py-4">{service.reviews.length}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <button onClick={() => navigate(`/services/detail/${service.id}`)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض التفاصيل"><EyeIcon className="w-5 h-5" /></button>
+                                                <button onClick={() => navigate(`/dashboard/services/detail/${service.id}`)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض التفاصيل"><EyeIcon className="w-5 h-5" /></button>
                                                 {canManage && (
                                                     <>
                                                         <button onClick={() => handleEditService(service)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>

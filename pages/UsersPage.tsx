@@ -2,21 +2,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from '../components/common/Icons';
 import { useUserManagementContext } from '../context/UserManagementContext';
-import { useUIContext } from '../context/UIContext';
 import type { AppUser, AdminUser, UserStatus, AdminUserRole } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
+import StatusBadge from '../components/ServicePage';
 import TabButton from '../components/common/TabButton';
+import Pagination from '../components/common/Pagination';
 
-const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
-    const statusMap = {
-        active: { text: 'مفعل', classes: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
-        pending: { text: 'معلق', classes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' },
-        banned: { text: 'محظور', classes: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' },
-    };
-    const { text, classes } = statusMap[status];
-    return <span className={`px-2 py-1 text-xs font-medium rounded-full ${classes}`}>{text}</span>;
-};
+const ITEMS_PER_PAGE = 10;
 
 const UserForm: React.FC<{
     user: AppUser | null;
@@ -146,11 +139,10 @@ const AdminForm: React.FC<{
 };
 
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
-    const { users, handleDeleteUser, handleDeleteUsers } = useUserManagementContext();
-    const { showToast } = useUIContext();
+    const { users, handleDeleteUser } = useUserManagementContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
-    const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
@@ -160,36 +152,13 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
             return matchesSearch && matchesFilter;
         });
     }, [users, searchTerm, statusFilter]);
-    
+
+    const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+    const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
     useEffect(() => {
-        setSelectedUserIds([]);
+        setCurrentPage(1);
     }, [searchTerm, statusFilter]);
-
-    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked) {
-            setSelectedUserIds(filteredUsers.map(u => u.id));
-        } else {
-            setSelectedUserIds([]);
-        }
-    };
-
-    const handleSelectOne = (e: React.ChangeEvent<HTMLInputElement>, id: number) => {
-        if (e.target.checked) {
-            setSelectedUserIds(prev => [...prev, id]);
-        } else {
-            setSelectedUserIds(prev => prev.filter(userId => userId !== id));
-        }
-    };
-    
-    const handleBulkDelete = () => {
-        if (window.confirm(`هل أنت متأكد من حذف ${selectedUserIds.length} مستخدمين؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
-            handleDeleteUsers(selectedUserIds);
-            showToast(`تم حذف ${selectedUserIds.length} مستخدمين بنجاح.`);
-            setSelectedUserIds([]);
-        }
-    };
-
-    const isAllSelected = filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length;
 
     return (
         <div className="animate-fade-in">
@@ -211,24 +180,10 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                     </button>
                 </div>
             </div>
-
-            {selectedUserIds.length > 0 && (
-                <div className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-700/50 rounded-lg mb-4 animate-fade-in">
-                    <span className="font-semibold text-sm">{selectedUserIds.length} مستخدمين محددين</span>
-                    <button onClick={handleBulkDelete} className="flex items-center gap-2 text-sm font-semibold bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 px-3 py-1 rounded-md hover:bg-red-200">
-                        <TrashIcon className="w-4 h-4" />
-                        حذف المحدد
-                    </button>
-                </div>
-            )}
-
              <div className="overflow-x-auto">
                 <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
                         <tr>
-                             <th scope="col" className="p-4">
-                                <input type="checkbox" checked={isAllSelected} onChange={handleSelectAll} className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500" />
-                            </th>
                             <th scope="col" className="px-6 py-3">المستخدم</th>
                             <th scope="col" className="px-6 py-3">الحالة</th>
                             <th scope="col" className="px-6 py-3">تاريخ الانضمام</th>
@@ -236,11 +191,8 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredUsers.map(user => (
-                            <tr key={user.id} className={`bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 ${selectedUserIds.includes(user.id) ? 'bg-slate-50 dark:bg-slate-700/50' : ''}`}>
-                                 <td className="w-4 p-4">
-                                    <input type="checkbox" checked={selectedUserIds.includes(user.id)} onChange={(e) => handleSelectOne(e, user.id)} className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500" />
-                                </td>
+                        {paginatedUsers.map(user => (
+                            <tr key={user.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
@@ -264,6 +216,7 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                 </table>
                  {filteredUsers.length === 0 && <p className="text-center py-8">لا يوجد مستخدمون يطابقون البحث.</p>}
             </div>
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
     )
 };
@@ -324,7 +277,6 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
 const UsersPage: React.FC = () => {
     const navigate = useNavigate();
     const { handleSaveUser, handleSaveAdmin } = useUserManagementContext();
-    const { showToast } = useUIContext();
     const [activeTab, setActiveTab] = useState<'users' | 'admins'>('users');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);
@@ -351,13 +303,11 @@ const UsersPage: React.FC = () => {
     const handleSaveAndCloseUser = (user: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => {
         handleSaveUser(user);
         handleCloseModal();
-        showToast(user.id ? 'تم تعديل بيانات المستخدم بنجاح!' : 'تم إضافة المستخدم بنجاح!');
     };
 
     const handleSaveAndCloseAdmin = (admin: Omit<AdminUser, 'id'> & { id?: number }) => {
         handleSaveAdmin(admin);
         handleCloseModal();
-        showToast(admin.id ? 'تم تعديل بيانات المدير بنجاح!' : 'تم إضافة المدير بنجاح!');
     };
 
     const renderContent = () => {

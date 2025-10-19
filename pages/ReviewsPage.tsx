@@ -11,8 +11,9 @@ import { useServicesContext } from '../context/ServicesContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import KpiCard from '../components/common/KpiCard';
-// FIX: Update Gemini API import
 import { GoogleGenAI, Type } from "@google/genai";
+import Rating from '../components/DashboardView';
+import Spinner from '../components/common/Spinner';
 
 // AI Analysis Types
 interface AnalysisResult {
@@ -21,15 +22,6 @@ interface AnalysisResult {
     negative_points: string[];
     suggested_reply: string;
 }
-
-// Components copied from other files to keep changes minimal
-const Rating: React.FC<{ rating: number }> = ({ rating }) => (
-    <div className="flex items-center">
-        {[...Array(5)].map((_, i) => (
-            <StarIcon key={i} className={`w-4 h-4 ${ i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600' }`} />
-        ))}
-    </div>
-);
 
 const ReplyForm: React.FC<{ review: Review; onSave: (reply: string) => void; onClose: () => void; }> = ({ review, onSave, onClose }) => {
     const [reply, setReply] = useState(review.adminReply || '');
@@ -167,7 +159,6 @@ const ReviewsPage: React.FC = () => {
         };
 
         try {
-            // FIX: Updated Gemini API usage to conform to new SDK guidelines.
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateContent({
                 model: "gemini-2.5-flash",
@@ -244,8 +235,9 @@ const ReviewsPage: React.FC = () => {
                                 <span>{isAnalyzing ? 'جاري التحليل...' : 'بدء التحليل'}</span>
                             </button>
                         </div>
+                        {isAnalyzing && <Spinner />}
                         {analysisError && <p className="text-red-500 text-sm">{analysisError}</p>}
-                        {analysisResult && (
+                        {analysisResult && !isAnalyzing && (
                             <div className="grid md:grid-cols-2 gap-6 mt-6 animate-fade-in">
                                 <div className="bg-white/50 dark:bg-slate-800/50 p-4 rounded-lg">
                                     <h3 className="font-bold mb-2 text-gray-700 dark:text-gray-200">ملخص عام</h3>

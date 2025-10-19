@@ -10,6 +10,8 @@ import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
+import { ContentStatusBadge } from '../components/ServicePage';
+import { InputField, TextareaField } from '../components/common/FormControls';
 
 const AdDetailsModal: React.FC<{ ad: Ad | null; isOpen: boolean; onClose: () => void }> = ({ ad, isOpen, onClose }) => {
     if (!ad) return null;
@@ -28,90 +30,35 @@ const AdDetailsModal: React.FC<{ ad: Ad | null; isOpen: boolean; onClose: () => 
     );
 };
 
-const AdForm: React.FC<{
-    onSave: (ad: Omit<Ad, 'id'> & { id?: number }) => void;
-    onClose: () => void;
-    ad: Omit<Ad, 'id'> & { id?: number } | null;
+const ReferralSection: React.FC<{
+    referralType: 'none' | 'service' | 'property';
+    onTypeChange: (type: 'none' | 'service' | 'property') => void;
+    referralId?: number;
+    onIdChange: (id?: number) => void;
     services: Service[];
     categories: Category[];
     properties: Property[];
-}> = ({ onSave, onClose, ad, services, categories, properties }) => {
-    const [title, setTitle] = useState('');
-    const [content, setContent] = useState('');
-    const [images, setImages] = useState<string[]>([]);
-    const [externalUrl, setExternalUrl] = useState('');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [placement, setPlacement] = useState<AdPlacement>('الرئيسية');
+}> = ({ referralType, onTypeChange, referralId, onIdChange, services, categories, properties }) => {
 
-
-    // Referral state
-    const [referralType, setReferralType] = useState<'none' | 'service' | 'property'>('none');
-    const [referralId, setReferralId] = useState<number | undefined>(undefined);
-    const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
-    const [selectedSubCategory, setSelectedSubCategory] = useState<number | undefined>(undefined);
+    const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
+    const [selectedSubCategory, setSelectedSubCategory] = useState<number | undefined>();
 
     useEffect(() => {
-        if (ad) {
-            setTitle(ad.title || '');
-            setContent(ad.content || '');
-            setImages(ad.imageUrl ? [ad.imageUrl] : []);
-            setExternalUrl(ad.externalUrl || '');
-            setStartDate(ad.startDate || '');
-            setEndDate(ad.endDate || '');
-            setPlacement(ad.placement || 'الرئيسية');
-
-            const refType = ad.referralType || 'none';
-            setReferralType(refType);
-            setReferralId(ad.referralId);
-
-            if (refType === 'service' && ad.referralId) {
-                const service = services.find(s => s.id === ad.referralId);
-                if (service) {
-                    for (const category of categories) {
-                        const subCategory = category.subCategories.find(sc => sc.id === service.subCategoryId);
-                        if (subCategory) {
-                            setSelectedCategory(category.id);
-                            setSelectedSubCategory(subCategory.id);
-                            break;
-                        }
+        if (referralType === 'service' && referralId) {
+            const service = services.find(s => s.id === referralId);
+            if (service) {
+                for (const category of categories) {
+                    const subCategory = category.subCategories.find(sc => sc.id === service.subCategoryId);
+                    if (subCategory) {
+                        setSelectedCategory(category.id);
+                        setSelectedSubCategory(subCategory.id);
+                        break;
                     }
                 }
-            } else {
-                setSelectedCategory(undefined);
-                setSelectedSubCategory(undefined);
             }
-
-        } else {
-            setTitle(''); setContent(''); setImages([]); setExternalUrl('');
-            setReferralType('none'); setReferralId(undefined);
-            setSelectedCategory(undefined); setSelectedSubCategory(undefined);
-            const today = new Date().toISOString().split('T')[0];
-            setStartDate(today); setEndDate(today);
-            setPlacement('الرئيسية');
         }
-    }, [ad, services, categories]);
+    }, [referralType, referralId, services, categories]);
 
-    const handleReferralTypeChange = (type: 'none' | 'service' | 'property') => {
-        setReferralType(type);
-        setReferralId(undefined);
-        setSelectedCategory(undefined);
-        setSelectedSubCategory(undefined);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave({ 
-            id: ad?.id, 
-            title, content, 
-            imageUrl: images.length > 0 ? images[0] : undefined, 
-            externalUrl, 
-            startDate, endDate,
-            placement,
-            referralType: referralType === 'none' ? undefined : referralType,
-            referralId: referralType !== 'none' ? referralId : undefined,
-        });
-    };
 
     const availableSubCategories = useMemo(() => {
         if (!selectedCategory) return [];
@@ -124,61 +71,117 @@ const AdForm: React.FC<{
     }, [selectedSubCategory, services]);
 
     return (
+        <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">إحالة الإعلان (اختياري)</label>
+            <div className="flex gap-4 mb-4">
+                {['none', 'service', 'property'].map(type => (
+                    <label key={type} className="flex items-center gap-2 text-sm">
+                        <input type="radio" name="referralType" checked={referralType === type} onChange={() => onTypeChange(type as any)} className="form-radio text-cyan-500 focus:ring-cyan-500" />
+                        {type === 'none' && 'لا يوجد (عرض منبثق)'}
+                        {type === 'service' && 'إحالة إلى خدمة'}
+                        {type === 'property' && 'إحالة إلى عقار'}
+                    </label>
+                ))}
+            </div>
+
+            {referralType === 'service' && (
+                <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <select value={selectedCategory || ''} onChange={e => { setSelectedCategory(Number(e.target.value)); setSelectedSubCategory(undefined); onIdChange(undefined); }} className="w-full bg-white dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"><option value="">-- اختر الفئة الرئيسية --</option>{categories.filter(c => c.name !== "المدينة والجهاز").map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+                    <select value={selectedSubCategory || ''} onChange={e => { setSelectedSubCategory(Number(e.target.value)); onIdChange(undefined); }} disabled={!selectedCategory} className="w-full bg-white dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"><option value="">-- اختر الفئة الفرعية --</option>{availableSubCategories.map(sc => <option key={sc.id} value={sc.id}>{sc.name}</option>)}</select>
+                    <select value={referralId || ''} onChange={e => onIdChange(Number(e.target.value))} disabled={!selectedSubCategory} className="w-full bg-white dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"><option value="">-- اختر الخدمة --</option>{availableServices.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
+                </div>
+            )}
+            
+            {referralType === 'property' && (
+                 <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                    <select value={referralId || ''} onChange={e => onIdChange(Number(e.target.value))} className="w-full bg-white dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"><option value="">-- اختر العقار للإحالة إليه --</option>{properties.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select>
+                </div>
+            )}
+        </div>
+    );
+}
+
+const AdForm: React.FC<{
+    onSave: (ad: Omit<Ad, 'id'> & { id?: number }) => void;
+    onClose: () => void;
+    ad: Omit<Ad, 'id'> & { id?: number } | null;
+    services: Service[];
+    categories: Category[];
+    properties: Property[];
+}> = ({ onSave, onClose, ad, services, categories, properties }) => {
+    
+    const [formData, setFormData] = useState({
+        title: '', content: '', externalUrl: '', startDate: '', endDate: '', placement: 'الرئيسية' as AdPlacement
+    });
+    const [images, setImages] = useState<string[]>([]);
+    const [referralType, setReferralType] = useState<'none' | 'service' | 'property'>('none');
+    const [referralId, setReferralId] = useState<number | undefined>(undefined);
+
+    useEffect(() => {
+        if (ad) {
+            setFormData({
+                title: ad.title || '', content: ad.content || '', externalUrl: ad.externalUrl || '',
+                startDate: ad.startDate || '', endDate: ad.endDate || '', placement: ad.placement || 'الرئيسية'
+            });
+            setImages(ad.imageUrl ? [ad.imageUrl] : []);
+            setReferralType(ad.referralType || 'none');
+            setReferralId(ad.referralId);
+        } else {
+            const today = new Date().toISOString().split('T')[0];
+             setFormData({ title: '', content: '', externalUrl: '', startDate: today, endDate: today, placement: 'الرئيسية' });
+            setImages([]);
+            setReferralType('none');
+            setReferralId(undefined);
+        }
+    }, [ad]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave({ 
+            id: ad?.id, 
+            ...formData,
+            imageUrl: images.length > 0 ? images[0] : undefined, 
+            referralType: referralType === 'none' ? undefined : referralType,
+            referralId: referralType !== 'none' ? referralId : undefined,
+        });
+    };
+
+    return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <div><label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">العنوان</label><input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"/></div>
-            <div><label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">المحتوى</label><textarea id="content" value={content} onChange={(e) => setContent(e.target.value)} required rows={3} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"></textarea></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">تاريخ البدء</label><input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" /></div><div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">تاريخ الانتهاء</label><input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500" /></div></div>
+            <InputField name="title" label="العنوان" value={formData.title} onChange={handleChange} required />
+            <TextareaField name="content" label="المحتوى" value={formData.content} onChange={handleChange} required />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <InputField name="startDate" type="date" label="تاريخ البدء" value={formData.startDate} onChange={handleChange} required />
+                <InputField name="endDate" type="date" label="تاريخ الانتهاء" value={formData.endDate} onChange={handleChange} required />
+            </div>
             <div>
                 <label htmlFor="placement" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">مكان عرض الإعلان</label>
-                <select id="placement" value={placement} onChange={e => setPlacement(e.target.value as AdPlacement)} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
+                <select id="placement" name="placement" value={formData.placement} onChange={handleChange} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
                     <option value="الرئيسية">الرئيسية</option>
                     <option value="المجتمع">المجتمع</option>
                     <option value="الخدمات">الخدمات</option>
                 </select>
             </div>
             <ImageUploader initialImages={images} onImagesChange={setImages} multiple={false} label="صورة الإعلان (اختياري)" />
-            <div><label htmlFor="externalUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">رابط خارجي (اختياري)</label><input type="url" id="externalUrl" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"/></div>
+            <InputField name="externalUrl" type="url" label="رابط خارجي (اختياري)" value={formData.externalUrl} onChange={handleChange} />
 
-            {/* Referral Section */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">إحالة الإعلان (اختياري)</label>
-                <div className="flex gap-4 mb-4">
-                    {['none', 'service', 'property'].map(type => (
-                        <label key={type} className="flex items-center gap-2 text-sm">
-                            <input type="radio" name="referralType" checked={referralType === type} onChange={() => handleReferralTypeChange(type as any)} className="form-radio text-cyan-500 focus:ring-cyan-500" />
-                            {type === 'none' && 'لا يوجد (عرض منبثق)'}
-                            {type === 'service' && 'إحالة إلى خدمة'}
-                            {type === 'property' && 'إحالة إلى عقار'}
-                        </label>
-                    ))}
-                </div>
-
-                {referralType === 'service' && (
-                    <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                        <select value={selectedCategory || ''} onChange={e => { setSelectedCategory(Number(e.target.value)); setSelectedSubCategory(undefined); setReferralId(undefined); }} className="w-full bg-white dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"><option value="">-- اختر الفئة الرئيسية --</option>{categories.filter(c => c.name !== "المدينة والجهاز").map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-                        <select value={selectedSubCategory || ''} onChange={e => { setSelectedSubCategory(Number(e.target.value)); setReferralId(undefined); }} disabled={!selectedCategory} className="w-full bg-white dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"><option value="">-- اختر الفئة الفرعية --</option>{availableSubCategories.map(sc => <option key={sc.id} value={sc.id}>{sc.name}</option>)}</select>
-                        <select value={referralId || ''} onChange={e => setReferralId(Number(e.target.value))} disabled={!selectedSubCategory} className="w-full bg-white dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"><option value="">-- اختر الخدمة --</option>{availableServices.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
-                    </div>
-                )}
-                
-                {referralType === 'property' && (
-                     <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                        <select value={referralId || ''} onChange={e => setReferralId(Number(e.target.value))} className="w-full bg-white dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500"><option value="">-- اختر العقار للإحالة إليه --</option>{properties.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select>
-                    </div>
-                )}
-            </div>
+            <ReferralSection
+                referralType={referralType}
+                onTypeChange={setReferralType}
+                referralId={referralId}
+                onIdChange={setReferralId}
+                services={services}
+                categories={categories}
+                properties={properties}
+            />
 
             <div className="flex justify-end gap-3 pt-4"><button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold bg-slate-100 dark:bg-slate-600 rounded-md hover:bg-slate-200 dark:hover:bg-slate-500">إلغاء</button><button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">حفظ الإعلان</button></div>
         </form>
     );
-};
-
-const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDate, endDate }) => {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const start = new Date(startDate); const end = new Date(endDate);
-    if (today < start) return <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">مجدول</span>;
-    if (today >= start && today <= end) return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">نشط</span>;
-    return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">منتهي</span>;
 };
 
 const AdsPage: React.FC = () => {
@@ -245,7 +248,7 @@ const AdsPage: React.FC = () => {
                                         <td className="px-6 py-4">
                                             <span className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300">{ad.placement}</span>
                                         </td>
-                                        <td className="px-6 py-4"><StatusBadge startDate={ad.startDate} endDate={ad.endDate} /></td>
+                                        <td className="px-6 py-4"><ContentStatusBadge startDate={ad.startDate} endDate={ad.endDate} /></td>
                                         <td className="px-6 py-4 text-xs font-mono">{ad.startDate} <br/> {ad.endDate}</td>
                                         <td className="px-6 py-4 text-xs">{getReferralInfo(ad)}</td>
                                         {canManage && (

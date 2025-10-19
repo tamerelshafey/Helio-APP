@@ -78,10 +78,10 @@ const FormRow: React.FC<{ label: string; children: React.ReactNode; description?
     </div>
 );
 
-const ToggleSwitch: React.FC<{ enabled: boolean; setEnabled: (e: boolean) => void }> = ({ enabled, setEnabled }) => (
+const ToggleSwitch: React.FC<{ enabled: boolean; setEnabled: () => void }> = ({ enabled, setEnabled }) => (
     <button
         type="button"
-        onClick={() => setEnabled(!enabled)}
+        onClick={setEnabled}
         className={`${enabled ? 'bg-cyan-600' : 'bg-gray-200 dark:bg-slate-600'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2`}
     >
         <span className={`${enabled ? 'translate-x-5' : 'translate-x-0'} inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}/>
@@ -111,10 +111,10 @@ const NotificationSettings = () => {
         <div>
             <h2 className="text-2xl font-bold mb-6">إعدادات الإشعارات</h2>
             <FormRow label="إشعارات البريد الإلكتروني" description="تلقي ملخصات وتقارير عبر البريد الإلكتروني.">
-                <ToggleSwitch enabled={emailNotifications} setEnabled={setEmailNotifications} />
+                <ToggleSwitch enabled={emailNotifications} setEnabled={() => setEmailNotifications(prev => !prev)} />
             </FormRow>
              <FormRow label="إشعارات لحظية" description="تلقي تنبيهات فورية على لوحة التحكم.">
-                 <ToggleSwitch enabled={pushNotifications} setEnabled={setPushNotifications} />
+                 <ToggleSwitch enabled={pushNotifications} setEnabled={() => setPushNotifications(prev => !prev)} />
             </FormRow>
         </div>
     );
@@ -141,7 +141,7 @@ const AppearanceSettings = () => {
         <div>
             <h2 className="text-2xl font-bold mb-6">المظهر</h2>
             <FormRow label="الوضع الداكن">
-                <ToggleSwitch enabled={isDarkMode} setEnabled={() => toggleDarkMode()} />
+                <ToggleSwitch enabled={isDarkMode} setEnabled={toggleDarkMode} />
             </FormRow>
              <FormRow label="لغة الواجهة">
                  <select className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none">

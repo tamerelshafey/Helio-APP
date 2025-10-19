@@ -5,10 +5,10 @@ const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
-        if (typeof window === 'undefined') return true;
+        if (typeof window === 'undefined') return false; // Default to light on server
         const storedTheme = window.localStorage.getItem('theme');
-        // Default to dark if not explicitly set to light
-        return storedTheme !== 'light';
+        // Default to light mode if not set
+        return storedTheme === 'dark';
     });
 
     useEffect(() => {

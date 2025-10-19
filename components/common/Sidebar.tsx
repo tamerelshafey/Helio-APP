@@ -1,44 +1,17 @@
 import React, { useState, memo, useMemo, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-    HomeIcon, UserGroupIcon, Cog6ToothIcon, MagnifyingGlassIcon, Bars3Icon, XMarkIcon, 
-    WrenchScrewdriverIcon, TruckIcon, ShieldExclamationIcon, NewspaperIcon, ChevronDownIcon, HeartIcon, ShoppingBagIcon, 
-    BuildingStorefrontIcon, AcademicCapIcon, DevicePhoneMobileIcon, BoltIcon, SparklesIcon, CarIcon, Squares2X2Icon, 
-    PaintBrushIcon, HomeModernIcon, BuildingLibraryIcon, InformationCircleIcon,
-    CakeIcon, FireIcon,
-    BookOpenIcon, BellAlertIcon, DocumentChartBarIcon, DocumentDuplicateIcon, RectangleGroupIcon,
-    BeakerIcon,
-    GiftIcon,
-    FilmIcon,
-    TrashIcon,
-    BanknotesIcon,
-    EnvelopeIcon,
-    BuildingOffice2Icon,
+    HomeIcon, UserGroupIcon, MagnifyingGlassIcon, Bars3Icon, XMarkIcon, 
+    WrenchScrewdriverIcon, TruckIcon, ShieldExclamationIcon, NewspaperIcon, ChevronDownIcon, 
+    HomeModernIcon, BuildingLibraryIcon,
+    BellAlertIcon, DocumentChartBarIcon, DocumentDuplicateIcon, RectangleGroupIcon,
     ChatBubbleOvalLeftIcon,
-    QuestionMarkCircleIcon,
     ClipboardDocumentListIcon,
     PencilSquareIcon,
-    TagIcon,
-    BriefcaseIcon,
     ChatBubbleLeftRightIcon,
-    ArchiveBoxIcon
 } from './Icons';
 import { useAuthContext } from '../../context/AuthContext';
-import type { AdminUser, AdminUserRole } from '../../types';
-
-const iconComponents: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
-    BuildingLibraryIcon, InformationCircleIcon, DocumentDuplicateIcon, TruckIcon,
-    HeartIcon, BuildingStorefrontIcon, HomeModernIcon, UserGroupIcon, BeakerIcon, CakeIcon, FireIcon, ShoppingBagIcon,
-    AcademicCapIcon, BookOpenIcon, GiftIcon, FilmIcon, SparklesIcon, BoltIcon, TrashIcon, WrenchScrewdriverIcon,
-    BanknotesIcon, EnvelopeIcon,
-    DevicePhoneMobileIcon, CarIcon, Squares2X2Icon, PaintBrushIcon
-};
-
-const getIcon = (name: string, props: React.SVGProps<SVGSVGElement>) => {
-    const IconComponent = iconComponents[name];
-    return IconComponent ? <IconComponent {...props} /> : <Squares2X2Icon {...props} />;
-};
-
+import type { AdminUserRole } from '../../types';
 
 interface NavItemData {
     name: string;
@@ -78,21 +51,32 @@ const Sidebar: React.FC = () => {
         const communityManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول المجتمع'];
 
         return [
-            { name: "نظرة عامة", icon: <HomeIcon className="w-6 h-6" />, to: "/" },
-            { name: "هيكل الخدمات", icon: <RectangleGroupIcon className="w-6 h-6" />, to: "/services-overview", roles: serviceManagerRoles },
-            { name: "دليل خدمات جهاز المدينة", icon: <DocumentDuplicateIcon className="w-6 h-6 text-sky-400" />, to: "/city-services-guide", roles: serviceManagerRoles },
-            { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/properties", roles: ['مدير عام', 'مسؤول العقارات'] },
-            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/transportation", roles: ['مدير عام', 'مسؤول النقل'] },
-            { name: "إدارة الطوارئ", icon: <ShieldExclamationIcon className="w-6 h-6" />, to: "/emergency", roles: serviceManagerRoles },
-            { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/news", roles: contentManagerRoles },
-            { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/notifications", roles: contentManagerRoles },
-            { name: "إدارة الإعلانات", icon: <NewspaperIcon className="w-6 h-6 text-orange-400" />, to: "/ads", roles: contentManagerRoles },
-            { name: "إدارة المجتمع", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/community", roles: communityManagerRoles },
-            { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/users", roles: ['مدير عام'] },
-            { name: "إدارة المحتوى", icon: <PencilSquareIcon className="w-6 h-6" />, to: "/content-management", roles: ['مدير عام'] },
-            { name: "إدارة التقييمات", icon: <ChatBubbleLeftRightIcon className="w-6 h-6" />, to: "/reviews", roles: serviceManagerRoles },
-            { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/reports" },
-            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/audit-log", roles: ['مدير عام'] }
+            // 1. Overview
+            { name: "نظرة عامة", icon: <HomeIcon className="w-6 h-6" />, to: "/dashboard" },
+            
+            // 2. Services Group
+            { name: "هيكل الخدمات", icon: <RectangleGroupIcon className="w-6 h-6" />, to: "/dashboard/services-overview", roles: serviceManagerRoles },
+            { name: "إدارة التقييمات", icon: <ChatBubbleLeftRightIcon className="w-6 h-6" />, to: "/dashboard/reviews", roles: serviceManagerRoles },
+            { name: "دليل خدمات جهاز المدينة", icon: <DocumentDuplicateIcon className="w-6 h-6 text-sky-400" />, to: "/dashboard/city-services-guide", roles: serviceManagerRoles },
+            { name: "إدارة الطوارئ", icon: <ShieldExclamationIcon className="w-6 h-6" />, to: "/dashboard/emergency", roles: serviceManagerRoles },
+    
+            // 3. Content Group
+            { name: "إدارة المحتوى", icon: <PencilSquareIcon className="w-6 h-6" />, to: "/dashboard/content-management", roles: ['مدير عام'] },
+            { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/dashboard/news", roles: contentManagerRoles },
+            { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/dashboard/notifications", roles: contentManagerRoles },
+            { name: "إدارة الإعلانات", icon: <NewspaperIcon className="w-6 h-6 text-orange-400" />, to: "/dashboard/ads", roles: contentManagerRoles },
+            
+            // 4. Modules Group
+            { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/dashboard/properties", roles: ['مدير عام', 'مسؤول العقارات'] },
+            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/dashboard/transportation", roles: ['مدير عام', 'مسؤول النقل'] },
+            { name: "إدارة المجتمع", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/dashboard/community", roles: communityManagerRoles },
+    
+            // 5. Users
+            { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/dashboard/users", roles: ['مدير عام'] },
+    
+            // 6. Analytics & System
+            { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/dashboard/reports" },
+            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: ['مدير عام'] }
         ];
     }, []);
 
