@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import KpiCard from '../common/KpiCard';
 import UserActivityChart from './UserActivityChart';
-// FIX: Corrected import path for RecentActivityTable component
 import RecentActivityTable from './RecentInquiriesTable';
 import AlertsPanel from './AlertsPanel';
 import UsersToVerify from './UsersToVerify';

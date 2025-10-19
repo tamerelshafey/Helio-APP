@@ -1,5 +1,5 @@
 import React from 'react';
-import type { UserStatus, MarketplaceItemStatus, LostFoundStatus, ModerationStatus } from '../types';
+import type { UserStatus, MarketplaceItemStatus, LostFoundStatus, ModerationStatus, UserAccountType } from '../types';
 
 type StatusType = UserStatus | MarketplaceItemStatus | LostFoundStatus | ModerationStatus | 'active' | 'scheduled' | 'expired';
 
@@ -47,6 +47,19 @@ export const ContentStatusBadge: React.FC<{ startDate: string, endDate: string }
     const { text, classes } = statusMap[status];
     return <span className={`px-2 py-1 text-xs font-medium rounded-full ${classes}`}>{text}</span>;
 };
+
+/**
+ * A badge for displaying user account type.
+ */
+export const AccountTypeBadge: React.FC<{ type: UserAccountType }> = ({ type }) => {
+    const typeMap: Record<UserAccountType, { text: string; classes: string }> = {
+        user: { text: 'مستخدم', classes: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
+        service_provider: { text: 'مقدم خدمة', classes: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
+    };
+    const { text, classes } = typeMap[type];
+    return <span className={`px-2 py-1 text-xs font-medium rounded-full ${classes}`}>{text}</span>;
+}
+
 
 /**
  * A generic badge for displaying various status types from a predefined map.

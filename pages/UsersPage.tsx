@@ -1,13 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, UserCircleIcon } from '../components/common/Icons';
 import { useUserManagementContext } from '../context/UserManagementContext';
+import { useServicesContext } from '../context/ServicesContext';
 import type { AppUser, AdminUser, UserStatus, AdminUserRole } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import StatusBadge from '../components/ServicePage';
+import StatusBadge, { AccountTypeBadge } from '../components/ServicePage';
 import TabButton from '../components/common/TabButton';
 import Pagination from '../components/common/Pagination';
+import { 
+    ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, 
+    UserGroupIcon, UserCircleIcon, WrenchScrewdriverIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon 
+} from '../components/common/Icons';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -35,6 +39,7 @@ const UserForm: React.FC<{
             ...formData,
             status: formData.status as UserStatus,
             avatar: avatar[0] || `https://picsum.photos/200/200?random=${Date.now()}`,
+            accountType: user?.accountType || 'user',
         });
     };
 
@@ -90,7 +95,6 @@ const AdminForm: React.FC<{
         );
     };
 
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({
@@ -139,17 +143,18 @@ const AdminForm: React.FC<{
 };
 
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
-    const { users, handleDeleteUser } = useUserManagementContext();
+    const { users, handleDeleteUser, handleSetUserAccountType } = useUserManagementContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
     const [currentPage, setCurrentPage] = useState(1);
 
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
+            const isRegularUser = user.accountType === 'user';
             const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                   user.email.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesFilter = statusFilter === 'all' || user.status === statusFilter;
-            return matchesSearch && matchesFilter;
+            return isRegularUser && matchesSearch && matchesFilter;
         });
     }, [users, searchTerm, statusFilter]);
 
@@ -206,6 +211,7 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                                 <td className="px-6 py-4">{user.joinDate}</td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
+                                        <button onClick={() => handleSetUserAccountType(user.id, 'service_provider')} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-md" title="ترقية إلى مقدم خدمة"><ArrowTrendingUpIcon className="w-5 h-5"/></button>
                                         <button onClick={() => onEdit(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
                                         <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
                                     </div>
@@ -220,6 +226,57 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
         </div>
     )
 };
+
+const ServiceProvidersTab: React.FC = () => {
+    const { users, handleSetUserAccountType } = useUserManagementContext();
+    const { services } = useServicesContext();
+
+    const providers = useMemo(() => users.filter(u => u.accountType === 'service_provider'), [users]);
+
+    return (
+        <div className="animate-fade-in overflow-x-auto">
+            <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" className="px-6 py-3">مقدم الخدمة</th>
+                        <th scope="col" className="px-6 py-3">الخدمات المرتبطة</th>
+                        <th scope="col" className="px-6 py-3">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {providers.map(provider => {
+                        const linkedServices = services.filter(s => s.providerId === provider.id);
+                        return (
+                            <tr key={provider.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <img src={provider.avatar} alt={provider.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
+                                        <div>
+                                            <div className="font-semibold text-gray-900 dark:text-white">{provider.name}</div>
+                                            <div className="text-xs">{provider.email}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    {linkedServices.length > 0 ? (
+                                        <ul className="text-xs space-y-1">
+                                            {linkedServices.map(s => <li key={s.id}>- {s.name}</li>)}
+                                        </ul>
+                                    ) : <span className="text-xs text-gray-400">لا يوجد</span>}
+                                </td>
+                                <td className="px-6 py-4">
+                                     <button onClick={() => handleSetUserAccountType(provider.id, 'user')} className="p-2 text-orange-500 hover:bg-orange-100 dark:hover:bg-orange-900/50 rounded-md" title="إلغاء الترقية إلى مستخدم عادي"><ArrowTrendingDownIcon className="w-5 h-5"/></button>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+            {providers.length === 0 && <p className="text-center py-8">لا يوجد مقدمو خدمات بعد.</p>}
+        </div>
+    );
+};
+
 
 const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) => void; }> = ({ onAdd, onEdit }) => {
     const { admins, handleDeleteAdmin } = useUserManagementContext();
@@ -277,7 +334,7 @@ const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) =>
 const UsersPage: React.FC = () => {
     const navigate = useNavigate();
     const { handleSaveUser, handleSaveAdmin } = useUserManagementContext();
-    const [activeTab, setActiveTab] = useState<'users' | 'admins'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'providers' | 'admins'>('users');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);
     const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
@@ -314,6 +371,8 @@ const UsersPage: React.FC = () => {
         switch (activeTab) {
             case 'users':
                 return <RegularUsersTab onAdd={() => handleOpenUserModal(null)} onEdit={handleOpenUserModal} />;
+            case 'providers':
+                return <ServiceProvidersTab />;
             case 'admins':
                 return <AdminUsersTab onAdd={() => handleOpenAdminModal(null)} onEdit={handleOpenAdminModal} />;
             default:
@@ -332,6 +391,7 @@ const UsersPage: React.FC = () => {
                 
                 <div className="flex gap-2 mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">
                     <TabButton active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<UserGroupIcon className="w-5 h-5" />}>المستخدمون</TabButton>
+                    <TabButton active={activeTab === 'providers'} onClick={() => setActiveTab('providers')} icon={<WrenchScrewdriverIcon className="w-5 h-5" />}>مقدمو الخدمات</TabButton>
                     <TabButton active={activeTab === 'admins'} onClick={() => setActiveTab('admins')} icon={<UserCircleIcon className="w-5 h-5" />}>المديرون</TabButton>
                 </div>
 

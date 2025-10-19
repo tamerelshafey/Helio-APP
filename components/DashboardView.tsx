@@ -1,5 +1,4 @@
 import React, { memo } from 'react';
-// FIX: Corrected import path for Icons.
 import { StarIcon } from './common/Icons';
 
 const Rating: React.FC<{ rating: number; size?: string }> = ({ rating, size = 'w-4 h-4' }) => (

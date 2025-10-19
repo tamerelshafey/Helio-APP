@@ -51,11 +51,8 @@ const ReviewQueueTab: React.FC = () => {
             <h2 className="text-xl font-bold">عناصر بانتظار المراجعة ({totalPending})</h2>
             {totalPending > 0 ? (
                 <div className="space-y-4">
-                    {/* FIX: Removed 'key' prop from ItemCard and wrapped it in a div with the key to satisfy TypeScript. */}
                     {pendingSale.map(item => <div key={`sale-${item.id}`}><ItemCard item={item} type="sale" onAction={(id, action) => handleApproval('sale', id, action)} /></div>)}
-                    {/* FIX: Removed 'key' prop from ItemCard and wrapped it in a div with the key to satisfy TypeScript. */}
                     {pendingJobs.map(item => <div key={`job-${item.id}`}><ItemCard item={item} type="job" onAction={(id, action) => handleApproval('job', id, action)} /></div>)}
-                    {/* FIX: Removed 'key' prop from ItemCard and wrapped it in a div with the key to satisfy TypeScript. */}
                     {pendingLostFound.map(item => <div key={`lf-${item.id}`}><ItemCard item={item} type="lostfound" onAction={(id, action) => handleApproval('lostfound', id, action)} /></div>)}
                 </div>
             ) : (

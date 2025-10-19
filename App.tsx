@@ -28,6 +28,8 @@ const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const ContentManagementPage = lazy(() => import('./pages/ContentManagementPage'));
 const CommunityPage = lazy(() => import('./pages/CommunityPage'));
+const BlankPage = lazy(() => import('./pages/BlankPage'));
+const OffersPage = lazy(() => import('./pages/OffersPage'));
 
 // Lazy load public pages
 const PublicHeader = lazy(() => import('./components/PublicHeader'));
@@ -171,6 +173,8 @@ const App: React.FC = () => {
                         <Route path="audit-log" element={<AuditLogPage />} />
                         <Route path="content-management" element={<ContentManagementPage />} />
                         <Route path="community" element={<CommunityPage />} />
+                        <Route path="blank" element={<BlankPage />} />
+                        <Route path="offers" element={<OffersPage />} />
                     </Route>
                     
                     {/* A fallback for any path that doesn't match will redirect to the public home page */}

@@ -9,6 +9,8 @@ import {
     ClipboardDocumentListIcon,
     PencilSquareIcon,
     ChatBubbleLeftRightIcon,
+    CubeIcon,
+    TagIcon,
 } from './Icons';
 import { useAuthContext } from '../../context/AuthContext';
 import type { AdminUserRole } from '../../types';
@@ -65,6 +67,7 @@ const Sidebar: React.FC = () => {
             { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/dashboard/news", roles: contentManagerRoles },
             { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/dashboard/notifications", roles: contentManagerRoles },
             { name: "إدارة الإعلانات", icon: <NewspaperIcon className="w-6 h-6 text-orange-400" />, to: "/dashboard/ads", roles: contentManagerRoles },
+            { name: "إدارة العروض", icon: <TagIcon className="w-6 h-6 text-rose-400" />, to: "/dashboard/offers", roles: ['مدير عام', 'مسؤول المحتوى', 'مسؤول ادارة الخدمات'] },
             
             // 4. Modules Group
             { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/dashboard/properties", roles: ['مدير عام', 'مسؤول العقارات'] },
@@ -76,7 +79,8 @@ const Sidebar: React.FC = () => {
     
             // 6. Analytics & System
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/dashboard/reports" },
-            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: ['مدير عام'] }
+            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: ['مدير عام'] },
+            { name: "صفحة فارغة", icon: <CubeIcon className="w-6 h-6" />, to: "/dashboard/blank", roles: ['مدير عام'] }
         ];
     }, []);
 

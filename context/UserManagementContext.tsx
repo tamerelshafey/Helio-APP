@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 import { useAppContext } from './AppContext';
 import { mockUsers, mockAdmins } from '../data/mock-data';
-import type { AppUser, AdminUser, UserManagementContextType, UserStatus } from '../types';
+import type { AppUser, AdminUser, UserManagementContextType, UserStatus, UserAccountType } from '../types';
 
 const UserManagementContext = createContext<UserManagementContextType | undefined>(undefined);
 
@@ -20,6 +20,7 @@ export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ chil
                     id: Math.max(...prev.map(u => u.id), 0) + 1,
                     ...userData,
                     joinDate: new Date().toISOString().split('T')[0],
+                    accountType: 'user', // Default account type
                 };
                 return [newUser, ...prev];
             }
@@ -27,6 +28,15 @@ export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ chil
         const action = isNew ? 'إضافة مستخدم جديد' : 'تعديل بيانات مستخدم';
         logActivity(action, `حفظ بيانات المستخدم: "${userData.name}"`);
     }, [logActivity]);
+    
+    const handleSetUserAccountType = useCallback((userId: number, accountType: UserAccountType) => {
+        const user = users.find(u => u.id === userId);
+        if (user) {
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, accountType } : u));
+            const action = accountType === 'service_provider' ? 'ترقية حساب مستخدم' : 'إلغاء ترقية حساب';
+            logActivity(action, `تم تغيير نوع حساب المستخدم "${user.name}" إلى "${accountType}".`);
+        }
+    }, [users, logActivity]);
 
     const handleDeleteUser = useCallback((id: number) => {
         const userName = users.find(u => u.id === id)?.name || `ID: ${id}`;
@@ -66,10 +76,12 @@ export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ chil
         users, admins,
         handleSaveUser, handleDeleteUser,
         handleDeleteUsers,
+        handleSetUserAccountType,
         handleSaveAdmin, handleDeleteAdmin,
     }), [
         users, admins,
         handleSaveUser, handleDeleteUser, handleDeleteUsers,
+        handleSetUserAccountType,
         handleSaveAdmin, handleDeleteAdmin
     ]);
 

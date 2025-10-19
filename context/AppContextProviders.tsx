@@ -9,6 +9,7 @@ import { UserManagementProvider } from './UserManagementContext';
 import { TransportationProvider } from './TransportationContext';
 import { CommunityProvider } from './CommunityContext';
 import { MarketplaceProvider } from './MarketplaceContext';
+import { OffersProvider } from './OffersContext';
 
 const AppContextProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -22,7 +23,9 @@ const AppContextProviders: React.FC<{ children: React.ReactNode }> = ({ children
                   <TransportationProvider>
                     <MarketplaceProvider>
                       <CommunityProvider>
-                        {children}
+                        <OffersProvider>
+                          {children}
+                        </OffersProvider>
                       </CommunityProvider>
                     </MarketplaceProvider>
                   </TransportationProvider>

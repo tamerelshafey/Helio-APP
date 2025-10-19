@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import type { Alert } from '../../types';
-// FIX: Replaced non-existent 'BuildingStorefrontIcon' with 'BuildingOffice2Icon'.
 import { BellAlertIcon, UserPlusIcon, BuildingOffice2Icon } from '../common/Icons';
 import { useUserManagementContext } from '../../context/UserManagementContext';
 import { usePropertiesContext } from '../../context/PropertiesContext';

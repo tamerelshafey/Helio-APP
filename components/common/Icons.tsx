@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // AcademicCapIcon
@@ -46,6 +47,13 @@ export const ArrowRightOnRectangleIcon: React.FC<React.SVGProps<SVGSVGElement>> 
 export const ArrowTrendingUpIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-3.976 5.192M21.75 3l-4.217 5.519" />
+  </svg>
+);
+
+// ArrowTrendingDownIcon
+export const ArrowTrendingDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.511L13.5 21" />
   </svg>
 );
 
@@ -565,7 +573,7 @@ export const TrashIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 // TruckIcon
 export const TruckIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2.14-2.14a1 1 0 011.414 0l2.14 2.14L13 16m-2 1h4a1 1 0 001-1v-6a1 1 0 00-1-1h-4v6z" />
     </svg>
 );

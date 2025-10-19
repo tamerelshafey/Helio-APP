@@ -30,6 +30,8 @@ const breadcrumbNameMap: { [key: string]: string } = {
   'buy-sell': 'البيع والشراء',
   'jobs': 'الوظائف',
   'lost-and-found': 'المفقودات',
+  'blank': 'صفحة فارغة',
+  'offers': 'إدارة العروض',
 };
 
 const Breadcrumbs: React.FC = () => {

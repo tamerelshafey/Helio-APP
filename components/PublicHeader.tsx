@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-// FIX: Corrected the import path for icons.
 import { ChevronDownIcon } from './common/Icons';
 
 const PublicHeader: React.FC = () => {

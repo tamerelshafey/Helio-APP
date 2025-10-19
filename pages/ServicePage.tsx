@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon, WrenchScrewdriverIcon } from '../components/common/Icons';
-import type { Service, Category } from '../types';
+import type { Service, Category, AppUser } from '../types';
 import { useServicesContext } from '../context/ServicesContext';
+import { useUserManagementContext } from '../context/UserManagementContext';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
@@ -17,11 +18,12 @@ const ServiceForm: React.FC<{
     service: Service | null;
     initialSubCategoryId: number;
     categories: Category[];
-}> = ({ onSave, onClose, service, initialSubCategoryId, categories }) => {
+    serviceProviders: AppUser[];
+}> = ({ onSave, onClose, service, initialSubCategoryId, categories, serviceProviders }) => {
 
     const [formData, setFormData] = useState({
         name: '', address: '', phone: '', phone2: '', whatsapp: '', about: '',
-        facebookUrl: '', instagramUrl: '', workingHours: '',
+        facebookUrl: '', instagramUrl: '', workingHours: '', providerId: 0
     });
     const [images, setImages] = useState<string[]>([]);
     const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>();
@@ -40,12 +42,13 @@ const ServiceForm: React.FC<{
                 facebookUrl: service.facebookUrl || '',
                 instagramUrl: service.instagramUrl || '',
                 workingHours: service.workingHours || '',
+                providerId: service.providerId || 0,
             });
             setImages(service.images);
             currentSubCategoryId = service.subCategoryId;
         } else {
             // Reset form for new service
-            setFormData({ name: '', address: '', phone: '', phone2: '', whatsapp: '', about: '', facebookUrl: '', instagramUrl: '', workingHours: '' });
+            setFormData({ name: '', address: '', phone: '', phone2: '', whatsapp: '', about: '', facebookUrl: '', instagramUrl: '', workingHours: '', providerId: 0 });
             setImages([]);
         }
         
@@ -59,7 +62,7 @@ const ServiceForm: React.FC<{
         }
     }, [service, initialSubCategoryId, categories]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -76,7 +79,16 @@ const ServiceForm: React.FC<{
         const serviceData = {
             id: service?.id,
             subCategoryId: selectedSubCategoryId,
-            ...formData,
+            name: formData.name,
+            address: formData.address,
+            phone: formData.phone,
+            phone2: formData.phone2,
+            whatsapp: formData.whatsapp,
+            about: formData.about,
+            facebookUrl: formData.facebookUrl,
+            instagramUrl: formData.instagramUrl,
+            workingHours: formData.workingHours,
+            providerId: formData.providerId ? Number(formData.providerId) : undefined,
             images,
         };
         onSave(serviceData);
@@ -110,6 +122,15 @@ const ServiceForm: React.FC<{
                     </select>
                 </div>
             </div>
+             <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">مقدم الخدمة (المالك)</label>
+                <select name="providerId" value={formData.providerId} onChange={handleChange} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
+                    <option value={0}>-- لا يوجد --</option>
+                    {serviceProviders.map(provider => (
+                        <option key={provider.id} value={provider.id}>{provider.name}</option>
+                    ))}
+                </select>
+            </div>
             <InputField name="address" label="العنوان" value={formData.address} onChange={handleChange} required />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField name="phone" label="رقم الهاتف" value={formData.phone} onChange={handleChange} required />
@@ -137,12 +158,15 @@ const ServicePage: React.FC = () => {
     const subCategoryId = Number(subCategoryIdStr);
     
     const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite } = useServicesContext();
+    const { users } = useUserManagementContext();
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState<Service | null>(null);
     const [sortOrder, setSortOrder] = useState<'default' | 'favorite' | 'rating' | 'alpha'>('default');
+    
+    const serviceProviders = useMemo(() => users.filter(u => u.accountType === 'service_provider'), [users]);
     
     const categoryName = useMemo(() => {
         return categories.flatMap(c => c.subCategories).find(sc => sc.id === subCategoryId)?.name || 'خدمات';
@@ -282,6 +306,7 @@ const ServicePage: React.FC = () => {
                     service={editingService}
                     initialSubCategoryId={subCategoryId}
                     categories={categories}
+                    serviceProviders={serviceProviders}
                 />
             </Modal>
         </div>
