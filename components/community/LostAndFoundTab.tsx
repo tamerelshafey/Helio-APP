@@ -8,7 +8,7 @@ import TabButton from '../common/TabButton';
 import EmptyState from '../common/EmptyState';
 import ImageUploader from '../common/ImageUploader';
 import { ArchiveBoxIcon, PlusIcon, PencilSquareIcon, TrashIcon, CheckCircleIcon } from '../common/Icons';
-import StatusBadge from '../ServicePage';
+import StatusBadge from '../common/StatusBadge';
 
 const LostFoundForm: React.FC<{
     item: LostAndFoundItem | null;

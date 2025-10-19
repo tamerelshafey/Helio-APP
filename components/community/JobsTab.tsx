@@ -7,7 +7,7 @@ import KpiCard from '../common/KpiCard';
 import TabButton from '../common/TabButton';
 import EmptyState from '../common/EmptyState';
 import { BriefcaseIcon, TrashIcon, MapPinIcon } from '../common/Icons';
-import StatusBadge from '../ServicePage';
+import StatusBadge from '../common/StatusBadge';
 
 const JobsTab: React.FC = () => {
     const { jobs, handleDeleteItem } = useMarketplaceContext();

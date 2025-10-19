@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 import { useAppContext } from './AppContext';
 import {
-    mockInternalSupervisor, mockExternalSupervisor, mockInternalDrivers, mockWeeklySchedule, mockExternalRoutes, mockScheduleOverrides
+    mockInternalSupervisor, mockExternalSupervisor, mockInternalDrivers, mockWeeklySchedule, 
+    mockExternalRoutes, mockScheduleOverrides, mockInternalRoutes
 } from '../data/mock-data';
 import type {
-    Driver, WeeklyScheduleItem, Supervisor, ExternalRoute, TransportationContextType, ScheduleDriver, ScheduleOverride
+    Driver, WeeklyScheduleItem, Supervisor, ExternalRoute, TransportationContextType, 
+    ScheduleDriver, ScheduleOverride, InternalRoute
 } from '../types';
 
 const TransportationContext = createContext<TransportationContextType | undefined>(undefined);
@@ -15,6 +17,7 @@ export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ chil
     const [internalSupervisor, setInternalSupervisor] = useState<Supervisor>(mockInternalSupervisor);
     const [externalSupervisor, setExternalSupervisor] = useState<Supervisor>(mockExternalSupervisor);
     const [internalDrivers, setInternalDrivers] = useState<Driver[]>(mockInternalDrivers);
+    const [internalRoutes, setInternalRoutes] = useState<InternalRoute[]>(mockInternalRoutes);
     const [weeklySchedule, setWeeklySchedule] = useState<WeeklyScheduleItem[]>(mockWeeklySchedule);
     const [externalRoutes, setExternalRoutes] = useState<ExternalRoute[]>(mockExternalRoutes);
     const [scheduleOverrides, setScheduleOverrides] = useState<ScheduleOverride[]>(mockScheduleOverrides);
@@ -81,6 +84,26 @@ export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ chil
         }
     }, [externalRoutes, logActivity]);
 
+    const handleSaveInternalRoute = useCallback((routeData: Omit<InternalRoute, 'id'> & { id?: number }) => {
+        setInternalRoutes(prev => {
+            if (routeData.id) {
+                return prev.map(r => r.id === routeData.id ? { ...r, ...routeData, id: r.id } : r);
+            } else {
+                const newRoute: InternalRoute = { ...routeData, id: Date.now() };
+                return [newRoute, ...prev];
+            }
+        });
+        logActivity(routeData.id ? 'تعديل مسار داخلي' : 'إضافة مسار داخلي', `تم حفظ المسار: ${routeData.name}`);
+    }, [logActivity]);
+
+    const handleDeleteInternalRoute = useCallback((id: number) => {
+        const route = internalRoutes.find(r => r.id === id);
+        setInternalRoutes(prev => prev.filter(r => r.id !== id));
+        if (route) {
+            logActivity('حذف مسار داخلي', `تم حذف المسار: ${route.name}`);
+        }
+    }, [internalRoutes, logActivity]);
+
     const handleSaveSchedule = useCallback((schedule: WeeklyScheduleItem[]) => {
         setWeeklySchedule(schedule);
         logActivity('تحديث قالب الجدول', 'تم تحديث القالب الأسبوعي لمناوبات السائقين.');
@@ -115,14 +138,15 @@ export const TransportationProvider: React.FC<{ children: ReactNode }> = ({ chil
 
 
     const value = useMemo(() => ({
-        transportation: { internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes, scheduleOverrides },
+        transportation: { internalSupervisor, externalSupervisor, internalDrivers, internalRoutes, weeklySchedule, externalRoutes, scheduleOverrides },
         handleSaveDriver, handleDeleteDriver,
+        handleSaveInternalRoute, handleDeleteInternalRoute,
         handleSaveRoute, handleDeleteRoute,
         handleSaveSchedule, handleSaveSupervisor,
         handleSaveOverride, handleResetOverride,
     }), [
-        internalSupervisor, externalSupervisor, internalDrivers, weeklySchedule, externalRoutes, scheduleOverrides,
-        handleSaveDriver, handleDeleteDriver, handleSaveRoute, handleDeleteRoute, handleSaveSchedule, 
+        internalSupervisor, externalSupervisor, internalDrivers, internalRoutes, weeklySchedule, externalRoutes, scheduleOverrides,
+        handleSaveDriver, handleDeleteDriver, handleSaveInternalRoute, handleDeleteInternalRoute, handleSaveRoute, handleDeleteRoute, handleSaveSchedule, 
         handleSaveSupervisor, handleSaveOverride, handleResetOverride
     ]);
 

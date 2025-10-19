@@ -1,13 +1,38 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import { useAppContext } from './AppContext';
 import { mockProperties } from '../data/mock-data';
-import type { Property, PropertiesContextType } from '../types';
+import type { Property, PropertiesContextType, SortConfig } from '../types';
 
 const PropertiesContext = createContext<PropertiesContextType | undefined>(undefined);
 
 export const PropertiesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { logActivity } = useAppContext();
-    const [properties, setProperties] = useState<Property[]>(mockProperties);
+    const [properties, setProperties] = useState<Property[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [sortConfig, setSortConfig] = useState<SortConfig<Property>>(null);
+
+    useEffect(() => {
+        // Simulate data fetching
+        const timer = setTimeout(() => {
+            setProperties(mockProperties);
+            setLoading(false);
+        }, 1500); // 1.5 second delay
+
+        return () => clearTimeout(timer); // Cleanup on unmount
+    }, []);
+
+    const handleSortProperties = useCallback((key: keyof Property) => {
+        setSortConfig(prevConfig => {
+            if (prevConfig && prevConfig.key === key) {
+                if (prevConfig.direction === 'descending') {
+                    return null; // Go back to default order
+                }
+                return { ...prevConfig, direction: 'descending' };
+            }
+            return { key, direction: 'ascending' };
+        });
+    }, []);
+
 
     const handleSaveProperty = useCallback((property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => {
         const isNew = !property.id;
@@ -38,9 +63,12 @@ export const PropertiesProvider: React.FC<{ children: ReactNode }> = ({ children
 
     const value = useMemo(() => ({
         properties,
+        loading,
+        sortConfig,
+        handleSortProperties,
         handleSaveProperty,
         handleDeleteProperty,
-    }), [properties, handleSaveProperty, handleDeleteProperty]);
+    }), [properties, loading, sortConfig, handleSortProperties, handleSaveProperty, handleDeleteProperty]);
 
     return (
         <PropertiesContext.Provider value={value}>

@@ -1,14 +1,39 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import { useAppContext } from './AppContext';
 import { mockUsers, mockAdmins } from '../data/mock-data';
-import type { AppUser, AdminUser, UserManagementContextType, UserStatus, UserAccountType } from '../types';
+import type { AppUser, AdminUser, UserManagementContextType, UserStatus, UserAccountType, SortConfig } from '../types';
 
 const UserManagementContext = createContext<UserManagementContextType | undefined>(undefined);
 
 export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { logActivity } = useAppContext();
-    const [users, setUsers] = useState<AppUser[]>(mockUsers);
-    const [admins, setAdmins] = useState<AdminUser[]>(mockAdmins);
+    const [users, setUsers] = useState<AppUser[]>([]);
+    const [admins, setAdmins] = useState<AdminUser[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [sortConfig, setSortConfig] = useState<SortConfig<AppUser>>(null);
+
+    useEffect(() => {
+        // Simulate data fetching
+        const timer = setTimeout(() => {
+            setUsers(mockUsers);
+            setAdmins(mockAdmins);
+            setLoading(false);
+        }, 1500); // 1.5 second delay
+
+        return () => clearTimeout(timer); // Cleanup on unmount
+    }, []);
+
+    const handleSortUsers = useCallback((key: keyof AppUser) => {
+        setSortConfig(prevConfig => {
+            if (prevConfig && prevConfig.key === key) {
+                return {
+                    ...prevConfig,
+                    direction: prevConfig.direction === 'ascending' ? 'descending' : 'ascending',
+                };
+            }
+            return { key, direction: 'ascending' };
+        });
+    }, []);
 
     const handleSaveUser = useCallback((userData: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => {
         const isNew = !userData.id;
@@ -73,13 +98,15 @@ export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ chil
     }, [admins, logActivity]);
 
     const value = useMemo(() => ({
-        users, admins,
+        users, admins, loading, sortConfig,
+        handleSortUsers,
         handleSaveUser, handleDeleteUser,
         handleDeleteUsers,
         handleSetUserAccountType,
         handleSaveAdmin, handleDeleteAdmin,
     }), [
-        users, admins,
+        users, admins, loading, sortConfig,
+        handleSortUsers,
         handleSaveUser, handleDeleteUser, handleDeleteUsers,
         handleSetUserAccountType,
         handleSaveAdmin, handleDeleteAdmin

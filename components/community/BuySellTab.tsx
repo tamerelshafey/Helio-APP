@@ -7,7 +7,7 @@ import KpiCard from '../common/KpiCard';
 import TabButton from '../common/TabButton';
 import EmptyState from '../common/EmptyState';
 import { TagIcon, TrashIcon, PhoneIcon } from '../common/Icons';
-import StatusBadge from '../ServicePage';
+import StatusBadge from '../common/StatusBadge';
 
 const BuySellTab: React.FC = () => {
     const { forSaleItems, handleDeleteItem } = useMarketplaceContext();

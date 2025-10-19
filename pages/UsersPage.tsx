@@ -1,17 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useUserManagementContext } from '../context/UserManagementContext';
 import { useServicesContext } from '../context/ServicesContext';
-import type { AppUser, AdminUser, UserStatus, AdminUserRole } from '../types';
+import { useUIContext } from '../context/UIContext';
+import type { AppUser, AdminUser, UserStatus, AdminUserRole, SortDirection } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import StatusBadge, { AccountTypeBadge } from '../components/ServicePage';
+import StatusBadge, { AccountTypeBadge } from '../components/common/StatusBadge';
 import TabButton from '../components/common/TabButton';
 import Pagination from '../components/common/Pagination';
 import { 
     ArrowLeftIcon, MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, 
-    UserGroupIcon, UserCircleIcon, WrenchScrewdriverIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon 
+    UserGroupIcon, UserCircleIcon, WrenchScrewdriverIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon,
+    ArrowUpIcon, ArrowDownIcon
 } from '../components/common/Icons';
+import { UserTableSkeleton, ServiceProviderTableSkeleton, AdminTableSkeleton } from '../components/common/SkeletonLoader';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -143,10 +146,12 @@ const AdminForm: React.FC<{
 };
 
 const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => void; }> = ({ onAdd, onEdit }) => {
-    const { users, handleDeleteUser, handleSetUserAccountType } = useUserManagementContext();
+    const { users, handleDeleteUser, handleDeleteUsers, handleSetUserAccountType, loading, sortConfig, handleSortUsers } = useUserManagementContext();
+    const { showToast } = useUIContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
 
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
@@ -157,13 +162,67 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
             return isRegularUser && matchesSearch && matchesFilter;
         });
     }, [users, searchTerm, statusFilter]);
+    
+    const sortedAndFilteredUsers = useMemo(() => {
+        let sortableItems = [...filteredUsers];
+        if (sortConfig) {
+            sortableItems.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [filteredUsers, sortConfig]);
 
-    const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-    const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(sortedAndFilteredUsers.length / ITEMS_PER_PAGE);
+    const paginatedUsers = sortedAndFilteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, statusFilter]);
+        setSelectedUserIds([]);
+    }, [searchTerm, statusFilter, sortConfig]);
+
+    useEffect(() => {
+        setSelectedUserIds([]);
+    }, [currentPage]);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedUserIds(paginatedUsers.map(u => u.id));
+        } else {
+            setSelectedUserIds([]);
+        }
+    };
+
+    const handleSelectOne = (id: number) => {
+        setSelectedUserIds(prev =>
+            prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
+        );
+    };
+
+    const isAllSelected = paginatedUsers.length > 0 && selectedUserIds.length === paginatedUsers.length;
+    const isSomeSelected = selectedUserIds.length > 0 && !isAllSelected;
+
+    const handleBulkDelete = () => {
+        const count = selectedUserIds.length;
+        if (window.confirm(`هل أنت متأكد من حذف ${count} مستخدمين؟`)) {
+            handleDeleteUsers(selectedUserIds);
+            showToast(`تم حذف ${count} مستخدمين بنجاح!`);
+            setSelectedUserIds([]);
+        }
+    };
+    
+    const SortIndicator: React.FC<{ direction?: SortDirection }> = ({ direction }) => {
+        if (!direction) return null;
+        return direction === 'ascending' ? <ArrowUpIcon className="w-3 h-3 mr-1" /> : <ArrowDownIcon className="w-3 h-3 mr-1" />;
+    };
 
     return (
         <div className="animate-fade-in">
@@ -185,53 +244,115 @@ const RegularUsersTab: React.FC<{ onAdd: () => void; onEdit: (user: AppUser) => 
                     </button>
                 </div>
             </div>
-             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                        <tr>
-                            <th scope="col" className="px-6 py-3">المستخدم</th>
-                            <th scope="col" className="px-6 py-3">الحالة</th>
-                            <th scope="col" className="px-6 py-3">تاريخ الانضمام</th>
-                            <th scope="col" className="px-6 py-3">إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedUsers.map(user => (
-                            <tr key={user.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
-                                        <div>
-                                            <div className="font-semibold text-gray-900 dark:text-white">{user.name}</div>
-                                            <div className="text-xs">{user.email}</div>
+
+            {selectedUserIds.length > 0 && (
+                <div className="bg-slate-200 dark:bg-slate-700 p-3 rounded-lg mb-4 flex items-center justify-between animate-fade-in">
+                    <span className="text-sm font-semibold">
+                        تم تحديد {selectedUserIds.length} مستخدمين
+                    </span>
+                    <button
+                        onClick={handleBulkDelete}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-700"
+                    >
+                        <TrashIcon className="w-4 h-4" />
+                        حذف المحدد
+                    </button>
+                </div>
+            )}
+            
+            {loading ? (
+                <UserTableSkeleton />
+            ) : (
+                <>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="p-4">
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 dark:focus:ring-cyan-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                onChange={handleSelectAll}
+                                                checked={isAllSelected}
+                                                ref={el => el && (el.indeterminate = isSomeSelected)}
+                                            />
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4"><StatusBadge status={user.status} /></td>
-                                <td className="px-6 py-4">{user.joinDate}</td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => handleSetUserAccountType(user.id, 'service_provider')} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-md" title="ترقية إلى مقدم خدمة"><ArrowTrendingUpIcon className="w-5 h-5"/></button>
-                                        <button onClick={() => onEdit(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
-                                        <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                 {filteredUsers.length === 0 && <p className="text-center py-8">لا يوجد مستخدمون يطابقون البحث.</p>}
-            </div>
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortUsers('name')}>
+                                        <div className="flex items-center">
+                                            المستخدم
+                                            {sortConfig?.key === 'name' && <SortIndicator direction={sortConfig.direction} />}
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortUsers('status')}>
+                                        <div className="flex items-center">
+                                            الحالة
+                                            {sortConfig?.key === 'status' && <SortIndicator direction={sortConfig.direction} />}
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortUsers('joinDate')}>
+                                        <div className="flex items-center">
+                                            تاريخ الانضمام
+                                            {sortConfig?.key === 'joinDate' && <SortIndicator direction={sortConfig.direction} />}
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-3">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {paginatedUsers.map(user => (
+                                    <tr key={user.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="w-4 p-4">
+                                            <div className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 dark:focus:ring-cyan-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                                    checked={selectedUserIds.includes(user.id)}
+                                                    onChange={() => handleSelectOne(user.id)}
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <Link to={`/dashboard/users/${user.id}`} className="flex items-center gap-3 group">
+                                                <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
+                                                <div>
+                                                    <div className="font-semibold text-gray-900 dark:text-white group-hover:text-cyan-500 transition-colors">{user.name}</div>
+                                                    <div className="text-xs">{user.email}</div>
+                                                </div>
+                                            </Link>
+                                        </td>
+                                        <td className="px-6 py-4"><StatusBadge status={user.status} /></td>
+                                        <td className="px-6 py-4">{user.joinDate}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => handleSetUserAccountType(user.id, 'service_provider')} className="p-2 text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-md" title="ترقية إلى مقدم خدمة"><ArrowTrendingUpIcon className="w-5 h-5"/></button>
+                                                <button onClick={() => onEdit(user)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                <button onClick={() => handleDeleteUser(user.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {sortedAndFilteredUsers.length === 0 && <p className="text-center py-8">لا يوجد مستخدمون يطابقون البحث.</p>}
+                    </div>
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                </>
+            )}
         </div>
     )
 };
 
 const ServiceProvidersTab: React.FC = () => {
-    const { users, handleSetUserAccountType } = useUserManagementContext();
+    const { users, handleSetUserAccountType, loading } = useUserManagementContext();
     const { services } = useServicesContext();
 
     const providers = useMemo(() => users.filter(u => u.accountType === 'service_provider'), [users]);
+
+    if (loading) {
+        return <ServiceProviderTableSkeleton />;
+    }
 
     return (
         <div className="animate-fade-in overflow-x-auto">
@@ -249,13 +370,13 @@ const ServiceProvidersTab: React.FC = () => {
                         return (
                             <tr key={provider.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
+                                    <Link to={`/dashboard/users/${provider.id}`} className="flex items-center gap-3 group">
                                         <img src={provider.avatar} alt={provider.name} className="w-10 h-10 rounded-full object-cover" loading="lazy"/>
                                         <div>
-                                            <div className="font-semibold text-gray-900 dark:text-white">{provider.name}</div>
+                                            <div className="font-semibold text-gray-900 dark:text-white group-hover:text-cyan-500 transition-colors">{provider.name}</div>
                                             <div className="text-xs">{provider.email}</div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 </td>
                                 <td className="px-6 py-4">
                                     {linkedServices.length > 0 ? (
@@ -279,7 +400,12 @@ const ServiceProvidersTab: React.FC = () => {
 
 
 const AdminUsersTab: React.FC<{ onAdd: () => void; onEdit: (admin: AdminUser) => void; }> = ({ onAdd, onEdit }) => {
-    const { admins, handleDeleteAdmin } = useUserManagementContext();
+    const { admins, handleDeleteAdmin, loading } = useUserManagementContext();
+    
+    if (loading) {
+        return <AdminTableSkeleton />;
+    }
+
     return (
         <div className="animate-fade-in">
             <div className="flex justify-end mb-6">

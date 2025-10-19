@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import { useAppContext } from './AppContext';
 import { mockNews, mockNotifications, mockAds } from '../data/mock-data';
 import type { News, Notification, Ad, ContentContextType } from '../types';
@@ -8,9 +8,22 @@ const ContentContext = createContext<ContentContextType | undefined>(undefined);
 export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { logActivity } = useAppContext();
 
-    const [news, setNews] = useState<News[]>(mockNews);
-    const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-    const [ads, setAds] = useState<Ad[]>(mockAds);
+    const [news, setNews] = useState<News[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [ads, setAds] = useState<Ad[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+
+    useEffect(() => {
+        // Simulate data fetching
+        const timer = setTimeout(() => {
+            setNews(mockNews);
+            setNotifications(mockNotifications);
+            setAds(mockAds);
+            setLoading(false);
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleSaveNews = useCallback((newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => {
         const isNew = !newsItem.id;
@@ -85,12 +98,12 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     }, [ads, logActivity]);
 
     const value = useMemo(() => ({
-        news, notifications, ads,
+        news, notifications, ads, loading,
         handleSaveNews, handleDeleteNews,
         handleSaveNotification, handleDeleteNotification,
         handleSaveAd, handleDeleteAd,
     }), [
-        news, notifications, ads,
+        news, notifications, ads, loading,
         handleSaveNews, handleDeleteNews,
         handleSaveNotification, handleDeleteNotification,
         handleSaveAd, handleDeleteAd

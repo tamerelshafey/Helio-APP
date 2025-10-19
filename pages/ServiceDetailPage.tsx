@@ -10,7 +10,7 @@ import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ServiceInfoCard from '../components/common/ServiceInfoCard';
-import Rating from '../components/DashboardView';
+import Rating from '../components/common/Rating';
 
 const ReplyForm: React.FC<{ review: Review; onSave: (reply: string) => void; onClose: () => void; }> = ({ review, onSave, onClose }) => {
     const [reply, setReply] = useState(review.adminReply || '');

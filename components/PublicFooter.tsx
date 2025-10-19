@@ -1,18 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { GooglePlayIcon, AppleIcon } from './common/Icons';
 
 const PublicFooter: React.FC = () => {
     return (
-        <footer className="bg-white border-t border-slate-200 dark:bg-slate-900" dir="rtl">
+        <footer className="bg-white border-t border-slate-200 dark:bg-slate-900 dark:border-slate-800" dir="rtl">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid md:grid-cols-4 gap-8 text-right">
-                    <div className="md:col-span-1">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 text-right">
+                    <div className="md:col-span-2 lg:col-span-1">
                         <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Helio APP</h2>
                         <p className="text-gray-500 mt-2 dark:text-gray-400">بوابتك الرقمية لمدينة هليوبوليس الجديدة.</p>
+                         <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                            <a href="https://play.google.com/store/apps/details?id=com.helio.company" target="_blank" rel="noopener noreferrer" className="bg-black text-white rounded-lg px-3 py-2 flex items-center gap-2 transition-transform hover:scale-105">
+                                <GooglePlayIcon className="w-6 h-6" />
+                                <div className="text-right">
+                                    <p className="text-xs leading-none">GET IT ON</p>
+                                    <p className="text-lg font-semibold leading-tight">Google Play</p>
+                                </div>
+                            </a>
+                        </div>
                     </div>
                     <div>
                         <h3 className="font-semibold text-gray-800 dark:text-gray-200">روابط سريعة</h3>
                         <ul className="mt-4 space-y-2">
+                            <li><Link to="/" className="text-gray-500 hover:text-cyan-500 dark:text-gray-400 dark:hover:text-cyan-400">الرئيسية</Link></li>
                             <li><Link to="/about" className="text-gray-500 hover:text-cyan-500 dark:text-gray-400 dark:hover:text-cyan-400">حول التطبيق</Link></li>
                             <li><Link to="/faq" className="text-gray-500 hover:text-cyan-500 dark:text-gray-400 dark:hover:text-cyan-400">الأسئلة الشائعة</Link></li>
                         </ul>

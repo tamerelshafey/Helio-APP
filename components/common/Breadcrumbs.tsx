@@ -49,14 +49,18 @@ const Breadcrumbs: React.FC = () => {
 
             {pathnames.map((value, index) => {
                 const isLast = index === pathnames.length - 1;
-                // Prepend /dashboard for correct link generation
                 const to = `/dashboard/${pathnames.slice(0, index + 1).join('/')}`;
                 
-                if (!isNaN(Number(value))) {
+                let displayName = breadcrumbNameMap[value as keyof typeof breadcrumbNameMap] || value;
+                
+                // If the previous part was 'users' and this part is a number, display "تفاصيل المستخدم"
+                if (pathnames[index - 1] === 'users' && !isNaN(Number(value))) {
+                    displayName = 'تفاصيل المستخدم';
+                } else if (!isNaN(Number(value))) {
+                    // Don't render generic IDs
                     return null;
                 }
 
-                const displayName = breadcrumbNameMap[value as keyof typeof breadcrumbNameMap] || value.charAt(0).toUpperCase() + value.slice(1);
 
                 return (
                     <React.Fragment key={to}>
@@ -69,6 +73,7 @@ const Breadcrumbs: React.FC = () => {
                                 {displayName}
                             </Link>
                         )}
+                        {/* Add separator only if the next item is not a number/ID */}
                         {!isLast && pathnames[index+1] && isNaN(Number(pathnames[index+1])) && <span className="mx-2 text-gray-400">/</span>}
                     </React.Fragment>
                 );

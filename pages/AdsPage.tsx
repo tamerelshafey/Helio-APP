@@ -10,7 +10,7 @@ import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
-import { ContentStatusBadge } from '../components/ServicePage';
+import { ContentStatusBadge } from '../components/common/StatusBadge';
 import { InputField, TextareaField } from '../components/common/FormControls';
 
 const AdDetailsModal: React.FC<{ ad: Ad | null; isOpen: boolean; onClose: () => void }> = ({ ad, isOpen, onClose }) => {
@@ -111,32 +111,50 @@ const AdForm: React.FC<{
 }> = ({ onSave, onClose, ad, services, categories, properties }) => {
     
     const [formData, setFormData] = useState({
-        title: '', content: '', externalUrl: '', startDate: '', endDate: '', placement: 'الرئيسية' as AdPlacement
+        title: '', content: '', externalUrl: '', startDate: '', endDate: ''
     });
+    const [placements, setPlacements] = useState<AdPlacement[]>(['الرئيسية']);
     const [images, setImages] = useState<string[]>([]);
     const [referralType, setReferralType] = useState<'none' | 'service' | 'property'>('none');
     const [referralId, setReferralId] = useState<number | undefined>(undefined);
+
+    const allPlacements: AdPlacement[] = ['الرئيسية', 'الخدمات', 'العقارات', 'الأخبار', 'المجتمع'];
 
     useEffect(() => {
         if (ad) {
             setFormData({
                 title: ad.title || '', content: ad.content || '', externalUrl: ad.externalUrl || '',
-                startDate: ad.startDate || '', endDate: ad.endDate || '', placement: ad.placement || 'الرئيسية'
+                startDate: ad.startDate || '', endDate: ad.endDate || ''
             });
+            setPlacements(ad.placements || ['الرئيسية']);
             setImages(ad.imageUrl ? [ad.imageUrl] : []);
             setReferralType(ad.referralType || 'none');
             setReferralId(ad.referralId);
         } else {
             const today = new Date().toISOString().split('T')[0];
-             setFormData({ title: '', content: '', externalUrl: '', startDate: today, endDate: today, placement: 'الرئيسية' });
+            setFormData({ title: '', content: '', externalUrl: '', startDate: today, endDate: today });
+            setPlacements(['الرئيسية']);
             setImages([]);
             setReferralType('none');
             setReferralId(undefined);
         }
     }, [ad]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+    
+    const handlePlacementChange = (placement: AdPlacement) => {
+        setPlacements(prev => {
+            const newPlacements = prev.includes(placement)
+                ? prev.filter(p => p !== placement)
+                : [...prev, placement];
+            // Ensure at least one is selected
+            if (newPlacements.length === 0) {
+                return prev; // Or show a toast. Forcing one selection is better UX.
+            }
+            return newPlacements;
+        });
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -144,6 +162,7 @@ const AdForm: React.FC<{
         onSave({ 
             id: ad?.id, 
             ...formData,
+            placements,
             imageUrl: images.length > 0 ? images[0] : undefined, 
             referralType: referralType === 'none' ? undefined : referralType,
             referralId: referralType !== 'none' ? referralId : undefined,
@@ -159,12 +178,20 @@ const AdForm: React.FC<{
                 <InputField name="endDate" type="date" label="تاريخ الانتهاء" value={formData.endDate} onChange={handleChange} required />
             </div>
             <div>
-                <label htmlFor="placement" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">مكان عرض الإعلان</label>
-                <select id="placement" name="placement" value={formData.placement} onChange={handleChange} required className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2 focus:ring-2 focus:ring-cyan-500">
-                    <option value="الرئيسية">الرئيسية</option>
-                    <option value="المجتمع">المجتمع</option>
-                    <option value="الخدمات">الخدمات</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">أماكن عرض الإعلان</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-md">
+                    {allPlacements.map(placement => (
+                        <label key={placement} className="flex items-center space-x-2 rtl:space-x-reverse cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={placements.includes(placement)}
+                                onChange={() => handlePlacementChange(placement)}
+                                className="form-checkbox h-4 w-4 rounded text-cyan-600 focus:ring-cyan-500"
+                            />
+                            <span className="text-sm">{placement}</span>
+                        </label>
+                    ))}
+                </div>
             </div>
             <ImageUploader initialImages={images} onImagesChange={setImages} multiple={false} label="صورة الإعلان (اختياري)" />
             <InputField name="externalUrl" type="url" label="رابط خارجي (اختياري)" value={formData.externalUrl} onChange={handleChange} />
@@ -246,7 +273,11 @@ const AdsPage: React.FC = () => {
                                     <tr key={ad.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                         <td className="px-6 py-4 max-w-sm"><div className="font-semibold text-gray-900 dark:text-white truncate">{ad.title}</div><div className="text-xs text-gray-500 dark:text-gray-400 truncate">{ad.content}</div></td>
                                         <td className="px-6 py-4">
-                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300">{ad.placement}</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {ad.placements.map(p => (
+                                                    <span key={p} className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300">{p}</span>
+                                                ))}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4"><ContentStatusBadge startDate={ad.startDate} endDate={ad.endDate} /></td>
                                         <td className="px-6 py-4 text-xs font-mono">{ad.startDate} <br/> {ad.endDate}</td>

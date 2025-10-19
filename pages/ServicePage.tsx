@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon, WrenchScrewdriverIcon } from '../components/common/Icons';
-import type { Service, Category, AppUser } from '../types';
+import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon, WrenchScrewdriverIcon, ArrowUpIcon, ArrowDownIcon } from '../components/common/Icons';
+import type { Service, Category, AppUser, SortDirection } from '../types';
 import { useServicesContext } from '../context/ServicesContext';
 import { useUserManagementContext } from '../context/UserManagementContext';
 import { useUIContext } from '../context/UIContext';
@@ -9,7 +9,7 @@ import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
-import Rating from '../components/DashboardView';
+import Rating from '../components/common/Rating';
 import { InputField, TextareaField } from '../components/common/FormControls';
 
 const ServiceForm: React.FC<{
@@ -157,14 +157,13 @@ const ServicePage: React.FC = () => {
     const { subCategoryId: subCategoryIdStr } = useParams<{ subCategoryId: string }>();
     const subCategoryId = Number(subCategoryIdStr);
     
-    const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite } = useServicesContext();
+    const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite, sortConfig, handleSortServices } = useServicesContext();
     const { users } = useUserManagementContext();
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState<Service | null>(null);
-    const [sortOrder, setSortOrder] = useState<'default' | 'favorite' | 'rating' | 'alpha'>('default');
     
     const serviceProviders = useMemo(() => users.filter(u => u.accountType === 'service_provider'), [users]);
     
@@ -176,13 +175,27 @@ const ServicePage: React.FC = () => {
 
     const sortedServices = useMemo(() => {
         let sorted = [...filteredServices];
-        switch (sortOrder) {
-            case 'rating': sorted.sort((a, b) => b.rating - a.rating); break;
-            case 'favorite': sorted.sort((a, b) => (b.isFavorite ? 1 : 0) - (a.isFavorite ? 1 : 0)); break;
-            case 'alpha': sorted.sort((a, b) => a.name.localeCompare(b.name, 'ar')); break;
+        if (sortConfig) {
+            sorted.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+
+                if (aValue === bValue) return 0;
+                
+                const order = sortConfig.direction === 'ascending' ? 1 : -1;
+
+                if (typeof aValue === 'string' && typeof bValue === 'string') {
+                    return aValue.localeCompare(bValue, 'ar') * order;
+                }
+                
+                if (aValue < bValue) return -1 * order;
+                if (aValue > bValue) return 1 * order;
+                
+                return 0;
+            });
         }
         return sorted;
-    }, [filteredServices, sortOrder]);
+    }, [filteredServices, sortConfig]);
 
     const handleAddService = () => { setEditingService(null); setIsModalOpen(true); };
     const handleEditService = (service: Service) => { setEditingService(service); setIsModalOpen(true); };
@@ -200,6 +213,11 @@ const ServicePage: React.FC = () => {
             showToast('تم حذف الخدمة بنجاح!');
         }
     };
+    
+    const SortIndicator: React.FC<{ direction?: SortDirection }> = ({ direction }) => {
+        if (!direction) return null;
+        return direction === 'ascending' ? <ArrowUpIcon className="w-3 h-3 ml-1" /> : <ArrowDownIcon className="w-3 h-3 ml-1" />;
+    };
 
     return (
         <div className="animate-fade-in">
@@ -213,24 +231,12 @@ const ServicePage: React.FC = () => {
                         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">إدارة الخدمات</h1>
                         <p className="text-gray-500 dark:text-gray-400">{categoryName}</p>
                     </div>
-                    <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-                         <select
-                            value={sortOrder}
-                            onChange={(e) => setSortOrder(e.target.value as any)}
-                            className="w-full sm:w-48 bg-slate-100 dark:bg-slate-700 text-gray-800 dark:text-gray-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                         >
-                            <option value="default">ترتيب افتراضي</option>
-                            <option value="favorite">الأكثر تفضيلاً</option>
-                            <option value="rating">الأعلى تقييماً</option>
-                            <option value="alpha">ترتيب أبجدي</option>
-                        </select>
-                        {canManage && (
-                            <button onClick={handleAddService} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                                <PlusIcon className="w-5 h-5" />
-                                <span>إضافة خدمة</span>
-                            </button>
-                        )}
-                    </div>
+                    {canManage && (
+                        <button onClick={handleAddService} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                            <PlusIcon className="w-5 h-5" />
+                            <span>إضافة خدمة</span>
+                        </button>
+                    )}
                 </div>
 
                 <div className="overflow-x-auto">
@@ -239,8 +245,18 @@ const ServicePage: React.FC = () => {
                             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
                                 <tr>
                                     <th scope="col" className="p-3"><StarIcon className="w-5 h-5 mx-auto"/></th>
-                                    <th scope="col" className="px-6 py-3">اسم الخدمة</th>
-                                    <th scope="col" className="px-6 py-3">التقييم</th>
+                                    <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortServices('name')}>
+                                        <div className="flex items-center">
+                                            اسم الخدمة
+                                            {sortConfig?.key === 'name' && <SortIndicator direction={sortConfig.direction} />}
+                                        </div>
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortServices('rating')}>
+                                        <div className="flex items-center">
+                                            التقييم
+                                            {sortConfig?.key === 'rating' && <SortIndicator direction={sortConfig.direction} />}
+                                        </div>
+                                    </th>
                                     <th scope="col" className="px-6 py-3">عدد التقييمات</th>
                                     <th scope="col" className="px-6 py-3">إجراءات</th>
                                 </tr>

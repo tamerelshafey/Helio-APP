@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     ArrowLeftIcon, StarIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon, 
@@ -12,8 +12,11 @@ import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import KpiCard from '../components/common/KpiCard';
 import { GoogleGenAI, Type } from "@google/genai";
-import Rating from '../components/DashboardView';
+import Rating from '../components/common/Rating';
 import Spinner from '../components/common/Spinner';
+import Pagination from '../components/common/Pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 // AI Analysis Types
 interface AnalysisResult {
@@ -63,6 +66,8 @@ const ReviewsPage: React.FC = () => {
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [isReplyModalOpen, setReplyModalOpen] = useState(false);
     const [selectedReview, setSelectedReview] = useState<(Review & { serviceId: number }) | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
 
     // AI Analysis State
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -117,6 +122,17 @@ const ReviewsPage: React.FC = () => {
         })
     ), [allReviews, searchTerm, ratingFilter, serviceFilter]);
     
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, ratingFilter, serviceFilter]);
+
+    const totalPages = Math.ceil(filteredReviews.length / ITEMS_PER_PAGE);
+
+    const paginatedReviews = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredReviews.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredReviews, currentPage]);
+    
     const handleAnalyzeReviews = async () => {
         setIsAnalyzing(true);
         setAnalysisError(null);
@@ -147,7 +163,7 @@ const ReviewsPage: React.FC = () => {
             مهمتك هي تقديم ملخص شامل باللغة العربية. يرجى إرجاع النتائج بتنسيق JSON حصريًا.
         `;
 
-        const schema = {
+        const analysisSchema = {
             type: Type.OBJECT,
             properties: {
                 summary: { type: Type.STRING, description: 'ملخص عام وموجز لمشاعر العملاء في التقييمات.' },
@@ -165,7 +181,7 @@ const ReviewsPage: React.FC = () => {
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",
-                    responseSchema: schema,
+                    responseSchema: analysisSchema,
                 },
             });
             const resultText = response.text.trim();
@@ -291,7 +307,7 @@ const ReviewsPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredReviews.map(review => (
+                            {paginatedReviews.map(review => (
                                 <tr key={`${review.serviceId}-${review.id}`} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
@@ -319,6 +335,13 @@ const ReviewsPage: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
+                     {filteredReviews.length > 0 && (
+                        <Pagination 
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
                 </div>
             </div>
 

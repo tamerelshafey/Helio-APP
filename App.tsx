@@ -23,12 +23,12 @@ const TransportationPage = lazy(() => import('./pages/TransportationPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const CityServicesGuidePage = lazy(() => import('./pages/CityServicesGuidePage'));
 const UsersPage = lazy(() => import('./pages/UsersPage'));
+const UserDetailPage = lazy(() => import('./pages/UserDetailPage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
 const ReviewsPage = lazy(() => import('./pages/ReviewsPage'));
 const AuditLogPage = lazy(() => import('./pages/AuditLogPage'));
 const ContentManagementPage = lazy(() => import('./pages/ContentManagementPage'));
 const CommunityPage = lazy(() => import('./pages/CommunityPage'));
-const BlankPage = lazy(() => import('./pages/BlankPage'));
 const OffersPage = lazy(() => import('./pages/OffersPage'));
 
 // Lazy load public pages
@@ -168,12 +168,12 @@ const App: React.FC = () => {
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="city-services-guide" element={<CityServicesGuidePage />} />
                         <Route path="users" element={<UsersPage />} />
+                        <Route path="users/:userId" element={<UserDetailPage />} />
                         <Route path="reports" element={<ReportsPage />} />
                         <Route path="reviews" element={<ReviewsPage />} />
                         <Route path="audit-log" element={<AuditLogPage />} />
                         <Route path="content-management" element={<ContentManagementPage />} />
                         <Route path="community" element={<CommunityPage />} />
-                        <Route path="blank" element={<BlankPage />} />
                         <Route path="offers" element={<OffersPage />} />
                     </Route>
                     

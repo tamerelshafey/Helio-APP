@@ -8,7 +8,7 @@ import ImageUploader from '../components/common/ImageUploader';
 import { useContentContext } from '../context/ContentContext';
 import { useHasPermission } from '../context/AuthContext';
 import { useUIContext } from '../context/UIContext';
-import { ContentStatusBadge } from '../components/ServicePage';
+import { ContentStatusBadge } from '../components/common/StatusBadge';
 
 const NotificationForm: React.FC<{
     onSave: (notification: Omit<Notification, 'id'> & { id?: number }) => void;

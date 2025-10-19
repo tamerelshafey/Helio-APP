@@ -5,7 +5,7 @@ import {
     PencilSquareIcon, TrashIcon, ChevronLeftIcon, ChevronRightIcon
 } from '../components/common/Icons';
 import { useTransportationContext } from '../context/TransportationContext';
-import type { Driver, ExternalRoute, Supervisor, ScheduleOverride, WeeklyScheduleItem } from '../types';
+import type { Driver, ExternalRoute, Supervisor, ScheduleOverride, WeeklyScheduleItem, InternalRoute } from '../types';
 import Modal from '../components/common/Modal';
 import TabButton from '../components/common/TabButton';
 import { useHasPermission } from '../context/AuthContext';
@@ -15,6 +15,7 @@ import EmptyState from '../components/common/EmptyState';
 import TransportationCalendar from '../components/transportation/TransportationCalendar';
 import DriverForm from '../components/transportation/DriverForm';
 import RouteForm from '../components/transportation/RouteForm';
+import InternalRouteForm from '../components/transportation/InternalRouteForm';
 import ScheduleOverrideForm from '../components/transportation/ScheduleOverrideForm';
 import WeeklyTemplateForm from '../components/transportation/WeeklyTemplateForm';
 
@@ -81,13 +82,14 @@ const getStartOfWeek = (date: Date) => {
 };
 
 const InternalTransportTab: React.FC = () => {
-    const { transportation, handleSaveDriver, handleDeleteDriver, handleSaveSupervisor, handleSaveSchedule, handleSaveOverride, handleResetOverride } = useTransportationContext();
-    const { internalSupervisor, internalDrivers, weeklySchedule, scheduleOverrides } = transportation;
+    const { transportation, handleSaveDriver, handleDeleteDriver, handleSaveSupervisor, handleSaveSchedule, handleSaveOverride, handleResetOverride, handleSaveInternalRoute, handleDeleteInternalRoute } = useTransportationContext();
+    const { internalSupervisor, internalDrivers, internalRoutes, weeklySchedule, scheduleOverrides } = transportation;
     const canManage = useHasPermission(['مسؤول النقل']);
     const { showToast } = useUIContext();
 
-    const [modal, setModal] = useState<'driver' | 'override' | 'template' | null>(null);
+    const [modal, setModal] = useState<'driver' | 'override' | 'template' | 'internal_route' | null>(null);
     const [editingDriver, setEditingDriver] = useState<Driver | null>(null);
+    const [editingInternalRoute, setEditingInternalRoute] = useState<InternalRoute | null>(null);
     const [overrideDate, setOverrideDate] = useState<string | null>(null);
 
     const [viewDate, setViewDate] = useState(new Date());
@@ -104,7 +106,8 @@ const InternalTransportTab: React.FC = () => {
 
     const openDriverModal = (driver: Driver | null) => { setEditingDriver(driver); setModal('driver'); };
     const openOverrideModal = (date: string) => { setOverrideDate(date); setModal('override'); };
-    
+    const openInternalRouteModal = (route: InternalRoute | null) => { setEditingInternalRoute(route); setModal('internal_route'); };
+
     const confirmDeleteDriver = (id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا السائق؟ سيتم إزالته من جميع الجداول الزمنية.')) {
             handleDeleteDriver(id);
@@ -112,10 +115,23 @@ const InternalTransportTab: React.FC = () => {
         }
     };
     
+    const confirmDeleteInternalRoute = (id: number) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا المسار؟')) {
+            handleDeleteInternalRoute(id);
+            showToast('تم حذف المسار.');
+        }
+    };
+
     const handleSaveAndCloseDriver = (driver: Omit<Driver, 'id'> & { id?: number }) => {
         handleSaveDriver(driver);
         setModal(null);
         showToast('تم حفظ بيانات السائق.');
+    };
+    
+    const handleSaveAndCloseInternalRoute = (route: Omit<InternalRoute, 'id'> & { id?: number }) => {
+        handleSaveInternalRoute(route);
+        setModal(null);
+        showToast('تم حفظ المسار.');
     };
     
     const handleSaveAndCloseOverride = (override: ScheduleOverride) => {
@@ -165,6 +181,35 @@ const InternalTransportTab: React.FC = () => {
                         <p className="text-center text-sm text-gray-500 py-4">لم يتم إضافة سائقين بعد.</p>
                     )}
                 </div>
+            </div>
+
+            <div className="space-y-8">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">خطوط السير الداخلية</h2>
+                    {canManage && <button onClick={() => openInternalRouteModal(null)} className="flex items-center gap-2 text-sm bg-cyan-500 text-white font-semibold px-3 py-1 rounded-md hover:bg-cyan-600"><PlusIcon className="w-4 h-4"/>إضافة مسار</button>}
+                </div>
+                
+                {internalRoutes.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {internalRoutes.map(route => (
+                            <div key={route.id} className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md flex flex-col gap-4 relative group">
+                                {canManage && <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={() => openInternalRouteModal(route)} className="p-1 rounded-full bg-slate-200 dark:bg-slate-700"><PencilSquareIcon className="w-4 h-4 text-blue-500"/></button><button onClick={() => confirmDeleteInternalRoute(route.id)} className="p-1 rounded-full bg-slate-200 dark:bg-slate-700"><TrashIcon className="w-4 h-4 text-red-500"/></button></div>}
+                                 <div>
+                                    <h3 className="font-bold text-lg text-cyan-600 dark:text-cyan-400">{route.name}</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">المواعيد: {route.timings.join(' | ')}</p>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1"><MapPinIcon className="w-4 h-4"/>المحطات:</h4>
+                                    <ol className="list-decimal list-inside text-sm space-y-1">
+                                        {route.stops.map(stop => <li key={stop}>{stop}</li>)}
+                                    </ol>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <EmptyState icon={<BusIcon className="w-16 h-16 text-slate-400"/>} title="لا توجد مسارات داخلية" message="ابدأ بإضافة أول مسار للباصات الداخلية."/>
+                )}
             </div>
             
              <div>
@@ -224,6 +269,9 @@ const InternalTransportTab: React.FC = () => {
             {canManage && <>
                 <Modal isOpen={modal === 'driver'} onClose={() => setModal(null)} title={editingDriver ? 'تعديل بيانات السائق' : 'إضافة سائق جديد'}>
                     <DriverForm onSave={handleSaveAndCloseDriver} onClose={() => setModal(null)} driver={editingDriver} />
+                </Modal>
+                <Modal isOpen={modal === 'internal_route'} onClose={() => setModal(null)} title={editingInternalRoute ? 'تعديل المسار الداخلي' : 'إضافة مسار داخلي جديد'}>
+                    <InternalRouteForm onSave={handleSaveAndCloseInternalRoute} onClose={() => setModal(null)} route={editingInternalRoute} />
                 </Modal>
                 <Modal isOpen={modal === 'override'} onClose={() => setModal(null)} title={`تعديل جدول يوم: ${overrideDate}`}>
                     {overrideDate && <ScheduleOverrideForm date={overrideDate} onSave={handleSaveAndCloseOverride} onReset={handleResetAndCloseOverride} onClose={() => setModal(null)} drivers={internalDrivers} />}

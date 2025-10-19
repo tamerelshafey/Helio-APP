@@ -14,7 +14,7 @@ import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
-import { ContentStatusBadge } from '../components/ServicePage';
+import { ContentStatusBadge } from '../components/common/StatusBadge';
 import { InputField, TextareaField } from '../components/common/FormControls';
 import Pagination from '../components/common/Pagination';
 

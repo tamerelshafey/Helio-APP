@@ -11,7 +11,7 @@ export type ModerationStatus = 'pending' | 'approved' | 'rejected';
 export type AdminUserRole = 'مدير عام' | 'مسؤول ادارة الخدمات' | 'مسؤول العقارات' | 'مسؤول المحتوى' | 'مسؤول النقل' | 'مسؤول المجتمع';
 export type ActivityType = 'NEW_SERVICE' | 'EMERGENCY_REPORT' | 'NEWS_PUBLISHED' | 'NEW_PROPERTY';
 export type AlertType = 'new_inquiry' | 'user_registered' | 'property_listed';
-export type AdPlacement = 'الرئيسية' | 'المجتمع' | 'الخدمات';
+export type AdPlacement = 'الرئيسية' | 'المجتمع' | 'الخدمات' | 'العقارات' | 'الأخبار';
 export type DiscussionCircleCategory = 'عام' | 'أحياء سكنية' | 'كمبوندات';
 
 // =========
@@ -123,7 +123,7 @@ export interface Ad {
     externalUrl?: string;
     startDate: string;
     endDate: string;
-    placement: AdPlacement;
+    placements: AdPlacement[];
     referralType?: 'service' | 'property';
     referralId?: number;
 }
@@ -217,6 +217,13 @@ export interface ExternalRoute {
     name: string;
     timings: string[];
     waitingPoint: string;
+}
+
+export interface InternalRoute {
+    id: number;
+    name: string;
+    stops: string[];
+    timings: string[];
 }
 
 // =========
@@ -378,6 +385,9 @@ export interface OfferCode {
 // =========
 // Context Types
 // =========
+export type SortDirection = 'ascending' | 'descending';
+export type SortConfig<T> = { key: keyof T; direction: SortDirection } | null;
+
 
 export interface AuthContextType {
     currentUser: AdminUser | null;
@@ -415,6 +425,9 @@ export interface AppContextType {
 export interface ServicesContextType {
     categories: Category[];
     services: Service[];
+    loading: boolean;
+    sortConfig: SortConfig<Service>;
+    handleSortServices: (key: keyof Service) => void;
     handleUpdateReview: (serviceId: number, reviewId: number, newComment: string) => void;
     handleDeleteReview: (serviceId: number, reviewId: number) => void;
     handleReplyToReview: (serviceId: number, reviewId: number, reply: string) => void;
@@ -431,6 +444,9 @@ export interface ServicesContextType {
 
 export interface PropertiesContextType {
     properties: Property[];
+    loading: boolean;
+    sortConfig: SortConfig<Property>;
+    handleSortProperties: (key: keyof Property) => void;
     handleSaveProperty: (property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => void;
     handleDeleteProperty: (id: number) => void;
 }
@@ -439,6 +455,7 @@ export interface ContentContextType {
     news: News[];
     notifications: Notification[];
     ads: Ad[];
+    loading: boolean;
     handleSaveNews: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
     handleDeleteNews: (id: number) => void;
     handleSaveNotification: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
@@ -450,6 +467,9 @@ export interface ContentContextType {
 export interface UserManagementContextType {
     users: AppUser[];
     admins: AdminUser[];
+    loading: boolean;
+    sortConfig: SortConfig<AppUser>;
+    handleSortUsers: (key: keyof AppUser) => void;
     handleSaveUser: (userData: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => void;
     handleDeleteUser: (id: number) => void;
     handleDeleteUsers: (ids: number[]) => void;
@@ -463,12 +483,15 @@ export interface TransportationContextType {
         internalSupervisor: Supervisor;
         externalSupervisor: Supervisor;
         internalDrivers: Driver[];
+        internalRoutes: InternalRoute[];
         weeklySchedule: WeeklyScheduleItem[];
         externalRoutes: ExternalRoute[];
         scheduleOverrides: ScheduleOverride[];
     };
     handleSaveDriver: (driverData: Omit<Driver, 'id'> & { id?: number }) => void;
     handleDeleteDriver: (id: number) => void;
+    handleSaveInternalRoute: (routeData: Omit<InternalRoute, 'id'> & { id?: number }) => void;
+    handleDeleteInternalRoute: (id: number) => void;
     handleSaveRoute: (routeData: Omit<ExternalRoute, 'id'> & { id?: number }) => void;
     handleDeleteRoute: (id: number) => void;
     handleSaveSchedule: (schedule: WeeklyScheduleItem[]) => void;

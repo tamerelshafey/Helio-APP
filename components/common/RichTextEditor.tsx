@@ -1,5 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 
+// Note: This component uses the deprecated document.execCommand API for simplicity.
+// For a production application, consider using a modern rich text editor library like Tiptap or Slate.js.
+
 // Simplified Icons for the editor toolbar
 const BoldIcon = () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M15.25 12c0 .69-.56 1.25-1.25 1.25h-3.5a.75.75 0 010-1.5h.75a.75.75 0 000-1.5h-1.5a.75.75 0 010-1.5h2.5c.69 0 1.25.56 1.25 1.25v2.5zM12 2a10 10 0 100 20 10 10 0 000-20zM6.5 7.5c0-1.38 1.12-2.5 2.5-2.5h2.25c1.657 0 3 1.343 3 3v.75a.75.75 0 01-1.5 0V8c0-.828-.672-1.5-1.5-1.5H9c-.828 0-1.5.672-1.5 1.5v7c0 .828.672 1.5 1.5 1.5h3.25c1.657 0 3-1.343 3-3v-.75a.75.75 0 011.5 0V16c0 2.485-2.015 4.5-4.5 4.5H9c-2.485 0-4.5-2.015-4.5-4.5v-7z" /></svg>;
 const ItalicIcon = () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM9.99 17.25a.75.75 0 01-1.48-.25l1.5-9a.75.75 0 011.48.25l-1.5 9zm6 0a.75.75 0 01-1.48-.25l1.5-9a.75.75 0 011.48.25l-1.5 9z" /></svg>;

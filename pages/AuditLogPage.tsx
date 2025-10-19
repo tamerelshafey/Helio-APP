@@ -1,7 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, ClipboardDocumentListIcon, MagnifyingGlassIcon } from '../components/common/Icons';
 import { useAppContext } from '../context/AppContext';
+import Pagination from '../components/common/Pagination';
+
+const ITEMS_PER_PAGE = 15;
 
 const AuditLogPage: React.FC = () => {
     const navigate = useNavigate();
@@ -9,6 +12,7 @@ const AuditLogPage: React.FC = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [actionFilter, setActionFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const actionTypes = useMemo(() => {
         const types = new Set(auditLogs.map(log => log.action));
@@ -24,6 +28,16 @@ const AuditLogPage: React.FC = () => {
             return matchesSearch && matchesFilter;
         });
     }, [auditLogs, searchTerm, actionFilter]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, actionFilter]);
+
+    const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
+    const paginatedLogs = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredLogs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredLogs, currentPage]);
 
     const formatTimestamp = (isoString: string) => {
         return new Date(isoString).toLocaleString('ar-EG', {
@@ -80,7 +94,7 @@ const AuditLogPage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredLogs.map(log => (
+                            {paginatedLogs.map(log => (
                                 <tr key={log.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                     <td className="px-6 py-4 font-mono whitespace-nowrap">{formatTimestamp(log.timestamp)}</td>
                                     <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{log.user}</td>
@@ -99,6 +113,14 @@ const AuditLogPage: React.FC = () => {
                         </div>
                     )}
                 </div>
+
+                {filteredLogs.length > 0 && (
+                    <Pagination 
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                    />
+                )}
             </div>
         </div>
     );

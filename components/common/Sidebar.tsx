@@ -79,8 +79,7 @@ const Sidebar: React.FC = () => {
     
             // 6. Analytics & System
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/dashboard/reports" },
-            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: ['مدير عام'] },
-            { name: "صفحة فارغة", icon: <CubeIcon className="w-6 h-6" />, to: "/dashboard/blank", roles: ['مدير عام'] }
+            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: ['مدير عام'] }
         ];
     }, []);
 

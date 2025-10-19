@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import { useAppContext } from './AppContext';
 import { useUIContext } from './UIContext';
 import { mockCategories, mockServices } from '../data/mock-data';
-import type { Category, Service, ServicesContextType, SubCategory } from '../types';
+import type { Category, Service, ServicesContextType, SubCategory, SortConfig } from '../types';
 
 const ServicesContext = createContext<ServicesContextType | undefined>(undefined);
 
@@ -10,8 +10,34 @@ export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }
     const { logActivity } = useAppContext();
     const { showToast } = useUIContext();
 
-    const [categories, setCategories] = useState<Category[]>(mockCategories);
-    const [services, setServices] = useState<Service[]>(mockServices);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [services, setServices] = useState<Service[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [sortConfig, setSortConfig] = useState<SortConfig<Service>>(null);
+    
+    useEffect(() => {
+        // Simulate data fetching
+        const timer = setTimeout(() => {
+            setCategories(mockCategories);
+            setServices(mockServices);
+            setLoading(false);
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleSortServices = useCallback((key: keyof Service) => {
+        setSortConfig(prevConfig => {
+            if (prevConfig && prevConfig.key === key) {
+                if (prevConfig.direction === 'descending') {
+                    return null; // Return to default
+                }
+                return { ...prevConfig, direction: 'descending' };
+            }
+            return { key, direction: 'ascending' };
+        });
+    }, []);
+
 
     const handleUpdateReview = useCallback((serviceId: number, reviewId: number, newComment: string) => {
         let serviceName = '';
@@ -181,6 +207,9 @@ export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }
     const value = useMemo(() => ({
         categories,
         services,
+        loading,
+        sortConfig,
+        handleSortServices,
         handleUpdateReview,
         handleDeleteReview,
         handleReplyToReview,
@@ -196,6 +225,9 @@ export const ServicesProvider: React.FC<{ children: ReactNode }> = ({ children }
     }), [
         categories,
         services,
+        loading,
+        sortConfig,
+        handleSortServices,
         handleUpdateReview,
         handleDeleteReview,
         handleReplyToReview,

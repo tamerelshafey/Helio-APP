@@ -16,7 +16,8 @@ import KpiCard from '../components/common/KpiCard';
 import TabButton from '../components/common/TabButton';
 import { useUIContext } from '../context/UIContext';
 import EmptyState from '../components/common/EmptyState';
-import Rating from '../components/DashboardView';
+import Rating from '../components/common/Rating';
+import { ReportPageSkeleton } from '../components/common/SkeletonLoader';
 
 const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({ data, categories }) => {
     const { isDarkMode } = useUIContext();
@@ -443,9 +444,11 @@ const tabConfig: { key: ReportTab; label: string; icon: React.ReactNode; roles: 
 const ReportsPage: React.FC = () => {
     const navigate = useNavigate();
     const { currentUser } = useAuthContext();
-    const { news } = useContentContext();
-    const { services, categories } = useServicesContext();
-    const { properties } = usePropertiesContext();
+    const { news, loading: contentLoading } = useContentContext();
+    const { services, categories, loading: servicesLoading } = useServicesContext();
+    const { properties, loading: propertiesLoading } = usePropertiesContext();
+
+    const isLoading = contentLoading || servicesLoading || propertiesLoading;
 
     const availableTabs = useMemo(() => {
         if (!currentUser) return [];
@@ -478,6 +481,9 @@ const ReportsPage: React.FC = () => {
     const filteredNews = useMemo(() => news.filter(n => n.date >= startDate && n.date <= endDate), [news, startDate, endDate]);
 
     const renderContent = () => {
+        if (isLoading) {
+            return <ReportPageSkeleton />;
+        }
         if (!activeTab) return null;
         switch (activeTab) {
             case 'services': return <ServiceReports data={filteredServices} categories={categories} />;

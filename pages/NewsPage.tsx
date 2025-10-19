@@ -8,6 +8,7 @@ import { useContentContext } from '../context/ContentContext';
 import { useHasPermission } from '../context/AuthContext';
 import { useUIContext } from '../context/UIContext';
 import RichTextEditor from '../components/common/RichTextEditor';
+import { NewsCardSkeleton } from '../components/common/SkeletonLoader';
 
 const NewsForm: React.FC<{
     onSave: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
@@ -106,7 +107,7 @@ const NewsCard: React.FC<{ newsItem: News; onEdit: () => void; onDelete: () => v
 
 const NewsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { news, handleSaveNews, handleDeleteNews } = useContentContext();
+    const { news, handleSaveNews, handleDeleteNews, loading } = useContentContext();
     const canManage = useHasPermission(['مسؤول المحتوى']);
     const { showToast } = useUIContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -135,6 +136,39 @@ const NewsPage: React.FC = () => {
         showToast(data.id ? 'تم تعديل الخبر بنجاح!' : 'تم إضافة الخبر بنجاح!');
     };
 
+    const renderContent = () => {
+        if (loading) {
+            return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {Array.from({ length: 4 }).map((_, i) => <NewsCardSkeleton key={i} />)}
+                </div>
+            );
+        }
+
+        if (news.length > 0) {
+            return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {news.map(newsItem => (
+                        <NewsCard 
+                            key={newsItem.id} 
+                            newsItem={newsItem} 
+                            onEdit={() => handleEditClick(newsItem)}
+                            onDelete={() => confirmDelete(newsItem.id)}
+                            canManage={canManage}
+                        />
+                    ))}
+                </div>
+            );
+        }
+
+        return (
+            <div className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+                <h3 className="text-xl font-semibold">لا توجد أخبار حالياً</h3>
+                <p className="mt-2">انقر على "إضافة خبر جديد" لبدء النشر.</p>
+            </div>
+        );
+    };
+
     return (
         <div className="animate-fade-in">
             <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
@@ -150,24 +184,8 @@ const NewsPage: React.FC = () => {
                     </button>
                 )}
             </div>
-            {news.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {news.map(newsItem => (
-                        <NewsCard 
-                            key={newsItem.id} 
-                            newsItem={newsItem} 
-                            onEdit={() => handleEditClick(newsItem)}
-                            onDelete={() => confirmDelete(newsItem.id)}
-                            canManage={canManage}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
-                    <h3 className="text-xl font-semibold">لا توجد أخبار حالياً</h3>
-                    <p className="mt-2">انقر على "إضافة خبر جديد" لبدء النشر.</p>
-                </div>
-            )}
+            
+            {renderContent()}
             
             <Modal
                 isOpen={isModalOpen}

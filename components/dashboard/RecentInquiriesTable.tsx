@@ -30,7 +30,7 @@ const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
   return <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-full">{typeMap[type]}</div>;
 };
 
-const RecentActivityTable: React.FC = () => {
+const RecentInquiriesTable: React.FC = () => {
     const { news } = useContentContext();
     const { services } = useServicesContext();
     const { properties } = usePropertiesContext();
@@ -87,4 +87,4 @@ const RecentActivityTable: React.FC = () => {
   );
 };
 
-export default RecentActivityTable;
+export default RecentInquiriesTable;
