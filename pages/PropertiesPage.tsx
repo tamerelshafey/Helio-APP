@@ -15,6 +15,7 @@ import EmptyState from '../components/common/EmptyState';
 import { InputField, TextareaField } from '../components/common/FormControls';
 import { PropertyCardSkeleton } from '../components/common/SkeletonLoader';
 import Pagination from '../components/common/Pagination';
+import { PropertyStatusBadge } from '../components/common/StatusBadge';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -32,6 +33,7 @@ const PropertyForm: React.FC<{
     const [contactName, setContactName] = useState('');
     const [contactPhone, setContactPhone] = useState('');
     const [amenities, setAmenities] = useState('');
+    const [expiryDate, setExpiryDate] = useState('');
 
     useEffect(() => {
         if (property) {
@@ -44,9 +46,13 @@ const PropertyForm: React.FC<{
             setContactName(property.contact?.name || '');
             setContactPhone(property.contact?.phone || '');
             setAmenities(property.amenities?.join(', ') || '');
+            setExpiryDate(property.expiryDate || '');
         } else {
             setTitle(''); setDescription(''); setImages([]); setAddress('');
             setType('sale'); setPrice(0); setContactName(''); setContactPhone(''); setAmenities('');
+            const futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 30);
+            setExpiryDate(futureDate.toISOString().split('T')[0]);
         }
     }, [property]);
 
@@ -60,6 +66,7 @@ const PropertyForm: React.FC<{
             type, price,
             contact: { name: contactName, phone: contactPhone },
             amenities: amenities.split(',').map(s => s.trim()).filter(Boolean),
+            expiryDate,
         };
         onSave(propertyData);
     };
@@ -79,6 +86,7 @@ const PropertyForm: React.FC<{
                     </select>
                 </div>
             </div>
+            <InputField name="expiryDate" label="تاريخ انتهاء صلاحية الإعلان" type="date" value={expiryDate} onChange={e => setExpiryDate(e.target.value)} required />
             <InputField name="address" label="العنوان / المنطقة" value={address} onChange={e => setAddress(e.target.value)} required />
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField name="contactName" label="اسم جهة الاتصال" value={contactName} onChange={e => setContactName(e.target.value)} required />
@@ -175,8 +183,11 @@ const PropertiesPage: React.FC = () => {
                  <div key={prop.id} className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 group">
                     <div className="relative">
                         <img src={prop.images[0] || 'https://picsum.photos/600/400?random=30'} alt={prop.title} className="w-full h-48 object-cover" loading="lazy" />
-                        <div className={`absolute top-3 right-3 px-3 py-1 text-sm font-bold text-white rounded-full ${prop.type === 'sale' ? 'bg-cyan-500' : 'bg-purple-500'}`}>
-                            {prop.type === 'sale' ? 'للبيع' : 'للإيجار'}
+                        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+                            <div className={`px-3 py-1 text-sm font-bold text-white rounded-full ${prop.type === 'sale' ? 'bg-cyan-500' : 'bg-purple-500'}`}>
+                                {prop.type === 'sale' ? 'للبيع' : 'للإيجار'}
+                            </div>
+                            <PropertyStatusBadge expiryDate={prop.expiryDate} />
                         </div>
                          {canManage && (
                             <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -211,6 +222,7 @@ const PropertiesPage: React.FC = () => {
                             <div className="flex items-center">العقار <SortIndicator direction={sortConfig?.key === 'title' ? sortConfig.direction : undefined} /></div>
                         </th>
                         <th scope="col" className="px-6 py-3">النوع</th>
+                        <th scope="col" className="px-6 py-3">الحالة</th>
                         <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortProperties('price')}>
                              <div className="flex items-center">السعر <SortIndicator direction={sortConfig?.key === 'price' ? sortConfig.direction : undefined} /></div>
                         </th>
@@ -228,6 +240,9 @@ const PropertiesPage: React.FC = () => {
                                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${prop.type === 'sale' ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'}`}>
                                     {prop.type === 'sale' ? 'بيع' : 'إيجار'}
                                 </span>
+                            </td>
+                            <td className="px-6 py-4">
+                                <PropertyStatusBadge expiryDate={prop.expiryDate} />
                             </td>
                             <td className="px-6 py-4 font-mono">{prop.price.toLocaleString('ar-EG')} ج.م</td>
                             <td className="px-6 py-4">{prop.creationDate}</td>

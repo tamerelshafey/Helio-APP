@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, ReactNode } from 'react';
 import { useMarketplaceContext } from '../../context/MarketplaceContext';
 import { useAppContext } from '../../context/AppContext';
 import { useCommunityContext } from '../../context/CommunityContext';
@@ -6,10 +6,117 @@ import { useUserManagementContext } from '../../context/UserManagementContext';
 import { useUIContext } from '../../context/UIContext';
 import { 
     CheckCircleIcon, XCircleIcon, TagIcon, BriefcaseIcon, ArchiveBoxIcon,
-    DocumentDuplicateIcon, ChatBubbleOvalLeftIcon, TrashIcon
+    DocumentDuplicateIcon, ChatBubbleOvalLeftIcon, TrashIcon, ShieldExclamationIcon, ChevronDownIcon
 } from '../common/Icons';
 import EmptyState from '../common/EmptyState';
-import { useMemo } from 'react';
+import { ForSaleItem, JobPosting, LostAndFoundItem, CommunityPost, CommunityComment, AppUser } from '../../types';
+
+// --- Reusable Section Component ---
+const CollapsibleSection: React.FC<{
+    title: string;
+    icon: ReactNode;
+    count: number;
+    children: ReactNode;
+    defaultOpen?: boolean;
+}> = ({ title, icon, count, children, defaultOpen = true }) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
+
+    if (count === 0) {
+        return null;
+    }
+
+    return (
+        <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between p-4 text-right"
+            >
+                <div className="flex items-center gap-3">
+                    {icon}
+                    <h3 className="font-bold text-gray-800 dark:text-white">{title}</h3>
+                    <span className="text-sm font-mono px-2 py-0.5 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300 rounded-full">{count}</span>
+                </div>
+                <ChevronDownIcon className={`w-6 h-6 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isOpen && (
+                <div className="p-4 border-t border-slate-200 dark:border-slate-700 space-y-4">
+                    {children}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- Specific Item Cards ---
+
+const PendingItemCard: React.FC<{
+    item: ForSaleItem | JobPosting | LostAndFoundItem;
+    type: 'sale' | 'job' | 'lostfound';
+    author?: AppUser;
+    onAction: (type: 'sale' | 'job' | 'lostfound', id: number, action: 'approve' | 'reject') => void;
+}> = ({ item, type, author, onAction }) => {
+    const title = 'itemName' in item ? item.itemName : item.title;
+    const date = 'creationDate' in item ? item.creationDate : item.date;
+    const imageUrl = 'images' in item ? item.images[0] : ('imageUrl' in item ? item.imageUrl : undefined);
+    
+    return (
+        <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl shadow-md flex flex-col sm:flex-row items-start gap-4">
+            {imageUrl && <img src={imageUrl} alt={title} className="w-full sm:w-24 h-24 object-cover rounded-md flex-shrink-0" />}
+            <div className="flex-grow">
+                <h4 className="font-bold text-gray-800 dark:text-white">{title}</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{item.description}</p>
+                <div className="text-xs text-gray-400 mt-2 flex items-center gap-4">
+                    {author && <span><strong>بواسطة:</strong> {author.name}</span>}
+                    <span><strong>تاريخ:</strong> {date}</span>
+                    {'price' in item && <span className="font-bold text-cyan-600">السعر: {item.price} جنيه</span>}
+                </div>
+            </div>
+            <div className="flex-shrink-0 flex sm:flex-col items-center justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                <button onClick={() => onAction(type, item.id, 'approve')} className="w-full sm:w-28 flex items-center justify-center gap-2 p-2 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded-md"><CheckCircleIcon className="w-5 h-5" /> موافقة</button>
+                <button onClick={() => onAction(type, item.id, 'reject')} className="w-full sm:w-28 flex items-center justify-center gap-2 p-2 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-md"><XCircleIcon className="w-5 h-5" /> رفض</button>
+            </div>
+        </div>
+    );
+};
+
+const ReportedContentCard: React.FC<{
+    item: any;
+    type: 'post' | 'comment';
+    author?: AppUser;
+    onDismiss: () => void;
+    onDelete: () => void;
+}> = ({ item, type, author, onDismiss, onDelete }) => (
+    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl shadow-md border-l-4 border-red-500">
+        <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="flex-grow">
+                <div className="flex items-center gap-2 mb-2">
+                    {type === 'post' ? <DocumentDuplicateIcon className="w-5 h-5 text-red-500" /> : <ChatBubbleOvalLeftIcon className="w-5 h-5 text-red-500" />}
+                    <h4 className="font-bold text-gray-800 dark:text-white">{type === 'post' ? 'منشور مُبلغ عنه' : 'تعليق مُبلغ عنه'}</h4>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 bg-slate-100 dark:bg-slate-700 p-2 rounded-md italic">"{item.content}"</p>
+                {type === 'comment' && <p className="text-xs text-gray-400 mt-1">على المنشور: "{item.postContent.substring(0, 50)}..."</p>}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2"><strong>بواسطة:</strong> {author?.name || 'مستخدم'} | <strong>البلاغات:</strong> {item.reports?.length || 0}</p>
+                
+                {item.reports && item.reports.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                        <p className="text-xs font-semibold">أسباب البلاغات:</p>
+                        <div className="flex flex-wrap gap-1">
+                            {item.reports.slice(0, 3).map((report: any, index: number) => (
+                                <span key={index} className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">{report.reason}</span>
+                            ))}
+                            {item.reports.length > 3 && <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">+{item.reports.length - 3} آخرون</span>}
+                        </div>
+                    </div>
+                )}
+            </div>
+            <div className="flex-shrink-0 flex sm:flex-col items-center justify-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                <button onClick={onDismiss} className="w-full sm:w-28 flex items-center justify-center gap-2 p-2 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md"><CheckCircleIcon className="w-5 h-5" /> تجاهل</button>
+                <button onClick={onDelete} className="w-full sm:w-28 flex items-center justify-center gap-2 p-2 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-md"><TrashIcon className="w-5 h-5" /> حذف</button>
+            </div>
+        </div>
+    </div>
+);
+
 
 const ReviewQueueTab: React.FC = () => {
     const { forSaleItems, jobs, handleApproveItem, handleRejectItem } = useMarketplaceContext();
@@ -20,6 +127,8 @@ const ReviewQueueTab: React.FC = () => {
     } = useCommunityContext();
     const { users } = useUserManagementContext();
     const { showToast } = useUIContext();
+
+    const getUser = (id: number): AppUser | undefined => users.find(u => u.id === id);
 
     const pendingSale = useMemo(() => forSaleItems.filter(item => item.status === 'pending'), [forSaleItems]);
     const pendingJobs = useMemo(() => jobs.filter(item => item.status === 'pending'), [jobs]);
@@ -45,59 +154,45 @@ const ReviewQueueTab: React.FC = () => {
         }
         showToast(`تم ${action === 'approve' ? 'الموافقة على' : 'رفض'} العنصر بنجاح!`);
     };
-    
-    // FIX: Changed component definition to use React.FC to allow for key prop.
-    const ItemCard: React.FC<{ item: any, type: 'sale' | 'job' | 'lostfound', onAction: (id: number, action: 'approve' | 'reject') => void }> = ({ item, type, onAction }) => (
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg flex flex-col sm:flex-row gap-4">
-            <div className="flex-grow">
-                <div className="flex items-center gap-2 mb-2">
-                    {type === 'sale' && <TagIcon className="w-5 h-5 text-cyan-500" />}
-                    {type === 'job' && <BriefcaseIcon className="w-5 h-5 text-purple-500" />}
-                    {type === 'lostfound' && <ArchiveBoxIcon className="w-5 h-5 text-amber-500" />}
-                    <h3 className="font-bold">{item.title || item.itemName}</h3>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{item.description}</p>
-                <p className="text-xs text-gray-400 mt-2">تاريخ الطلب: {item.creationDate || item.date}</p>
-            </div>
-            <div className="flex-shrink-0 flex sm:flex-col items-center justify-end gap-2">
-                <button onClick={() => onAction(item.id, 'approve')} className="flex items-center justify-center gap-2 w-24 p-2 text-sm bg-green-100 text-green-700 hover:bg-green-200 rounded-md"><CheckCircleIcon className="w-5 h-5" /> موافقة</button>
-                <button onClick={() => onAction(item.id, 'reject')} className="flex items-center justify-center gap-2 w-24 p-2 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-md"><XCircleIcon className="w-5 h-5" /> رفض</button>
-            </div>
-        </div>
-    );
-    
-    // FIX: Changed component definition to use React.FC to allow for key prop.
-    const ReportedItemCard: React.FC<{ item: any, type: 'post' | 'comment', onDismiss: () => void, onDelete: () => void }> = ({ item, type, onDismiss, onDelete }) => {
-        const author = users.find(u => u.id === item.authorId);
-        return (
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg flex flex-col sm:flex-row gap-4 border-l-4 border-red-500">
-                <div className="flex-grow">
-                    <div className="flex items-center gap-2 mb-2">
-                        {type === 'post' ? <DocumentDuplicateIcon className="w-5 h-5 text-red-500" /> : <ChatBubbleOvalLeftIcon className="w-5 h-5 text-red-500" />}
-                        <h3 className="font-bold">{type === 'post' ? 'منشور مُبلغ عنه' : 'تعليق مُبلغ عنه'}</h3>
-                    </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 bg-slate-100 dark:bg-slate-700 p-2 rounded-md">{item.content}</p>
-                    {type === 'comment' && <p className="text-xs text-gray-400 mt-1">على المنشور: "{item.postContent.substring(0, 50)}..."</p>}
-                    <p className="text-xs text-gray-500 mt-2">بواسطة: {author?.name || 'مستخدم'} | عدد البلاغات: {item.reports?.length || 0}</p>
-                </div>
-                <div className="flex-shrink-0 flex sm:flex-col items-center justify-end gap-2">
-                    <button onClick={onDismiss} className="flex items-center justify-center gap-2 w-24 p-2 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-md"><CheckCircleIcon className="w-5 h-5" /> تجاهل</button>
-                    <button onClick={onDelete} className="flex items-center justify-center gap-2 w-24 p-2 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-md"><TrashIcon className="w-5 h-5" /> حذف</button>
-                </div>
-            </div>
-        );
-    };
 
     return (
         <div className="animate-fade-in space-y-6">
             <h2 className="text-xl font-bold">عناصر بانتظار المراجعة ({totalPending})</h2>
             {totalPending > 0 ? (
                 <div className="space-y-4">
-                    {reportedPosts.map(post => <ReportedItemCard key={`post-report-${post.id}`} item={post} type="post" onDismiss={() => { handleDismissPostReports(post.id); showToast('تم تجاهل بلاغات المنشور.'); }} onDelete={() => { handleDeletePost(post.id); showToast('تم حذف المنشور.'); }} />)}
-                    {reportedComments.map(comment => <ReportedItemCard key={`comment-report-${comment.id}`} item={comment} type="comment" onDismiss={() => { handleDismissCommentReports(comment.postId, comment.id); showToast('تم تجاهل بلاغات التعليق.'); }} onDelete={() => { handleDeleteComment(comment.postId, comment.id); showToast('تم حذف التعليق.'); }} />)}
-                    {pendingSale.map(item => <ItemCard key={`sale-${item.id}`} item={item} type="sale" onAction={(id, action) => handleApproval('sale', id, action)} />)}
-                    {pendingJobs.map(item => <ItemCard key={`job-${item.id}`} item={item} type="job" onAction={(id, action) => handleApproval('job', id, action)} />)}
-                    {pendingLostFound.map(item => <ItemCard key={`lf-${item.id}`} item={item} type="lostfound" onAction={(id, action) => handleApproval('lostfound', id, action)} />)}
+                    <CollapsibleSection title="المنشورات والتعليقات المبلغ عنها" icon={<ShieldExclamationIcon className="w-6 h-6 text-red-500" />} count={reportedPosts.length + reportedComments.length}>
+                        {reportedPosts.map(post => 
+                            <ReportedContentCard 
+                                key={`post-${post.id}`} 
+                                item={post} type="post" 
+                                author={getUser(post.authorId)}
+                                onDismiss={() => { handleDismissPostReports(post.id); showToast('تم تجاهل بلاغات المنشور.'); }} 
+                                onDelete={() => { handleDeletePost(post.id); showToast('تم حذف المنشور.'); }} 
+                            />
+                        )}
+                        {reportedComments.map(comment => 
+                            <ReportedContentCard 
+                                key={`comment-${comment.id}`} 
+                                item={comment} 
+                                type="comment" 
+                                author={getUser(comment.authorId)}
+                                onDismiss={() => { handleDismissCommentReports(comment.postId, comment.id); showToast('تم تجاهل بلاغات التعليق.'); }} 
+                                onDelete={() => { handleDeleteComment(comment.postId, comment.id); showToast('تم حذف التعليق.'); }} 
+                            />
+                        )}
+                    </CollapsibleSection>
+
+                    <CollapsibleSection title="طلبات البيع والشراء" icon={<TagIcon className="w-6 h-6 text-cyan-500" />} count={pendingSale.length}>
+                        {pendingSale.map(item => <PendingItemCard key={`sale-${item.id}`} item={item} type="sale" author={getUser(item.authorId)} onAction={handleApproval} />)}
+                    </CollapsibleSection>
+
+                    <CollapsibleSection title="الوظائف المعلقة" icon={<BriefcaseIcon className="w-6 h-6 text-purple-500" />} count={pendingJobs.length}>
+                        {pendingJobs.map(item => <PendingItemCard key={`job-${item.id}`} item={item} type="job" author={getUser(item.authorId)} onAction={handleApproval} />)}
+                    </CollapsibleSection>
+
+                    <CollapsibleSection title="المفقودات والمعثورات" icon={<ArchiveBoxIcon className="w-6 h-6 text-amber-500" />} count={pendingLostFound.length}>
+                        {pendingLostFound.map(item => <PendingItemCard key={`lf-${item.id}`} item={item} type="lostfound" onAction={handleApproval} />)}
+                    </CollapsibleSection>
                 </div>
             ) : (
                 <EmptyState icon={<CheckCircleIcon className="w-16 h-16 text-slate-400" />} title="لا توجد طلبات للمراجعة" message="كل شيء على ما يرام! لا توجد عناصر جديدة بانتظار موافقتك." />

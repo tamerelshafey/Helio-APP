@@ -28,6 +28,31 @@ const statusMap: Record<StatusType, { text: string; classes: string }> = {
 };
 
 /**
+ * A badge for displaying property status based on expiry date.
+ */
+export const PropertyStatusBadge: React.FC<{ expiryDate?: string }> = ({ expiryDate }) => {
+    if (!expiryDate) {
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">غير محدد</span>;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end = new Date(expiryDate);
+
+    let status: 'active' | 'expired';
+    if (today <= end) {
+        status = 'active';
+    } else {
+        status = 'expired';
+    }
+    const { text, classes } = status === 'active' 
+        ? { text: 'نشط', classes: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' }
+        : { text: 'منتهي الصلاحية', classes: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' };
+
+    return <span className={`px-2 py-1 text-xs font-medium rounded-full ${classes}`}>{text}</span>;
+};
+
+/**
  * A badge for displaying status based on start and end dates.
  */
 export const ContentStatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDate, endDate }) => {

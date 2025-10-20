@@ -39,8 +39,8 @@ export const mockServices: Service[] = [
 ];
 
 export const mockProperties: Property[] = [
-    { id: 1, title: 'شقة للبيع 150م', description: 'شقة 3 غرف نوم...', images: ['https://picsum.photos/600/400?random=21'], location: { address: 'الحي الأول' }, type: 'sale', price: 1200000, contact: { name: 'المالك', phone: '010...'}, amenities: ['أسانسير', 'جراج'], views: 2500, creationDate: '2023-03-01' },
-    { id: 2, title: 'فيلا للإيجار', description: 'فيلا بحديقة خاصة...', images: ['https://picsum.photos/600/400?random=22'], location: { address: 'كمبوند XYZ' }, type: 'rent', price: 15000, contact: { name: 'مكتب تسويق', phone: '011...'}, amenities: ['حمام سباحة', 'أمن 24 ساعة'], views: 1800, creationDate: '2023-04-20' }
+    { id: 1, title: 'شقة للبيع 150م', description: 'شقة 3 غرف نوم...', images: ['https://picsum.photos/600/400?random=21'], location: { address: 'الحي الأول' }, type: 'sale', price: 1200000, contact: { name: 'المالك', phone: '010...'}, amenities: ['أسانسير', 'جراج'], views: 2500, creationDate: '2024-03-01', expiryDate: '2024-06-30' },
+    { id: 2, title: 'فيلا للإيجار', description: 'فيلا بحديقة خاصة...', images: ['https://picsum.photos/600/400?random=22'], location: { address: 'كمبوند XYZ' }, type: 'rent', price: 15000, contact: { name: 'مكتب تسويق', phone: '011...'}, amenities: ['حمام سباحة', 'أمن 24 ساعة'], views: 1800, creationDate: '2024-04-20', expiryDate: '2025-08-15' }
 ];
 
 export const mockNews: News[] = [
@@ -276,8 +276,47 @@ export const mockDiscussionCircles: DiscussionCircle[] = [
 ];
 
 export const mockCommunityPosts: CommunityPost[] = [
-    { id: 1, authorId: 1, circleId: 1, timestamp: '2023-06-01T10:00:00Z', content: 'ما هو أفضل مكان لشراء الخضروات؟', likes: 15, comments: [{ id: 1, authorId: 2, timestamp: '2023-06-01T10:05:00Z', content: 'أنصح بسوبر ماركت المدينة.' }] }
+    { 
+        id: 1, 
+        authorId: 1, 
+        circleId: 1, 
+        timestamp: '2023-06-01T10:00:00Z', 
+        content: 'ما هو أفضل مكان لشراء الخضروات الطازجة؟ سؤال مهم لكل سكان المدينة.', 
+        likes: 15, 
+        comments: [
+            { 
+                id: 1, 
+                authorId: 2, 
+                timestamp: '2023-06-01T10:05:00Z', 
+                content: 'أنصح بسوبر ماركت المدينة، أسعاره ممتازة.' 
+            },
+            {
+                id: 2,
+                authorId: 4, // Banned user
+                timestamp: '2023-06-01T11:00:00Z',
+                content: 'هذا تعليق غير لائق ومخالف.',
+                reports: [
+                    { userId: 1, reason: 'تعليق مسيء' },
+                    { userId: 3, reason: 'غير متعلق بالموضوع' }
+                ]
+            }
+        ] 
+    },
+    {
+        id: 2,
+        authorId: 3,
+        circleId: 2,
+        timestamp: '2023-06-02T14:00:00Z',
+        content: 'إعلان عن دورة تدريبية لتعلم البرمجة بأسعار رمزية. فرصة للجميع!',
+        likes: 5,
+        comments: [],
+        reports: [
+            { userId: 2, reason: 'إعلان غير مصرح به (سبام)' },
+            { userId: 1, reason: 'محتوى إعلاني' }
+        ]
+    }
 ];
+
 
 export const mockForSaleItems: ForSaleItem[] = [
     { id: 1, authorId: 2, title: 'أريكة مستعملة بحالة جيدة', description: 'أريكة 3 مقاعد...', category: 'أثاث', price: 1500, images: ['https://picsum.photos/600/400?random=61'], contactName: 'فاطمة', contactPhone: '010...', status: 'approved', creationDate: '2023-05-25' },

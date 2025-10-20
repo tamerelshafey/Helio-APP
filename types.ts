@@ -91,6 +91,7 @@ export interface Property {
     amenities: string[];
     views: number;
     creationDate: string;
+    expiryDate?: string;
 }
 
 export interface News {
