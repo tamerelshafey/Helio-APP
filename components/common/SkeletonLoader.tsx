@@ -4,6 +4,28 @@ const SkeletonLine: React.FC<{ width?: string; height?: string; className?: stri
     <div className={`${width} ${height} bg-slate-200 dark:bg-slate-700 rounded animate-pulse ${className}`}></div>
 );
 
+export const GeneralDashboardSkeleton: React.FC = () => (
+    <div className="animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
+            {[...Array(5)].map((_, i) => <div key={i} className="bg-slate-200 dark:bg-slate-700 h-36 rounded-xl"></div>)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2 flex flex-col gap-6">
+                <div className="bg-slate-200 dark:bg-slate-700 h-80 rounded-xl"></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-slate-200 dark:bg-slate-700 h-80 rounded-xl"></div>
+                    <div className="bg-slate-200 dark:bg-slate-700 h-80 rounded-xl"></div>
+                </div>
+            </div>
+            <div className="flex flex-col gap-6">
+                <div className="bg-slate-200 dark:bg-slate-700 h-96 rounded-xl"></div>
+                <div className="bg-slate-200 dark:bg-slate-700 h-64 rounded-xl"></div>
+                <div className="bg-slate-200 dark:bg-slate-700 h-64 rounded-xl"></div>
+            </div>
+        </div>
+    </div>
+);
+
 export const NewsCardSkeleton: React.FC = () => (
     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
         <div className="w-full h-48 bg-slate-200 dark:bg-slate-700 animate-pulse"></div>

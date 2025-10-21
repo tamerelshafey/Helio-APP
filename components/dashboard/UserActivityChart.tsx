@@ -2,17 +2,13 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useUIContext } from '../../context/UIContext';
 
-const data = [
-  { name: 'يناير', "مستخدمين جدد": 150, "إجمالي المستخدمين": 150 },
-  { name: 'فبراير', "مستخدمين جدد": 120, "إجمالي المستخدمين": 270 },
-  { name: 'مارس', "مستخدمين جدد": 200, "إجمالي المستخدمين": 470 },
-  { name: 'أبريل', "مستخدمين جدد": 110, "إجمالي المستخدمين": 580 },
-  { name: 'مايو', "مستخدمين جدد": 90, "إجمالي المستخدمين": 670 },
-  { name: 'يونيو', "مستخدمين جدد": 100, "إجمالي المستخدمين": 770 },
-  { name: 'يوليو', "مستخدمين جدد": 80, "إجمالي المستخدمين": 850 },
-];
+interface UserActivityData {
+    name: string;
+    "مستخدمين جدد": number;
+    "إجمالي المستخدمين": number;
+}
 
-const UserActivityChart: React.FC = () => {
+const UserActivityChart: React.FC<{ data: UserActivityData[] }> = ({ data }) => {
   const { isDarkMode } = useUIContext();
 
   const tooltipStyle = isDarkMode 

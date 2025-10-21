@@ -1,9 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { Activity } from '../../types';
 import { WrenchScrewdriverIcon, ShieldExclamationIcon, NewspaperIcon, BuildingOffice2Icon } from '../common/Icons';
-import { useServicesContext } from '../../context/ServicesContext';
-import { usePropertiesContext } from '../../context/PropertiesContext';
-import { useContentContext } from '../../context/ContentContext';
 
 const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -30,43 +27,13 @@ const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
   return <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-full">{typeMap[type]}</div>;
 };
 
-const RecentInquiriesTable: React.FC = () => {
-    const { news } = useContentContext();
-    const { services } = useServicesContext();
-    const { properties } = usePropertiesContext();
-    
-    const recentActivities = useMemo(() => {
-        const serviceActivities: Activity[] = services.map(s => ({
-            id: `s-${s.id}`,
-            type: 'NEW_SERVICE',
-            description: `تمت إضافة خدمة جديدة: ${s.name}`,
-            time: s.creationDate,
-        }));
-        
-        const propertyActivities: Activity[] = properties.map(p => ({
-            id: `p-${p.id}`,
-            type: 'NEW_PROPERTY',
-            description: `تمت إضافة عقار جديد: ${p.title}`,
-            time: p.creationDate,
-        }));
-
-        const newsActivities: Activity[] = news.map(n => ({
-            id: `n-${n.id}`,
-            type: 'NEWS_PUBLISHED',
-            description: `تم نشر خبر جديد: ${n.title}`,
-            time: n.date,
-        }));
-
-        return [...serviceActivities, ...propertyActivities, ...newsActivities]
-            .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-            .slice(0, 5);
-    }, [services, properties, news]);
+const RecentInquiriesTable: React.FC<{ activities: Activity[] }> = ({ activities }) => {
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
         <tbody>
-          {recentActivities.map((activity) => (
+          {activities.map((activity) => (
             <tr key={activity.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700">
               <td className="px-4 py-4">
                 <div className="flex items-center space-x-3 rtl:space-x-reverse">

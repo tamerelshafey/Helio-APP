@@ -1,14 +1,13 @@
 import React from 'react';
 import { UserCircleIcon, CheckCircleIcon } from '../common/Icons';
 import { useUserManagementContext } from '../../context/UserManagementContext';
+import type { AppUser } from '../../types';
 
-const UsersToVerify: React.FC = () => {
-    const { users, handleSaveUser } = useUserManagementContext();
-
-    const pendingUsers = users.filter(user => user.status === 'pending').slice(0, 3);
+const UsersToVerify: React.FC<{ users: AppUser[] }> = ({ users: pendingUsers }) => {
+    const { handleSaveUser, users: allUsers } = useUserManagementContext();
 
     const approveUser = (userId: number) => {
-        const user = users.find(u => u.id === userId);
+        const user = allUsers.find(u => u.id === userId);
         if (user) {
             handleSaveUser({ ...user, status: 'active' });
         }

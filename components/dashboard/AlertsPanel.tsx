@@ -1,8 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { Alert } from '../../types';
 import { BellAlertIcon, UserPlusIcon, BuildingOffice2Icon } from '../common/Icons';
-import { useUserManagementContext } from '../../context/UserManagementContext';
-import { usePropertiesContext } from '../../context/PropertiesContext';
 
 const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -32,33 +30,7 @@ const AlertIcon: React.FC<{ type: Alert['type'] }> = ({ type }) => {
     }
 }
 
-const AlertsPanel: React.FC = () => {
-    const { users } = useUserManagementContext();
-    const { properties } = usePropertiesContext();
-
-    const alerts = useMemo(() => {
-        const sortedUsers = [...users].sort((a,b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime());
-        const sortedProperties = [...properties].sort((a,b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
-
-        const userAlerts: Alert[] = sortedUsers.slice(0, 2).map(user => ({
-            id: `user-${user.id}`,
-            message: `مستخدم جديد سجل: ${user.name}`,
-            time: user.joinDate,
-            type: 'user_registered'
-        }));
-
-        const propertyAlerts: Alert[] = sortedProperties.slice(0, 1).map(prop => ({
-            id: `prop-${prop.id}`,
-            message: `تم إدراج عقار جديد: ${prop.title.substring(0, 25)}...`,
-            time: prop.creationDate,
-            type: 'property_listed'
-        }));
-        
-        return [...userAlerts, ...propertyAlerts]
-            .sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-
-    }, [users, properties]);
-    
+const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
     return (
         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
             <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">تنبيهات فورية</h3>
