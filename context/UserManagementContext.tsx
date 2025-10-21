@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import { useAppContext } from './AppContext';
+import { useUIContext } from './UIContext';
 import { mockUsers, mockAdmins } from '../data/mock-data';
 import type { AppUser, AdminUser, UserManagementContextType, UserStatus, UserAccountType, SortConfig } from '../types';
 
@@ -7,6 +8,7 @@ const UserManagementContext = createContext<UserManagementContextType | undefine
 
 export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { logActivity } = useAppContext();
+    const { showToast } = useUIContext();
     const [users, setUsers] = useState<AppUser[]>([]);
     const [admins, setAdmins] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -64,15 +66,28 @@ export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ chil
     }, [users, logActivity]);
 
     const handleDeleteUser = useCallback((id: number) => {
+        // Simulate business logic preventing deletion of the super admin
+        const userToDelete = users.find(u => u.id === id);
+        if (userToDelete?.email === 'super@admin.com') {
+            showToast('لا يمكن حذف حساب مدير النظام الرئيسي.', 'error');
+            return;
+        }
+
         const userName = users.find(u => u.id === id)?.name || `ID: ${id}`;
         setUsers(prev => prev.filter(u => u.id !== id));
         logActivity('حذف مستخدم', `حذف المستخدم: "${userName}"`);
-    }, [users, logActivity]);
+    }, [users, logActivity, showToast]);
     
     const handleDeleteUsers = useCallback((ids: number[]) => {
+        const superAdminId = users.find(u => u.email === 'super@admin.com')?.id;
+        if (superAdminId && ids.includes(superAdminId)) {
+            showToast('لا يمكن حذف حساب مدير النظام الرئيسي ضمن الحذف الجماعي.', 'error');
+            return;
+        }
+
         setUsers(prev => prev.filter(u => !ids.includes(u.id)));
         logActivity('حذف جماعي للمستخدمين', `تم حذف ${ids.length} مستخدمين.`);
-    }, [logActivity]);
+    }, [logActivity, showToast, users]);
 
     const handleSaveAdmin = useCallback((adminData: Omit<AdminUser, 'id'> & { id?: number }) => {
         const isNew = !adminData.id;
@@ -92,10 +107,16 @@ export const UserManagementProvider: React.FC<{ children: ReactNode }> = ({ chil
     }, [logActivity]);
 
     const handleDeleteAdmin = useCallback((id: number) => {
+        const adminToDelete = admins.find(a => a.id === id);
+        if (adminToDelete?.email === 'super@admin.com') {
+            showToast('لا يمكن حذف حساب مدير النظام الرئيسي.', 'error');
+            return;
+        }
+        
         const adminName = admins.find(a => a.id === id)?.name || `ID: ${id}`;
         setAdmins(prev => prev.filter(a => a.id !== id));
         logActivity('حذف مدير', `حذف المدير: "${adminName}"`);
-    }, [admins, logActivity]);
+    }, [admins, logActivity, showToast]);
 
     const value = useMemo(() => ({
         users, admins, loading, sortConfig,

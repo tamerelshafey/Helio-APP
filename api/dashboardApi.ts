@@ -58,6 +58,9 @@ export const getUserGrowth = async () => {
 export const getRecentActivities = async (): Promise<Activity[]> => {
     await delay(1200);
 
+    // Simulate a network error for demonstration purposes
+    throw new Error('Failed to load recent activities.');
+
     const serviceActivities: Activity[] = mockServices.map(s => ({
         id: `s-${s.id}`, type: 'NEW_SERVICE', description: `تمت إضافة خدمة جديدة: ${s.name}`, time: s.creationDate,
     }));
