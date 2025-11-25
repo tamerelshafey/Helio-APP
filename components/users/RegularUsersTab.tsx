@@ -188,7 +188,12 @@ const RegularUsersTab: React.FC<RegularUsersTabProps> = ({ onAdd, onEdit }) => {
                                                 className="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 dark:focus:ring-cyan-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                                 onChange={handleSelectAll}
                                                 checked={isAllSelected}
-                                                ref={el => el && (el.indeterminate = isSomeSelected)}
+                                                // FIX: ref callback should not return a value. Wrapped assignment in a block.
+                                                ref={el => {
+                                                    if (el) {
+                                                        el.indeterminate = isSomeSelected;
+                                                    }
+                                                }}
                                             />
                                         </div>
                                     </th>

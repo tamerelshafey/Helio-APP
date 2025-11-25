@@ -12,7 +12,8 @@ import StatusBadge from '../common/StatusBadge';
 
 const LostFoundForm: React.FC<{
     item: LostAndFoundItem | null;
-    onSave: (data: Omit<LostAndFoundItem, 'id'> & { id?: number }) => void;
+    // FIX: Update onSave prop to match the expected type from AppContext, excluding moderationStatus.
+    onSave: (data: Omit<LostAndFoundItem, 'id' | 'moderationStatus'> & { id?: number }) => void;
     onClose: () => void;
 }> = ({ item, onSave, onClose }) => {
     const [formData, setFormData] = useState({
@@ -84,14 +85,17 @@ const LostAndFoundTab: React.FC = () => {
 
     const handleAddItem = () => { setEditingItem(null); setIsModalOpen(true); };
     const handleEditItem = (item: LostAndFoundItem) => { setEditingItem(item); setIsModalOpen(true); };
-    const handleSaveAndClose = (item: Omit<LostAndFoundItem, 'id'> & { id?: number }) => { 
-        handleSaveLostAndFoundItem(item); 
+    // FIX: Align handler signature with the onSave prop and context function.
+    const handleSaveAndClose = (itemData: Omit<LostAndFoundItem, 'id' | 'moderationStatus'> & { id?: number }) => { 
+        handleSaveLostAndFoundItem(itemData); 
         setIsModalOpen(false); 
-        showToast(item.id ? 'تم تعديل العنصر بنجاح!' : 'تم إضافة العنصر، وهو الآن بانتظار المراجعة.'); 
+        showToast(itemData.id ? 'تم تعديل العنصر بنجاح!' : 'تم إضافة العنصر، وهو الآن بانتظار المراجعة.'); 
     };
     const confirmDelete = (id: number) => { if (window.confirm('هل أنت متأكد من حذف هذا العنصر؟')) { handleDeleteLostAndFoundItem(id); showToast('تم حذف العنصر!'); } };
+    // FIX: Destructure moderationStatus out of the item before saving to match the expected type.
     const markAsReturned = (item: LostAndFoundItem) => { 
-        handleSaveLostAndFoundItem({ ...item, status: 'returned' }); 
+        const { moderationStatus, ...itemData } = item;
+        handleSaveLostAndFoundItem({ ...itemData, status: 'returned' }); 
         showToast(`تم تحديث حالة "${item.itemName}" إلى "تم التسليم".`); 
     };
 
