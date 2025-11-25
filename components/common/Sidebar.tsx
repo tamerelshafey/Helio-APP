@@ -11,6 +11,7 @@ import {
     ChatBubbleLeftRightIcon,
     CubeIcon,
     TagIcon,
+    Cog6ToothIcon,
 } from './Icons';
 import { useAuthContext } from '../../context/AuthContext';
 import type { AdminUserRole } from '../../types';
@@ -80,7 +81,8 @@ const Sidebar: React.FC = () => {
     
             // 6. Analytics & System
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/dashboard/reports" },
-            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: [AdminRoles.SUPER_ADMIN] }
+            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: [AdminRoles.SUPER_ADMIN] },
+            { name: "الإعدادات", icon: <Cog6ToothIcon className="w-6 h-6" />, to: "/dashboard/settings", roles: [AdminRoles.SUPER_ADMIN] }
         ];
     }, []);
 

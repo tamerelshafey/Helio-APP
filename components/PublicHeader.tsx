@@ -42,7 +42,7 @@ const PublicHeader: React.FC = () => {
                          <div className="hidden md:block">
                             <div className="mr-10 flex items-baseline space-x-4 rtl:space-x-reverse rtl:mr-10 rtl:ml-0">
                                 <NavLink to="/" className={navLinkClasses}>الرئيسية</NavLink>
-                                <div className="relative" onMouseEnter={() => setIsAboutOpen(true)} onMouseLeave={() => setIsAboutOpen(false)}>
+                                <div className="relative pb-2" onMouseEnter={() => setIsAboutOpen(true)} onMouseLeave={() => setIsAboutOpen(false)}>
                                     <button className={dropdownButtonClasses(isAboutOpen)}>
                                         <span>حول</span><ChevronDownIcon className={`w-4 h-4 transition-transform ${isAboutOpen ? 'rotate-180' : ''}`} />
                                     </button>
@@ -51,7 +51,7 @@ const PublicHeader: React.FC = () => {
                                     </div>
                                 </div>
                                 <NavLink to="/faq" className={navLinkClasses}>الأسئلة الشائعة</NavLink>
-                                 <div className="relative" onMouseEnter={() => setIsLegalOpen(true)} onMouseLeave={() => setIsLegalOpen(false)}>
+                                 <div className="relative pb-2" onMouseEnter={() => setIsLegalOpen(true)} onMouseLeave={() => setIsLegalOpen(false)}>
                                     <button className={dropdownButtonClasses(isLegalOpen)}>
                                         <span>قانوني</span><ChevronDownIcon className={`w-4 h-4 transition-transform ${isLegalOpen ? 'rotate-180' : ''}`} />
                                     </button>
