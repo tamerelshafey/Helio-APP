@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, BellIcon, UserCircleIcon, SunIcon, Cog6ToothIcon } from '../components/common/Icons';
+import { ArrowLeftIcon, BellIcon, UserCircleIcon, SunIcon, Cog6ToothIcon, CubeIcon } from '../components/common/Icons';
 import { useUIContext } from '../context/UIContext';
+import { useAppContext } from '../context/AppContext';
 
-type Tab = 'general' | 'notifications' | 'account' | 'appearance';
+type Tab = 'general' | 'notifications' | 'account' | 'appearance' | 'app-links';
 
 const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
@@ -13,6 +14,8 @@ const SettingsPage: React.FC = () => {
         switch (activeTab) {
             case 'general':
                 return <GeneralSettings />;
+            case 'app-links':
+                return <AppLinksSettings />;
             case 'notifications':
                 return <NotificationSettings />;
             case 'account':
@@ -51,6 +54,7 @@ const SettingsPage: React.FC = () => {
                 <div className="lg:w-1/4">
                     <div className="space-y-2">
                         <TabButton tab="general" label="عام" icon={<Cog6ToothIcon className="w-6 h-6" />} />
+                        <TabButton tab="app-links" label="روابط التطبيق" icon={<CubeIcon className="w-6 h-6" />} />
                         <TabButton tab="notifications" label="الإشعارات" icon={<BellIcon className="w-6 h-6" />} />
                         <TabButton tab="account" label="الحساب" icon={<UserCircleIcon className="w-6 h-6" />} />
                         <TabButton tab="appearance" label="المظهر" icon={<SunIcon className="w-6 h-6" />} />
@@ -103,6 +107,62 @@ const GeneralSettings = () => (
         </FormRow>
     </div>
 );
+
+const AppLinksSettings: React.FC = () => {
+    const { googlePlayUrl, appleAppStoreUrl, handleUpdateAppLinks } = useAppContext();
+    const { showToast } = useUIContext();
+    const [links, setLinks] = useState({ googlePlayUrl, appleAppStoreUrl });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setLinks(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSave = () => {
+        setIsSaving(true);
+        handleUpdateAppLinks(links);
+        setTimeout(() => {
+            setIsSaving(false);
+            showToast('تم حفظ روابط التطبيق بنجاح!');
+        }, 1000);
+    };
+
+    return (
+        <div>
+            <h2 className="text-2xl font-bold mb-6">روابط التطبيق</h2>
+            <FormRow label="رابط Google Play" description="رابط التطبيق على متجر Google Play.">
+                <input
+                    type="url"
+                    name="googlePlayUrl"
+                    value={links.googlePlayUrl}
+                    onChange={handleChange}
+                    className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                    placeholder="https://play.google.com/..."
+                />
+            </FormRow>
+            <FormRow label="رابط App Store" description="رابط التطبيق على متجر Apple App Store.">
+                <input
+                    type="url"
+                    name="appleAppStoreUrl"
+                    value={links.appleAppStoreUrl}
+                    onChange={handleChange}
+                    className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                    placeholder="https://apps.apple.com/..."
+                />
+            </FormRow>
+             <div className="flex justify-end mt-6">
+                <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="px-6 py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 disabled:bg-slate-400"
+                >
+                    {isSaving ? '...جاري الحفظ' : 'حفظ الروابط'}
+                </button>
+            </div>
+        </div>
+    );
+};
 
 const NotificationSettings = () => {
     const [emailNotifications, setEmailNotifications] = useState(true);

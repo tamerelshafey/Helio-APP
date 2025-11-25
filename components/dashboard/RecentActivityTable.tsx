@@ -17,38 +17,49 @@ const formatRelativeTime = (dateString: string) => {
 };
 
 const ActivityIcon: React.FC<{ type: Activity['type'] }> = ({ type }) => {
-  const iconClasses = "w-6 h-6";
-  const typeMap: { [key in Activity['type']]: React.ReactNode } = {
-    NEW_SERVICE: <WrenchScrewdriverIcon className={`${iconClasses} text-blue-500`} />,
-    EMERGENCY_REPORT: <ShieldExclamationIcon className={`${iconClasses} text-red-500`} />,
-    NEWS_PUBLISHED: <NewspaperIcon className={`${iconClasses} text-purple-500`} />,
-    NEW_PROPERTY: <BuildingOffice2Icon className={`${iconClasses} text-green-500`} />,
+  const iconClasses = "w-5 h-5 text-white";
+  const bgClasses: Record<Activity['type'], string> = {
+    NEW_SERVICE: 'bg-blue-500',
+    EMERGENCY_REPORT: 'bg-red-500',
+    NEWS_PUBLISHED: 'bg-purple-500',
+    NEW_PROPERTY: 'bg-green-500',
   };
-  return <div className="p-2 bg-gray-100 dark:bg-slate-700 rounded-full">{typeMap[type]}</div>;
+  const typeMap: { [key in Activity['type']]: React.ReactNode } = {
+    NEW_SERVICE: <WrenchScrewdriverIcon className={iconClasses} />,
+    EMERGENCY_REPORT: <ShieldExclamationIcon className={iconClasses} />,
+    NEWS_PUBLISHED: <NewspaperIcon className={iconClasses} />,
+    NEW_PROPERTY: <BuildingOffice2Icon className={iconClasses} />,
+  };
+  return <div className={`flex items-center justify-center w-10 h-10 rounded-full ring-8 ring-slate-100 dark:ring-slate-800 ${bgClasses[type]}`}>{typeMap[type]}</div>;
 };
 
 const RecentActivityTable: React.FC<{ activities: Activity[] }> = ({ activities }) => {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <tbody>
-          {activities.map((activity) => (
-            <tr key={activity.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700">
-              <td className="px-4 py-4">
-                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+    <div className="flow-root">
+      <ul className="-mb-8">
+        {activities.map((activity, activityIdx) => (
+          <li key={activity.id}>
+            <div className="relative pb-8">
+              {activityIdx !== activities.length - 1 ? (
+                <span className="absolute top-5 right-5 -mr-px h-full w-0.5 bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
+              ) : null}
+              <div className="relative flex items-start space-x-3 rtl:space-x-reverse">
+                <div className="relative">
                   <ActivityIcon type={activity.type} />
-                  <div>
-                    <div className="font-medium text-gray-800 dark:text-gray-200">{activity.description}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatRelativeTime(activity.time)}
-                    </div>
-                  </div>
                 </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                <div className="min-w-0 flex-1 pt-1.5">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    {activity.description}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {formatRelativeTime(activity.time)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

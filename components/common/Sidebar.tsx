@@ -14,6 +14,7 @@ import {
 } from './Icons';
 import { useAuthContext } from '../../context/AuthContext';
 import type { AdminUserRole } from '../../types';
+import { AdminRoles } from '../../types';
 
 interface NavItemData {
     name: string;
@@ -48,9 +49,9 @@ const Sidebar: React.FC = () => {
     const location = useLocation();
 
     const navItems = useMemo(() => {
-        const serviceManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول ادارة الخدمات'];
-        const contentManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول المحتوى'];
-        const communityManagerRoles: AdminUserRole[] = ['مدير عام', 'مسؤول المجتمع'];
+        const serviceManagerRoles: AdminUserRole[] = [AdminRoles.SUPER_ADMIN, AdminRoles.SERVICES_ADMIN];
+        const contentManagerRoles: AdminUserRole[] = [AdminRoles.SUPER_ADMIN, AdminRoles.CONTENT_ADMIN];
+        const communityManagerRoles: AdminUserRole[] = [AdminRoles.SUPER_ADMIN, AdminRoles.COMMUNITY_ADMIN];
 
         return [
             // 1. Overview
@@ -63,23 +64,23 @@ const Sidebar: React.FC = () => {
             { name: "إدارة الطوارئ", icon: <ShieldExclamationIcon className="w-6 h-6" />, to: "/dashboard/emergency", roles: serviceManagerRoles },
     
             // 3. Content Group
-            { name: "إدارة المحتوى", icon: <PencilSquareIcon className="w-6 h-6" />, to: "/dashboard/content-management", roles: ['مدير عام'] },
+            { name: "إدارة المحتوى", icon: <PencilSquareIcon className="w-6 h-6" />, to: "/dashboard/content-management", roles: [AdminRoles.SUPER_ADMIN] },
             { name: "أخبار المدينة", icon: <NewspaperIcon className="w-6 h-6" />, to: "/dashboard/news", roles: contentManagerRoles },
             { name: "إدارة الإشعارات", icon: <BellAlertIcon className="w-6 h-6" />, to: "/dashboard/notifications", roles: contentManagerRoles },
             { name: "إدارة الإعلانات", icon: <NewspaperIcon className="w-6 h-6 text-orange-400" />, to: "/dashboard/ads", roles: contentManagerRoles },
-            { name: "إدارة العروض", icon: <TagIcon className="w-6 h-6 text-rose-400" />, to: "/dashboard/offers", roles: ['مدير عام', 'مسؤول المحتوى', 'مسؤول ادارة الخدمات'] },
+            { name: "إدارة العروض", icon: <TagIcon className="w-6 h-6 text-rose-400" />, to: "/dashboard/offers", roles: [AdminRoles.SUPER_ADMIN, AdminRoles.CONTENT_ADMIN, AdminRoles.SERVICES_ADMIN] },
             
             // 4. Modules Group
-            { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/dashboard/properties", roles: ['مدير عام', 'مسؤول العقارات'] },
-            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/dashboard/transportation", roles: ['مدير عام', 'مسؤول النقل'] },
+            { name: "إدارة العقارات", icon: <HomeModernIcon className="w-6 h-6" />, to: "/dashboard/properties", roles: [AdminRoles.SUPER_ADMIN, AdminRoles.PROPERTY_ADMIN] },
+            { name: "إدارة النقل", icon: <TruckIcon className="w-6 h-6" />, to: "/dashboard/transportation", roles: [AdminRoles.SUPER_ADMIN, AdminRoles.TRANSPORT_ADMIN] },
             { name: "إدارة المجتمع", icon: <ChatBubbleOvalLeftIcon className="w-6 h-6" />, to: "/dashboard/community", roles: communityManagerRoles },
     
             // 5. Users
-            { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/dashboard/users", roles: ['مدير عام'] },
+            { name: "المستخدمون", icon: <UserGroupIcon className="w-6 h-6" />, to: "/dashboard/users", roles: [AdminRoles.SUPER_ADMIN] },
     
             // 6. Analytics & System
             { name: "التقارير", icon: <DocumentChartBarIcon className="w-6 h-6" />, to: "/dashboard/reports" },
-            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: ['مدير عام'] }
+            { name: "سجل التدقيق", icon: <ClipboardDocumentListIcon className="w-6 h-6" />, to: "/dashboard/audit-log", roles: [AdminRoles.SUPER_ADMIN] }
         ];
     }, []);
 
@@ -92,7 +93,7 @@ const Sidebar: React.FC = () => {
 
         const filterByRole = (items: NavItemData[]): NavItemData[] => {
             const userRoles = currentUser.roles;
-            if (userRoles.includes('مدير عام')) return items;
+            if (userRoles.includes(AdminRoles.SUPER_ADMIN)) return items;
             
             return items
                 .filter(item => !item.roles || item.roles.some(requiredRole => userRoles.includes(requiredRole)))

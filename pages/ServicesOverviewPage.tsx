@@ -1,7 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useServicesContext } from '../context/ServicesContext';
 import { useUIContext } from '../context/UIContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+    getServices, getCategories, saveCategory, deleteCategory, saveSubCategory, 
+    deleteSubCategory, reorderCategories, reorderSubCategories 
+} from '../api/servicesApi';
 import { 
     ArrowLeftIcon, RectangleGroupIcon, Squares2X2Icon, HeartIcon, CakeIcon, AcademicCapIcon, ShoppingBagIcon, 
     DevicePhoneMobileIcon, BoltIcon, SparklesIcon, WrenchScrewdriverIcon, CarIcon, GiftIcon, PaintBrushIcon,
@@ -11,6 +15,7 @@ import {
 } from '../components/common/Icons';
 import Modal from '../components/common/Modal';
 import { Category, SubCategory } from '../types';
+import Spinner from '../components/common/Spinner';
 
 const allIconComponents: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
     HeartIcon, CakeIcon, AcademicCapIcon, ShoppingBagIcon, DevicePhoneMobileIcon, BoltIcon, SparklesIcon, WrenchScrewdriverIcon, 
@@ -90,10 +95,61 @@ const SubCategoryForm: React.FC<{
 
 const ServicesOverviewPage: React.FC = () => {
     const navigate = useNavigate();
-    const { services, categories, handleSaveCategory, handleDeleteCategory, handleSaveSubCategory, handleDeleteSubCategory, handleReorderCategories, handleReorderSubCategories } = useServicesContext();
     const { showToast } = useUIContext();
+    const queryClient = useQueryClient();
+
+    const { data: services = [], isLoading: isLoadingServices } = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const { data: categories = [], isLoading: isLoadingCategories } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
 
     const [modalState, setModalState] = useState<{ type: null | 'category' | 'subcategory'; data?: any; parentId?: number }>({ type: null });
+
+    const saveCategoryMutation = useMutation({
+        mutationFn: saveCategory,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            setModalState({ type: null });
+            showToast('تم حفظ الفئة الرئيسية بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error'),
+    });
+
+    const deleteCategoryMutation = useMutation({
+        mutationFn: deleteCategory,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            showToast('تم حذف الفئة بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error'),
+    });
+
+    const saveSubCategoryMutation = useMutation({
+        mutationFn: saveSubCategory,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            setModalState({ type: null });
+            showToast('تم حفظ الفئة الفرعية بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error'),
+    });
+
+    const deleteSubCategoryMutation = useMutation({
+        mutationFn: deleteSubCategory,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            queryClient.invalidateQueries({ queryKey: ['services'] });
+        },
+        onError: (error: Error) => showToast(error.message, 'error'),
+    });
+
+    const reorderCategoriesMutation = useMutation({
+        mutationFn: reorderCategories,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+    });
+
+    const reorderSubCategoriesMutation = useMutation({
+        mutationFn: reorderSubCategories,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+    });
 
     const categoryData = useMemo(() => {
         const serviceCounts: { [subCategoryId: number]: number } = {};
@@ -122,15 +178,19 @@ const ServicesOverviewPage: React.FC = () => {
     const onMoveCategory = (index: number, direction: 'up' | 'down') => {
         const reordered = handleMove(categoryData, index, direction);
         const originalCategories = reordered.map(c => categories.find(oc => oc.id === c.id)).filter(Boolean) as Category[];
-        handleReorderCategories(originalCategories);
+        reorderCategoriesMutation.mutate(originalCategories);
     };
 
     const onMoveSubCategory = (catId: number, subIndex: number, direction: 'up' | 'down') => {
         const category = categories.find(c => c.id === catId);
         if (!category) return;
-        const reordered = handleMove(category.subCategories, subIndex, direction);
-        handleReorderSubCategories(catId, reordered);
+        const reorderedSubCategories = handleMove(category.subCategories, subIndex, direction);
+        reorderSubCategoriesMutation.mutate({ categoryId: catId, reorderedSubCategories });
     };
+
+    if (isLoadingServices || isLoadingCategories) {
+        return <div className="flex justify-center items-center h-64"><Spinner /></div>;
+    }
 
     return (
         <div className="animate-fade-in space-y-6">
@@ -154,7 +214,7 @@ const ServicesOverviewPage: React.FC = () => {
                                 <span className="text-sm font-mono px-2 py-1 bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200 rounded-full mr-3">{category.totalCount}</span>
                                 <div className="mr-auto flex items-center gap-2">
                                     <button onClick={() => setModalState({ type: 'category', data: category })} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                    <button onClick={() => handleDeleteCategory(category.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                    <button onClick={() => deleteCategoryMutation.mutate(category.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
                                 </div>
                             </div>
                             <div className="p-4 pr-12 space-y-2">
@@ -164,11 +224,11 @@ const ServicesOverviewPage: React.FC = () => {
                                             <button onClick={() => onMoveSubCategory(category.id, subIndex, 'up')} disabled={subIndex === 0} className="p-1 disabled:opacity-30"><ArrowUpIcon className="w-4 h-4"/></button>
                                             <button onClick={() => onMoveSubCategory(category.id, subIndex, 'down')} disabled={subIndex === category.subCategories.length - 1} className="p-1 disabled:opacity-30"><ArrowDownIcon className="w-4 h-4"/></button>
                                         </div>
-                                        <Link to={`/services/subcategory/${sub.id}`} className="flex-grow text-gray-700 dark:text-gray-300 px-2">{sub.name}</Link>
+                                        <Link to={`/dashboard/services/subcategory/${sub.id}`} className="flex-grow text-gray-700 dark:text-gray-300 px-2">{sub.name}</Link>
                                         <span className="font-bold font-mono text-cyan-600 dark:text-cyan-400">{sub.count}</span>
                                         <div className="mr-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => setModalState({ type: 'subcategory', data: sub, parentId: category.id })} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                            <button onClick={() => handleDeleteSubCategory(category.id, sub.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => deleteSubCategoryMutation.mutate({ categoryId: category.id, subCategoryId: sub.id })} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
                                         </div>
                                     </div>
                                 ))}
@@ -181,10 +241,10 @@ const ServicesOverviewPage: React.FC = () => {
             
             {/* Modals */}
             <Modal isOpen={modalState.type === 'category'} onClose={() => setModalState({ type: null })} title={modalState.data ? 'تعديل فئة رئيسية' : 'إضافة فئة رئيسية'}>
-                <CategoryForm category={modalState.data} onClose={() => setModalState({ type: null })} onSave={(data) => { handleSaveCategory(data); setModalState({ type: null }); showToast('تم حفظ الفئة الرئيسية بنجاح!'); }} />
+                <CategoryForm category={modalState.data} onClose={() => setModalState({ type: null })} onSave={(data) => saveCategoryMutation.mutate(data)} />
             </Modal>
              <Modal isOpen={modalState.type === 'subcategory'} onClose={() => setModalState({ type: null })} title={modalState.data ? 'تعديل فئة فرعية' : 'إضافة فئة فرعية'}>
-                <SubCategoryForm subCategory={modalState.data} onClose={() => setModalState({ type: null })} onSave={(data) => { if (modalState.parentId) { handleSaveSubCategory(modalState.parentId, data); setModalState({ type: null }); showToast('تم حفظ الفئة الفرعية بنجاح!'); } }} />
+                <SubCategoryForm subCategory={modalState.data} onClose={() => setModalState({ type: null })} onSave={(data) => { if (modalState.parentId) { saveSubCategoryMutation.mutate({ categoryId: modalState.parentId, subCategoryData: data }); } }} />
             </Modal>
         </div>
     );

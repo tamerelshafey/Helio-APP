@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getNews, saveNews, deleteNews } from '../api/contentApi';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '../components/common/Icons';
 import type { News } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import { useContentContext } from '../context/ContentContext';
 import { useHasPermission } from '../context/AuthContext';
 import { useUIContext } from '../context/UIContext';
 import RichTextEditor from '../components/common/RichTextEditor';
 import { NewsCardSkeleton } from '../components/common/SkeletonLoader';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
 
 const NewsForm: React.FC<{
     onSave: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
@@ -107,12 +109,34 @@ const NewsCard: React.FC<{ newsItem: News; onEdit: () => void; onDelete: () => v
 
 const NewsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { news, handleSaveNews, handleDeleteNews, loading } = useContentContext();
+    const queryClient = useQueryClient();
+    const newsQuery = useQuery({ queryKey: ['news'], queryFn: getNews });
+    const { data: news = [] } = newsQuery;
+
     const canManage = useHasPermission(['مسؤول المحتوى']);
     const { showToast } = useUIContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNews, setEditingNews] = useState<News | null>(null);
 
+    const saveNewsMutation = useMutation({
+        mutationFn: saveNews,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['news'] });
+            setIsModalOpen(false);
+            showToast(editingNews ? 'تم تعديل الخبر بنجاح!' : 'تم إضافة الخبر بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const deleteNewsMutation = useMutation({
+        mutationFn: deleteNews,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['news'] });
+            showToast('تم حذف الخبر بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+    
     const handleAddClick = () => {
         setEditingNews(null);
         setIsModalOpen(true);
@@ -125,49 +149,15 @@ const NewsPage: React.FC = () => {
 
     const confirmDelete = (id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا الخبر؟')) {
-            handleDeleteNews(id);
-            showToast('تم حذف الخبر بنجاح!');
+            deleteNewsMutation.mutate(id);
         }
     };
-
-    const handleSaveAndClose = (data: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => {
-        handleSaveNews(data);
-        setIsModalOpen(false);
-        showToast(data.id ? 'تم تعديل الخبر بنجاح!' : 'تم إضافة الخبر بنجاح!');
-    };
-
-    const renderContent = () => {
-        if (loading) {
-            return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {Array.from({ length: 4 }).map((_, i) => <NewsCardSkeleton key={i} />)}
-                </div>
-            );
-        }
-
-        if (news.length > 0) {
-            return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {news.map(newsItem => (
-                        <NewsCard 
-                            key={newsItem.id} 
-                            newsItem={newsItem} 
-                            onEdit={() => handleEditClick(newsItem)}
-                            onDelete={() => confirmDelete(newsItem.id)}
-                            canManage={canManage}
-                        />
-                    ))}
-                </div>
-            );
-        }
-
-        return (
-            <div className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
-                <h3 className="text-xl font-semibold">لا توجد أخبار حالياً</h3>
-                <p className="mt-2">انقر على "إضافة خبر جديد" لبدء النشر.</p>
-            </div>
-        );
-    };
+    
+    const skeletonLoader = (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => <NewsCardSkeleton key={i} />)}
+        </div>
+    );
 
     return (
         <div className="animate-fade-in">
@@ -185,7 +175,26 @@ const NewsPage: React.FC = () => {
                 )}
             </div>
             
-            {renderContent()}
+            <QueryStateWrapper queries={newsQuery} loader={skeletonLoader}>
+                {news.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {news.map(newsItem => (
+                            <NewsCard 
+                                key={newsItem.id} 
+                                newsItem={newsItem} 
+                                onEdit={() => handleEditClick(newsItem)}
+                                onDelete={() => confirmDelete(newsItem.id)}
+                                canManage={canManage}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+                        <h3 className="text-xl font-semibold">لا توجد أخبار حالياً</h3>
+                        <p className="mt-2">انقر على "إضافة خبر جديد" لبدء النشر.</p>
+                    </div>
+                )}
+            </QueryStateWrapper>
             
             <Modal
                 isOpen={isModalOpen}
@@ -193,7 +202,7 @@ const NewsPage: React.FC = () => {
                 title={editingNews ? 'تعديل الخبر' : 'إضافة خبر جديد'}
             >
                 <NewsForm 
-                    onSave={handleSaveAndClose}
+                    onSave={(data) => saveNewsMutation.mutate(data)}
                     onClose={() => setIsModalOpen(false)}
                     newsItem={editingNews}
                 />

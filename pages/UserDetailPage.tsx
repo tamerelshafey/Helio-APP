@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useUserManagementContext } from '../context/UserManagementContext';
-import { useServicesContext } from '../context/ServicesContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getUserById, saveUser } from '../api/usersApi';
+import { getServices } from '../api/servicesApi';
 import { useCommunityContext } from '../context/CommunityContext';
 import { useMarketplaceContext } from '../context/MarketplaceContext';
 import { useOffersContext } from '../context/OffersContext';
@@ -10,21 +11,35 @@ import KpiCard from '../components/common/KpiCard';
 import TabButton from '../components/common/TabButton';
 import StatusBadge, { AccountTypeBadge } from '../components/common/StatusBadge';
 import EmptyState from '../components/common/EmptyState';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
 
 const UserDetailPage: React.FC = () => {
     const navigate = useNavigate();
     const { userId } = useParams<{ userId: string }>();
     const numericUserId = Number(userId);
+    const queryClient = useQueryClient();
 
-    const { users, handleSaveUser } = useUserManagementContext();
-    const { services } = useServicesContext();
+    const userQuery = useQuery({ 
+        queryKey: ['user', numericUserId], 
+        queryFn: () => getUserById(numericUserId) 
+    });
+    const { data: user } = userQuery;
+    
+    const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const { data: services = [] } = servicesQuery;
     const { communityPosts } = useCommunityContext();
     const { forSaleItems, jobs } = useMarketplaceContext();
     const { offerCodes } = useOffersContext();
 
     const [activeTab, setActiveTab] = useState('overview');
 
-    const user = useMemo(() => users.find(u => u.id === numericUserId), [users, numericUserId]);
+    const saveUserMutation = useMutation({
+        mutationFn: saveUser,
+        onSuccess: (updatedUser) => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.setQueryData(['user', updatedUser.id], updatedUser);
+        }
+    });
 
     const userStats = useMemo(() => {
         if (!user) return null;
@@ -37,16 +52,9 @@ const UserDetailPage: React.FC = () => {
         };
     }, [user, services, communityPosts, forSaleItems, jobs, offerCodes]);
 
-    if (!user || !userStats) {
-        return (
-            <div className="text-center p-8">
-                <h1 className="text-2xl font-bold">لم يتم العثور على المستخدم</h1>
-                <Link to="/dashboard/users" className="text-cyan-500 hover:underline mt-4">العودة إلى قائمة المستخدمين</Link>
-            </div>
-        );
-    }
-    
     const renderTabContent = () => {
+        if (!user || !userStats) return null;
+        
         switch(activeTab) {
             case 'services':
                 return userStats.services.length > 0 ? (
@@ -78,9 +86,9 @@ const UserDetailPage: React.FC = () => {
                     <div className="space-y-4">
                         <h3 className="text-lg font-bold">تعديل المعلومات</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div><label className="block text-sm font-medium mb-1">الاسم</label><input type="text" value={user.name} onChange={e => handleSaveUser({...user, name: e.target.value})} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2" /></div>
-                             <div><label className="block text-sm font-medium mb-1">البريد الإلكتروني</label><input type="email" value={user.email} onChange={e => handleSaveUser({...user, email: e.target.value})} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2" /></div>
-                             <div><label className="block text-sm font-medium mb-1">الحالة</label><select value={user.status} onChange={e => handleSaveUser({...user, status: e.target.value as any})} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2"><option value="active">مفعل</option><option value="pending">معلق</option><option value="banned">محظور</option></select></div>
+                             <div><label className="block text-sm font-medium mb-1">الاسم</label><input type="text" value={user.name} onChange={e => saveUserMutation.mutate({...user, name: e.target.value})} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2" /></div>
+                             <div><label className="block text-sm font-medium mb-1">البريد الإلكتروني</label><input type="email" value={user.email} onChange={e => saveUserMutation.mutate({...user, email: e.target.value})} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2" /></div>
+                             <div><label className="block text-sm font-medium mb-1">الحالة</label><select value={user.status} onChange={e => saveUserMutation.mutate({...user, status: e.target.value as any})} className="w-full bg-slate-100 dark:bg-slate-700 rounded-md p-2"><option value="active">مفعل</option><option value="pending">معلق</option><option value="banned">محظور</option></select></div>
                         </div>
                     </div>
                 );
@@ -93,39 +101,48 @@ const UserDetailPage: React.FC = () => {
                 <ArrowLeftIcon className="w-5 h-5" />
                 <span>العودة إلى قائمة المستخدمين</span>
             </button>
-            <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg">
-                <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
-                    <img src={user.avatar} alt={user.name} className="w-24 h-24 rounded-full object-cover ring-4 ring-cyan-200 dark:ring-cyan-700" />
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{user.name}</h1>
-                        <p className="text-gray-500 dark:text-gray-400">{user.email}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                            <StatusBadge status={user.status} />
-                            <AccountTypeBadge type={user.accountType} />
+            <QueryStateWrapper queries={[userQuery, servicesQuery]}>
+                {user && userStats ? (
+                    <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg">
+                        <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
+                            <img src={user.avatar} alt={user.name} className="w-24 h-24 rounded-full object-cover ring-4 ring-cyan-200 dark:ring-cyan-700" />
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{user.name}</h1>
+                                <p className="text-gray-500 dark:text-gray-400">{user.email}</p>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <StatusBadge status={user.status} />
+                                    <AccountTypeBadge type={user.accountType} />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
+                            <KpiCard title="تاريخ الانضمام" value={user.joinDate} icon={<CalendarDaysIcon className="w-6 h-6"/>} />
+                            <KpiCard title="الخدمات" value={userStats.services.length.toString()} icon={<WrenchScrewdriverIcon className="w-6 h-6"/>} />
+                            <KpiCard title="المنشورات" value={userStats.posts.length.toString()} icon={<DocumentDuplicateIcon className="w-6 h-6"/>} />
+                            <KpiCard title="العروض" value={userStats.offerCodes.length.toString()} icon={<TagIcon className="w-6 h-6"/>} />
+                        </div>
+
+                        <div className="border-b border-gray-200 dark:border-slate-700">
+                            <nav className="-mb-px flex gap-4" aria-label="Tabs">
+                                <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>نظرة عامة</TabButton>
+                                {user.accountType === 'service_provider' && <TabButton active={activeTab === 'services'} onClick={() => setActiveTab('services')}>الخدمات</TabButton>}
+                                <TabButton active={activeTab === 'community'} onClick={() => setActiveTab('community')}>نشاط المجتمع</TabButton>
+                                <TabButton active={activeTab === 'marketplace'} onClick={() => setActiveTab('marketplace')}>إعلانات السوق</TabButton>
+                                <TabButton active={activeTab === 'offers'} onClick={() => setActiveTab('offers')}>العروض</TabButton>
+                            </nav>
+                        </div>
+                        <div className="py-6">
+                            {renderTabContent()}
                         </div>
                     </div>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
-                    <KpiCard title="تاريخ الانضمام" value={user.joinDate} icon={<CalendarDaysIcon className="w-6 h-6"/>} />
-                    <KpiCard title="الخدمات" value={userStats.services.length.toString()} icon={<WrenchScrewdriverIcon className="w-6 h-6"/>} />
-                    <KpiCard title="المنشورات" value={userStats.posts.length.toString()} icon={<DocumentDuplicateIcon className="w-6 h-6"/>} />
-                    <KpiCard title="العروض" value={userStats.offerCodes.length.toString()} icon={<TagIcon className="w-6 h-6"/>} />
-                </div>
-
-                <div className="border-b border-gray-200 dark:border-slate-700">
-                    <nav className="-mb-px flex gap-4" aria-label="Tabs">
-                        <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>نظرة عامة</TabButton>
-                        {user.accountType === 'service_provider' && <TabButton active={activeTab === 'services'} onClick={() => setActiveTab('services')}>الخدمات</TabButton>}
-                        <TabButton active={activeTab === 'community'} onClick={() => setActiveTab('community')}>نشاط المجتمع</TabButton>
-                        <TabButton active={activeTab === 'marketplace'} onClick={() => setActiveTab('marketplace')}>إعلانات السوق</TabButton>
-                        <TabButton active={activeTab === 'offers'} onClick={() => setActiveTab('offers')}>العروض</TabButton>
-                    </nav>
-                </div>
-                <div className="py-6">
-                    {renderTabContent()}
-                </div>
-            </div>
+                ) : (
+                     <div className="text-center p-8">
+                        <h1 className="text-2xl font-bold">لم يتم العثور على المستخدم</h1>
+                        <Link to="/dashboard/users" className="text-cyan-500 hover:underline mt-4">العودة إلى قائمة المستخدمين</Link>
+                    </div>
+                )}
+            </QueryStateWrapper>
         </div>
     );
 };

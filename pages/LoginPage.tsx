@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUserManagementContext } from '../context/UserManagementContext';
+import { useQuery } from '@tanstack/react-query';
+import { getAdmins } from '../api/usersApi';
 import { useAuthContext } from '../context/AuthContext';
 import { useUIContext } from '../context/UIContext';
 import { KeyIcon, EnvelopeIcon } from '../components/common/Icons';
 import type { AdminUserRole } from '../types';
+import { AdminRoles } from '../types';
 
 const LoginPage: React.FC = () => {
-    const { admins } = useUserManagementContext();
+    const { data: admins = [], isLoading } = useQuery({ queryKey: ['admins'], queryFn: getAdmins });
     const { login } = useAuthContext();
     const { showToast } = useUIContext();
     const navigate = useNavigate();
@@ -42,14 +44,7 @@ const LoginPage: React.FC = () => {
         }
     };
     
-    const quickLoginRoles: AdminUserRole[] = [
-        'مدير عام', 
-        'مسؤول ادارة الخدمات', 
-        'مسؤول العقارات', 
-        'مسؤول المحتوى', 
-        'مسؤول النقل', 
-        'مسؤول المجتمع'
-    ];
+    const quickLoginRoles: AdminUserRole[] = Object.values(AdminRoles);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-slate-100 dark:bg-slate-900 px-4 py-8">
@@ -107,9 +102,10 @@ const LoginPage: React.FC = () => {
                         <div>
                             <button
                                 type="submit"
-                                className="flex w-full justify-center rounded-md bg-cyan-500 px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-cyan-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+                                disabled={isLoading}
+                                className="flex w-full justify-center rounded-md bg-cyan-500 px-3 py-2.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-cyan-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:bg-slate-400"
                             >
-                                تسجيل الدخول
+                                {isLoading ? 'جاري التحميل...' : 'تسجيل الدخول'}
                             </button>
                         </div>
                     </form>
@@ -121,7 +117,8 @@ const LoginPage: React.FC = () => {
                                 <button
                                     key={role}
                                     onClick={() => handleQuickLogin(role)}
-                                    className="text-xs px-2 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                                    disabled={isLoading}
+                                    className="text-xs px-2 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
                                 >
                                     {role}
                                 </button>

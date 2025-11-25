@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import type { CommunityPost, CommunityComment, AppUser } from '../../types';
 import { useCommunityContext } from '../../context/CommunityContext';
-import { useUserManagementContext } from '../../context/UserManagementContext';
+// FIX: Replaced deprecated useUserManagementContext with useQuery to fetch users from the API.
+import { useQuery } from '@tanstack/react-query';
+import { getUsers } from '../../api/usersApi';
 import { useUIContext } from '../../context/UIContext';
 import KpiCard from '../common/KpiCard';
 import Modal from '../common/Modal';
@@ -67,7 +69,7 @@ const PostsAndCommentsTab: React.FC = () => {
         communityPosts, discussionCircles, handleDeletePost, handleUpdatePost,
         handleDeleteComment, handleUpdateComment, handleDismissPostReports, handleDismissCommentReports
     } = useCommunityContext();
-    const { users } = useUserManagementContext();
+    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
     const { showToast } = useUIContext();
 
     const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);

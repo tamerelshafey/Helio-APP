@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getServices, getCategories, saveService, deleteService, toggleFavorite } from '../api/servicesApi';
+import { getUsers } from '../api/usersApi';
+
 import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon, WrenchScrewdriverIcon, ArrowUpIcon, ArrowDownIcon } from '../components/common/Icons';
 import type { Service, Category, AppUser, SortDirection } from '../types';
-import { useServicesContext } from '../context/ServicesContext';
-import { useUserManagementContext } from '../context/UserManagementContext';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
@@ -11,6 +13,7 @@ import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
 import Rating from '../components/common/Rating';
 import { InputField, TextareaField } from '../components/common/FormControls';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
 
 const ServiceForm: React.FC<{
     onSave: (service: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => void;
@@ -157,13 +160,45 @@ const ServicePage: React.FC = () => {
     const { subCategoryId: subCategoryIdStr } = useParams<{ subCategoryId: string }>();
     const subCategoryId = Number(subCategoryIdStr);
     
-    const { services, categories, handleSaveService, handleDeleteService, handleToggleFavorite, sortConfig, handleSortServices } = useServicesContext();
-    const { users } = useUserManagementContext();
+    const queryClient = useQueryClient();
+    const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories });
+    const usersQuery = useQuery({ queryKey: ['users'], queryFn: getUsers });
+    
+    const { data: services = [] } = servicesQuery;
+    const { data: categories = [] } = categoriesQuery;
+    const { data: users = [] } = usersQuery;
+    
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingService, setEditingService] = useState<Service | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Service; direction: SortDirection } | null>(null);
+
+    const saveServiceMutation = useMutation({
+        mutationFn: saveService,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['services'] });
+            setIsModalOpen(false);
+            showToast(editingService ? 'تم حفظ التعديلات بنجاح!' : 'تمت إضافة الخدمة بنجاح!');
+        },
+        onError: (error) => showToast(`حدث خطأ: ${error.message}`, 'error'),
+    });
+
+    const deleteServiceMutation = useMutation({
+        mutationFn: deleteService,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['services'] });
+            showToast('تم حذف الخدمة بنجاح!');
+        },
+        onError: (error) => showToast(`حدث خطأ: ${error.message}`, 'error'),
+    });
+
+    const toggleFavoriteMutation = useMutation({
+        mutationFn: toggleFavorite,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['services'] }),
+    });
     
     const serviceProviders = useMemo(() => users.filter(u => u.accountType === 'service_provider'), [users]);
     
@@ -197,20 +232,21 @@ const ServicePage: React.FC = () => {
         return sorted;
     }, [filteredServices, sortConfig]);
 
+    const handleSortServices = (key: keyof Service) => {
+        setSortConfig(prevConfig => {
+            if (prevConfig && prevConfig.key === key) {
+                return { ...prevConfig, direction: prevConfig.direction === 'ascending' ? 'descending' : 'ascending' };
+            }
+            return { key, direction: 'ascending' };
+        });
+    };
+
     const handleAddService = () => { setEditingService(null); setIsModalOpen(true); };
     const handleEditService = (service: Service) => { setEditingService(service); setIsModalOpen(true); };
     
-    const handleSaveAndClose = (serviceData: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => {
-        const isNew = !serviceData.id;
-        handleSaveService(serviceData);
-        setIsModalOpen(false);
-        showToast(isNew ? 'تمت إضافة الخدمة بنجاح!' : 'تم حفظ التعديلات بنجاح!');
-    };
-
     const confirmDeleteService = (id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذه الخدمة؟')) {
-            handleDeleteService(id);
-            showToast('تم حذف الخدمة بنجاح!');
+            deleteServiceMutation.mutate(id);
         }
     };
     
@@ -239,85 +275,87 @@ const ServicePage: React.FC = () => {
                     )}
                 </div>
 
-                <div className="overflow-x-auto">
-                     {sortedServices.length > 0 ? (
-                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                                <tr>
-                                    <th scope="col" className="p-3"><StarIcon className="w-5 h-5 mx-auto"/></th>
-                                    <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortServices('name')}>
-                                        <div className="flex items-center">
-                                            اسم الخدمة
-                                            {sortConfig?.key === 'name' && <SortIndicator direction={sortConfig.direction} />}
-                                        </div>
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortServices('rating')}>
-                                        <div className="flex items-center">
-                                            التقييم
-                                            {sortConfig?.key === 'rating' && <SortIndicator direction={sortConfig.direction} />}
-                                        </div>
-                                    </th>
-                                    <th scope="col" className="px-6 py-3">عدد التقييمات</th>
-                                    <th scope="col" className="px-6 py-3">إجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sortedServices.map(service => (
-                                    <tr key={service.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                        <td className="px-4 py-4 text-center">
-                                            <button onClick={() => handleToggleFavorite(service.id)} className="p-2 rounded-full hover:bg-yellow-100 dark:hover:bg-yellow-900/50" title="إضافة للمفضلة">
-                                                {service.isFavorite 
-                                                    ? <StarIcon className="w-5 h-5 text-yellow-400" /> 
-                                                    : <StarIconOutline className="w-5 h-5 text-gray-400" />
-                                                }
-                                            </button>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-semibold text-gray-900 dark:text-white">{service.name}</div>
-                                            <div className="text-xs">{service.address}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1">
-                                                <Rating rating={service.rating} />
-                                                <span className="text-xs font-bold">({service.rating.toFixed(1)})</span>
+                <QueryStateWrapper queries={[servicesQuery, categoriesQuery, usersQuery]}>
+                    <div className="overflow-x-auto">
+                        {sortedServices.length > 0 ? (
+                            <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                    <tr>
+                                        <th scope="col" className="p-3"><StarIcon className="w-5 h-5 mx-auto"/></th>
+                                        <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortServices('name')}>
+                                            <div className="flex items-center">
+                                                اسم الخدمة
+                                                {sortConfig?.key === 'name' && <SortIndicator direction={sortConfig.direction} />}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">{service.reviews.length}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => navigate(`/dashboard/services/detail/${service.id}`)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض التفاصيل"><EyeIcon className="w-5 h-5" /></button>
-                                                {canManage && (
-                                                    <>
-                                                        <button onClick={() => handleEditService(service)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                        <button onClick={() => confirmDeleteService(service.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
-                                                    </>
-                                                )}
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-600" onClick={() => handleSortServices('rating')}>
+                                            <div className="flex items-center">
+                                                التقييم
+                                                {sortConfig?.key === 'rating' && <SortIndicator direction={sortConfig.direction} />}
                                             </div>
-                                        </td>
+                                        </th>
+                                        <th scope="col" className="px-6 py-3">عدد التقييمات</th>
+                                        <th scope="col" className="px-6 py-3">إجراءات</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <EmptyState
-                            icon={<WrenchScrewdriverIcon className="w-16 h-16 text-slate-400" />}
-                            title={`لا توجد خدمات في فئة "${categoryName}"`}
-                            message="يمكنك البدء بإضافة أول خدمة في هذه الفئة من خلال الزر أدناه."
-                        >
-                            {canManage && (
-                                <button onClick={handleAddService} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                                    <PlusIcon className="w-5 h-5" />
-                                    <span>إضافة خدمة جديدة</span>
-                                </button>
-                            )}
-                        </EmptyState>
-                    )}
-                </div>
+                                </thead>
+                                <tbody>
+                                    {sortedServices.map(service => (
+                                        <tr key={service.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                            <td className="px-4 py-4 text-center">
+                                                <button onClick={() => toggleFavoriteMutation.mutate(service.id)} className="p-2 rounded-full hover:bg-yellow-100 dark:hover:bg-yellow-900/50" title="إضافة للمفضلة">
+                                                    {service.isFavorite 
+                                                        ? <StarIcon className="w-5 h-5 text-yellow-400" /> 
+                                                        : <StarIconOutline className="w-5 h-5 text-gray-400" />
+                                                    }
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-semibold text-gray-900 dark:text-white">{service.name}</div>
+                                                <div className="text-xs">{service.address}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1">
+                                                    <Rating rating={service.rating} />
+                                                    <span className="text-xs font-bold">({service.rating.toFixed(1)})</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">{service.reviews.length}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => navigate(`/dashboard/services/detail/${service.id}`)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض التفاصيل"><EyeIcon className="w-5 h-5" /></button>
+                                                    {canManage && (
+                                                        <>
+                                                            <button onClick={() => handleEditService(service)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                            <button onClick={() => confirmDeleteService(service.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <EmptyState
+                                icon={<WrenchScrewdriverIcon className="w-16 h-16 text-slate-400" />}
+                                title={`لا توجد خدمات في فئة "${categoryName}"`}
+                                message="يمكنك البدء بإضافة أول خدمة في هذه الفئة من خلال الزر أدناه."
+                            >
+                                {canManage && (
+                                    <button onClick={handleAddService} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                                        <PlusIcon className="w-5 h-5" />
+                                        <span>إضافة خدمة جديدة</span>
+                                    </button>
+                                )}
+                            </EmptyState>
+                        )}
+                    </div>
+                </QueryStateWrapper>
             </div>
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingService ? 'تعديل الخدمة' : 'إضافة خدمة جديدة'}>
                 <ServiceForm
-                    onSave={handleSaveAndClose}
+                    onSave={(data) => saveServiceMutation.mutate(data)}
                     onClose={() => setIsModalOpen(false)}
                     service={editingService}
                     initialSubCategoryId={subCategoryId}

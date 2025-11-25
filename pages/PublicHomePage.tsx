@@ -12,7 +12,7 @@ const getIcon = (name: string, props: React.SVGProps<SVGSVGElement>) => {
 };
 
 const PublicHomePage: React.FC = () => {
-    const { publicPagesContent } = useAppContext();
+    const { publicPagesContent, googlePlayUrl, appleAppStoreUrl } = useAppContext();
     const content = publicPagesContent.home;
 
     const phoneContentColors = [
@@ -39,21 +39,31 @@ const PublicHomePage: React.FC = () => {
                                 {content.heroSubtitle}
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
-                                <a href="https://play.google.com/store/apps/details?id=com.helio.company" target="_blank" rel="noopener noreferrer" className="bg-black text-white rounded-lg px-4 py-3 flex items-center justify-center gap-3 transition-transform hover:scale-105 w-full sm:w-auto">
+                                <a href={googlePlayUrl} target="_blank" rel="noopener noreferrer" className="bg-black text-white rounded-lg px-4 py-3 flex items-center justify-center gap-3 transition-transform hover:scale-105 w-full sm:w-auto">
                                     <GooglePlayIcon className="w-8 h-8" />
                                     <div className="text-right">
                                         <p className="text-xs">GET IT ON</p>
                                         <p className="text-xl font-semibold leading-tight">Google Play</p>
                                     </div>
                                 </a>
-                                <div className="bg-gray-700 text-white rounded-lg px-4 py-3 flex items-center justify-center gap-3 cursor-not-allowed w-full sm:w-auto opacity-70">
-                                    <AppleIcon className="w-8 h-8" />
-                                    <div className="text-right">
-                                        <p className="text-xs">Download on the</p>
-                                        <p className="text-xl font-semibold leading-tight">App Store</p>
-                                        <p className="text-xs -mt-1 font-sans">(قريباً)</p>
+                                {appleAppStoreUrl ? (
+                                    <a href={appleAppStoreUrl} target="_blank" rel="noopener noreferrer" className="bg-gray-700 text-white rounded-lg px-4 py-3 flex items-center justify-center gap-3 transition-transform hover:scale-105 w-full sm:w-auto">
+                                        <AppleIcon className="w-8 h-8" />
+                                        <div className="text-right">
+                                            <p className="text-xs">Download on the</p>
+                                            <p className="text-xl font-semibold leading-tight">App Store</p>
+                                        </div>
+                                    </a>
+                                ) : (
+                                    <div className="bg-gray-700 text-white rounded-lg px-4 py-3 flex items-center justify-center gap-3 cursor-not-allowed w-full sm:w-auto opacity-70">
+                                        <AppleIcon className="w-8 h-8" />
+                                        <div className="text-right">
+                                            <p className="text-xs">Download on the</p>
+                                            <p className="text-xl font-semibold leading-tight">App Store</p>
+                                            <p className="text-xs -mt-1 font-sans">(قريباً)</p>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 

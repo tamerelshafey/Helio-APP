@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { ChevronDownIcon, Bars3Icon, XMarkIcon, DocumentDuplicateIcon } from './common/Icons';
+import { useAppContext } from '../context/AppContext';
 
 const PublicHeader: React.FC = () => {
+    const { googlePlayUrl } = useAppContext();
     const [isAboutOpen, setIsAboutOpen] = useState(false);
     const [isLegalOpen, setIsLegalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -61,7 +63,7 @@ const PublicHeader: React.FC = () => {
                         </div>
                     </div>
                      <div className="flex items-center gap-4">
-                        <a href="https://play.google.com/store/apps/details?id=com.helio.company" target="_blank" rel="noopener noreferrer" className="hidden md:inline-block bg-cyan-500 text-white font-semibold rounded-lg px-4 py-2 text-sm transition-transform hover:scale-105 hover:bg-cyan-600">حمّل التطبيق</a>
+                        <a href={googlePlayUrl} target="_blank" rel="noopener noreferrer" className="hidden md:inline-block bg-cyan-500 text-white font-semibold rounded-lg px-4 py-2 text-sm transition-transform hover:scale-105 hover:bg-cyan-600">حمّل التطبيق</a>
                         <div className="md:hidden">
                             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700">
                                 {isMobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
@@ -79,7 +81,7 @@ const PublicHeader: React.FC = () => {
                         <NavLink to="/faq" className={navLinkClasses}>الأسئلة الشائعة</NavLink>
                         <NavLink to="/privacy-policy" className={navLinkClasses}>سياسة الخصوصية</NavLink>
                         <NavLink to="/terms-of-use" className={navLinkClasses}>شروط الاستخدام</NavLink>
-                        <div className="pt-4"><a href="https://play.google.com/store/apps/details?id=com.helio.company" target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-cyan-500 text-white font-semibold rounded-lg px-4 py-2.5 text-sm">حمّل التطبيق</a></div>
+                        <div className="pt-4"><a href={googlePlayUrl} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-cyan-500 text-white font-semibold rounded-lg px-4 py-2.5 text-sm">حمّل التطبيق</a></div>
                     </div>
                 )}
             </nav>

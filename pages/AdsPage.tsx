@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAds, saveAd, deleteAd } from '../api/contentApi';
+import { getServices, getCategories } from '../api/servicesApi';
+import { getProperties } from '../api/propertiesApi';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, NewspaperIcon, EyeIcon } from '../components/common/Icons';
 import type { Ad, Service, Category, Property, AdPlacement } from '../types';
-import { useContentContext } from '../context/ContentContext';
-import { useServicesContext } from '../context/ServicesContext';
-import { usePropertiesContext } from '../context/PropertiesContext';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
@@ -12,6 +13,7 @@ import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
 import { ContentStatusBadge } from '../components/common/StatusBadge';
 import { InputField, TextareaField } from '../components/common/FormControls';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
 
 const AdDetailsModal: React.FC<{ ad: Ad | null; isOpen: boolean; onClose: () => void }> = ({ ad, isOpen, onClose }) => {
     if (!ad) return null;
@@ -213,25 +215,49 @@ const AdForm: React.FC<{
 
 const AdsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { ads, handleSaveAd, handleDeleteAd } = useContentContext();
-    const { services, categories } = useServicesContext();
-    const { properties } = usePropertiesContext();
+    const queryClient = useQueryClient();
+    const adsQuery = useQuery({ queryKey: ['ads'], queryFn: getAds });
+    const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories });
+    const propertiesQuery = useQuery({ queryKey: ['properties'], queryFn: getProperties });
+    
+    const { data: ads = [] } = adsQuery;
+    const { data: services = [] } = servicesQuery;
+    const { data: categories = [] } = categoriesQuery;
+    const { data: properties = [] } = propertiesQuery;
+
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول المحتوى']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAd, setEditingAd] = useState<Ad | null>(null);
     const [viewingAd, setViewingAd] = useState<Ad | null>(null);
 
+    const saveAdMutation = useMutation({
+        mutationFn: saveAd,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ads'] });
+            setIsModalOpen(false);
+            showToast(editingAd ? 'تم حفظ التعديلات بنجاح!' : 'تم إضافة الإعلان بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+    
+    const deleteAdMutation = useMutation({
+        mutationFn: deleteAd,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['ads'] });
+            showToast('تم حذف الإعلان بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
     const handleAddClick = () => { setEditingAd(null); setIsModalOpen(true); };
     const handleEditClick = (ad: Ad) => { setEditingAd(ad); setIsModalOpen(true); };
-    const handleSaveAndClose = (adData: Omit<Ad, 'id'> & { id?: number }) => {
-        const isNew = !adData.id;
-        handleSaveAd(adData);
-        setIsModalOpen(false);
-        showToast(isNew ? 'تم إضافة الإعلان بنجاح!' : 'تم حفظ التعديلات بنجاح!');
-    };
+    
     const confirmDelete = (id: number) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا الإعلان؟')) { handleDeleteAd(id); showToast('تم حذف الإعلان بنجاح!'); }
+        if (window.confirm('هل أنت متأكد من حذف هذا الإعلان؟')) { 
+            deleteAdMutation.mutate(id);
+        }
     };
     
     const getReferralInfo = (ad: Ad): string => {
@@ -255,56 +281,58 @@ const AdsPage: React.FC = () => {
                     {canManage && <button onClick={handleAddClick} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors"><PlusIcon className="w-5 h-5" /><span>إضافة إعلان</span></button>}
                 </div>
                 
-                <div className="overflow-x-auto">
-                    {ads.length > 0 ? (
-                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                                <tr>
-                                    <th scope="col" className="px-6 py-3">الإعلان</th>
-                                    <th scope="col" className="px-6 py-3">مكان العرض</th>
-                                    <th scope="col" className="px-6 py-3">الحالة</th>
-                                    <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
-                                    <th scope="col" className="px-6 py-3">الإحالة</th>
-                                    {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {ads.map(ad => (
-                                    <tr key={ad.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                        <td className="px-6 py-4 max-w-sm"><div className="font-semibold text-gray-900 dark:text-white truncate">{ad.title}</div><div className="text-xs text-gray-500 dark:text-gray-400 truncate">{ad.content}</div></td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-wrap gap-1">
-                                                {ad.placements.map(p => (
-                                                    <span key={p} className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300">{p}</span>
-                                                ))}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4"><ContentStatusBadge startDate={ad.startDate} endDate={ad.endDate} /></td>
-                                        <td className="px-6 py-4 text-xs font-mono">{ad.startDate} <br/> {ad.endDate}</td>
-                                        <td className="px-6 py-4 text-xs">{getReferralInfo(ad)}</td>
-                                        {canManage && (
+                <QueryStateWrapper queries={[adsQuery, servicesQuery, categoriesQuery, propertiesQuery]}>
+                    <div className="overflow-x-auto">
+                        {ads.length > 0 ? (
+                            <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3">الإعلان</th>
+                                        <th scope="col" className="px-6 py-3">مكان العرض</th>
+                                        <th scope="col" className="px-6 py-3">الحالة</th>
+                                        <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
+                                        <th scope="col" className="px-6 py-3">الإحالة</th>
+                                        {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {ads.map(ad => (
+                                        <tr key={ad.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                            <td className="px-6 py-4 max-w-sm"><div className="font-semibold text-gray-900 dark:text-white truncate">{ad.title}</div><div className="text-xs text-gray-500 dark:text-gray-400 truncate">{ad.content}</div></td>
                                             <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <button onClick={() => setViewingAd(ad)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض الإعلان"><EyeIcon className="w-5 h-5" /></button>
-                                                    <button onClick={() => handleEditClick(ad)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                    <button onClick={() => confirmDelete(ad.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {ad.placements.map(p => (
+                                                        <span key={p} className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300">{p}</span>
+                                                    ))}
                                                 </div>
                                             </td>
-                                        )}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : (
-                       <EmptyState icon={<NewspaperIcon className="w-16 h-16 text-slate-400" />} title="لا توجد إعلانات حالياً" message="يمكنك إضافة إعلان جديد للوصول إلى سكان المدينة.">
-                          {canManage && <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors"><PlusIcon className="w-5 h-5" /><span>إضافة إعلان جديد</span></button>}
-                       </EmptyState>
-                    )}
-                </div>
+                                            <td className="px-6 py-4"><ContentStatusBadge startDate={ad.startDate} endDate={ad.endDate} /></td>
+                                            <td className="px-6 py-4 text-xs font-mono">{ad.startDate} <br/> {ad.endDate}</td>
+                                            <td className="px-6 py-4 text-xs">{getReferralInfo(ad)}</td>
+                                            {canManage && (
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => setViewingAd(ad)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="عرض الإعلان"><EyeIcon className="w-5 h-5" /></button>
+                                                        <button onClick={() => handleEditClick(ad)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                        <button onClick={() => confirmDelete(ad.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                        <EmptyState icon={<NewspaperIcon className="w-16 h-16 text-slate-400" />} title="لا توجد إعلانات حالياً" message="يمكنك إضافة إعلان جديد للوصول إلى سكان المدينة.">
+                            {canManage && <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600"><PlusIcon className="w-5 h-5" /><span>إضافة إعلان جديد</span></button>}
+                        </EmptyState>
+                        )}
+                    </div>
+                </QueryStateWrapper>
             </div>
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingAd ? 'تعديل الإعلان' : 'إضافة إعلان جديد'}>
-                <AdForm onSave={handleSaveAndClose} onClose={() => setIsModalOpen(false)} ad={editingAd} services={services} categories={categories} properties={properties} />
+                <AdForm onSave={(data) => saveAdMutation.mutate(data)} onClose={() => setIsModalOpen(false)} ad={editingAd} services={services} categories={categories} properties={properties} />
             </Modal>
             <AdDetailsModal ad={viewingAd} isOpen={!!viewingAd} onClose={() => setViewingAd(null)} />
         </div>

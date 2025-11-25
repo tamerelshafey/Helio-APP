@@ -8,16 +8,17 @@ import AlertsPanel from './AlertsPanel';
 import UsersToVerify from './UsersToVerify';
 import Footer from '../common/Footer';
 import { UserIcon, WrenchScrewdriverIcon, HomeModernIcon, UserGroupIcon, NewspaperIcon, Bars3Icon, ChatBubbleOvalLeftIcon } from '../common/Icons';
-import { useServicesContext } from '../../context/ServicesContext';
 import TopServicesChart from './TopServicesChart';
 import CategoryDistributionChart from './CategoryDistributionChart';
 import { getDashboardStats, getUserGrowth, getRecentActivities, getAlerts, getPendingUsers } from '../../api/dashboardApi';
+import { getServices, getCategories } from '../../api/servicesApi';
 import { GeneralDashboardSkeleton } from '../common/SkeletonLoader';
+import ErrorState from '../common/ErrorState';
 
 
 const GeneralDashboard: React.FC = () => {
-    // Keep contexts for full data lists required by some child components or for links
-    const { services, categories } = useServicesContext();
+    const { data: services = [], isLoading: isLoadingServices } = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const { data: categories = [], isLoading: isLoadingCategories } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
 
     const { data: statsData, isLoading: isLoadingStats } = useQuery({ 
         queryKey: ['dashboardStats'], 
@@ -29,9 +30,10 @@ const GeneralDashboard: React.FC = () => {
         queryFn: getUserGrowth
     });
     
-    const { data: recentActivities, isLoading: isLoadingActivities } = useQuery({
+    const { data: recentActivities, isLoading: isLoadingActivities, isError: isErrorActivities, refetch: refetchActivities } = useQuery({
         queryKey: ['recentActivities'],
-        queryFn: getRecentActivities
+        queryFn: getRecentActivities,
+        retry: false, // Disable retries to show the error state clearly for demonstration
     });
     
     const { data: alerts, isLoading: isLoadingAlerts } = useQuery({
@@ -44,20 +46,20 @@ const GeneralDashboard: React.FC = () => {
         queryFn: getPendingUsers
     });
     
-    const isLoading = isLoadingStats || isLoadingUserGrowth || isLoadingActivities || isLoadingAlerts || isLoadingPendingUsers;
+    const isLoading = isLoadingStats || isLoadingUserGrowth || isLoadingAlerts || isLoadingPendingUsers || isLoadingServices || isLoadingCategories;
 
     const firstServiceLink = (categories.length > 0 && categories.find(c => c.name !== "المدينة والجهاز")?.subCategories[0])
-        ? `/services/subcategory/${categories.find(c => c.name !== "المدينة والجهاز")?.subCategories[0].id}`
-        : '/services-overview';
+        ? `/dashboard/services/subcategory/${categories.find(c => c.name !== "المدينة والجهاز")?.subCategories[0].id}`
+        : '/dashboard/services-overview';
 
     const kpiData = React.useMemo(() => {
       if (!statsData) return [];
       return [
         { title: "إجمالي الخدمات", value: statsData.services.total.toString(), change: `+${statsData.services.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <WrenchScrewdriverIcon className="w-8 h-8 text-cyan-400" />, to: firstServiceLink, changeType: 'positive' as const },
-        { title: "إجمالي العقارات", value: statsData.properties.total.toString(), change: `+${statsData.properties.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <HomeModernIcon className="w-8 h-8 text-amber-400" />, to: "/properties", changeType: 'positive' as const },
-        { title: "إجمالي المستخدمين", value: statsData.users.total.toString(), change: `+${statsData.users.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <UserGroupIcon className="w-8 h-8 text-lime-400" />, to: "/users", changeType: 'positive' as const },
-        { title: "منشورات المجتمع", value: statsData.community.total.toString(), change: `+${statsData.community.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <ChatBubbleOvalLeftIcon className="w-8 h-8 text-fuchsia-400" />, to: "/community", changeType: 'positive' as const },
-        { title: "الأخبار والإشعارات", value: statsData.content.total.toString(), change: `+${statsData.content.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <NewspaperIcon className="w-8 h-8 text-indigo-400" />, to: "/news", changeType: 'positive' as const },
+        { title: "إجمالي العقارات", value: statsData.properties.total.toString(), change: `+${statsData.properties.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <HomeModernIcon className="w-8 h-8 text-amber-400" />, to: "/dashboard/properties", changeType: 'positive' as const },
+        { title: "إجمالي المستخدمين", value: statsData.users.total.toString(), change: `+${statsData.users.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <UserGroupIcon className="w-8 h-8 text-lime-400" />, to: "/dashboard/users", changeType: 'positive' as const },
+        { title: "منشورات المجتمع", value: statsData.community.total.toString(), change: `+${statsData.community.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <ChatBubbleOvalLeftIcon className="w-8 h-8 text-fuchsia-400" />, to: "/dashboard/community", changeType: 'positive' as const },
+        { title: "الأخبار والإشعارات", value: statsData.content.total.toString(), change: `+${statsData.content.newLast30Days}`, changeLabel: "آخر 30 يوم", icon: <NewspaperIcon className="w-8 h-8 text-indigo-400" />, to: "/dashboard/news", changeType: 'positive' as const },
       ];
   }, [statsData, firstServiceLink]);
 
@@ -102,7 +104,15 @@ const GeneralDashboard: React.FC = () => {
         <div className="flex flex-col gap-6">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
             <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300 flex items-center"><Bars3Icon className="w-6 h-6 mr-2" /> أحدث الأنشطة</h3>
-            <RecentActivityTable activities={recentActivities || []} />
+            {isLoadingActivities ? (
+                <div className="flex justify-center items-center h-48">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
+                </div>
+            ) : isErrorActivities ? (
+                <ErrorState message="فشل تحميل آخر الأنشطة." onRetry={refetchActivities} />
+            ) : (
+                <RecentActivityTable activities={recentActivities || []} />
+            )}
           </div>
           <AlertsPanel alerts={alerts || []} />
           <UsersToVerify users={pendingUsers || []} />

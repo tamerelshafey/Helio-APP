@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useContentContext } from '../../context/ContentContext';
+import { useQuery } from '@tanstack/react-query';
+import { getNews, getNotifications } from '../../api/contentApi';
 import KpiCard from '../common/KpiCard';
 import { NewspaperIcon, BellAlertIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon, ChartPieIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -22,7 +23,8 @@ const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDa
 };
 
 const NewsManagerDashboard: React.FC = () => {
-    const { news, notifications } = useContentContext();
+    const { data: news = [] } = useQuery({ queryKey: ['news'], queryFn: getNews });
+    const { data: notifications = [] } = useQuery({ queryKey: ['notifications'], queryFn: getNotifications });
     const { isDarkMode } = useUIContext();
 
     const stats = useMemo(() => {
@@ -118,7 +120,7 @@ const NewsManagerDashboard: React.FC = () => {
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-gray-700 dark:text-gray-300">أحدث الأخبار</h3>
-                        <Link to="/news" className="text-sm text-cyan-500 hover:underline">عرض الكل</Link>
+                        <Link to="/dashboard/news" className="text-sm text-cyan-500 hover:underline">عرض الكل</Link>
                     </div>
                     <ul className="space-y-3">
                         {stats.latestNews.map(item => (
@@ -135,7 +137,7 @@ const NewsManagerDashboard: React.FC = () => {
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-gray-700 dark:text-gray-300">أحدث الإشعارات</h3>
-                        <Link to="/notifications" className="text-sm text-cyan-500 hover:underline">عرض الكل</Link>
+                        <Link to="/dashboard/notifications" className="text-sm text-cyan-500 hover:underline">عرض الكل</Link>
                     </div>
                      <ul className="space-y-3">
                         {stats.latestNotifications.map(item => (
@@ -152,19 +154,19 @@ const NewsManagerDashboard: React.FC = () => {
             </div>
              {/* Actions */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                 <Link to="/news" className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                 <Link to="/dashboard/news" className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                     <div className="p-4 bg-cyan-100 dark:bg-cyan-900/50 rounded-full mb-3">
                         <PlusIcon className="w-8 h-8 text-cyan-500"/>
                     </div>
                     <h3 className="font-semibold text-gray-800 dark:text-white">إضافة خبر جديد</h3>
                 </Link>
-                 <Link to="/notifications" className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                 <Link to="/dashboard/notifications" className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                     <div className="p-4 bg-amber-100 dark:bg-amber-900/50 rounded-full mb-3">
                         <PlusIcon className="w-8 h-8 text-amber-500"/>
                     </div>
                     <h3 className="font-semibold text-gray-800 dark:text-white">إضافة إشعار جديد</h3>
                 </Link>
-                 <Link to="/ads" className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                 <Link to="/dashboard/ads" className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center text-center hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                     <div className="p-4 bg-indigo-100 dark:bg-indigo-900/50 rounded-full mb-3">
                         <PlusIcon className="w-8 h-8 text-indigo-500"/>
                     </div>

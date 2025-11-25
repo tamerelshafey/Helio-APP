@@ -1,15 +1,29 @@
 import React from 'react';
 import { UserCircleIcon, CheckCircleIcon } from '../common/Icons';
-import { useUserManagementContext } from '../../context/UserManagementContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getUsers, saveUser } from '../../api/usersApi';
 import type { AppUser } from '../../types';
+import { useUIContext } from '../../context/UIContext';
 
 const UsersToVerify: React.FC<{ users: AppUser[] }> = ({ users: pendingUsers }) => {
-    const { handleSaveUser, users: allUsers } = useUserManagementContext();
+    const queryClient = useQueryClient();
+    const { showToast } = useUIContext();
+    const { data: allUsers = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
+
+    const approveUserMutation = useMutation({
+        mutationFn: saveUser,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.invalidateQueries({ queryKey: ['pendingUsers']});
+            showToast('تم تفعيل المستخدم بنجاح!');
+        },
+        onError: (error) => showToast(error.message, 'error')
+    });
 
     const approveUser = (userId: number) => {
         const user = allUsers.find(u => u.id === userId);
         if (user) {
-            handleSaveUser({ ...user, status: 'active' });
+            approveUserMutation.mutate({ ...user, status: 'active' });
         }
     };
 
@@ -31,6 +45,7 @@ const UsersToVerify: React.FC<{ users: AppUser[] }> = ({ users: pendingUsers }) 
                                 onClick={() => approveUser(user.id)}
                                 className="p-2 rounded-full text-green-500 hover:bg-green-100 dark:hover:bg-green-900/50"
                                 title={`تفعيل المستخدم ${user.name}`}
+                                disabled={approveUserMutation.isPending}
                             >
                                 <CheckCircleIcon className="w-5 h-5" />
                             </button>

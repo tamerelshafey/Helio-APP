@@ -5,12 +5,14 @@ import {
     ArrowLeftIcon, StarIcon, StarIconOutline, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon,
     ChevronLeftIcon, ChevronRightIcon
 } from '../components/common/Icons';
-import { useServicesContext } from '../context/ServicesContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getServices, updateReview, deleteReview, replyToReview, toggleFavorite } from '../api/servicesApi';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import ServiceInfoCard from '../components/common/ServiceInfoCard';
 import Rating from '../components/common/Rating';
+import Spinner from '../components/common/Spinner';
 
 const ReplyForm: React.FC<{ review: Review; onSave: (reply: string) => void; onClose: () => void; }> = ({ review, onSave, onClose }) => {
     const [reply, setReply] = useState(review.adminReply || '');
@@ -46,14 +48,50 @@ const ServiceDetailPage: React.FC = () => {
     const { serviceId: serviceIdStr } = useParams<{ serviceId: string }>();
     const serviceId = Number(serviceIdStr);
     
-    const { services, handleUpdateReview, handleDeleteReview, handleReplyToReview, handleToggleFavorite } = useServicesContext();
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
+    const queryClient = useQueryClient();
+
+    const { data: services = [], isLoading } = useQuery({ queryKey: ['services'], queryFn: getServices });
     const service = services.find(s => s.id === serviceId);
 
     const [isReplyModalOpen, setReplyModalOpen] = useState(false);
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+
+    const updateReviewMutation = useMutation({
+        mutationFn: updateReview,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['services'] });
+            setEditModalOpen(false);
+            showToast('تم تعديل التقييم بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+    
+    const deleteReviewMutation = useMutation({
+        mutationFn: deleteReview,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['services'] });
+            showToast('تم حذف التقييم بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const replyToReviewMutation = useMutation({
+        mutationFn: replyToReview,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['services'] });
+            setReplyModalOpen(false);
+            showToast('تم إضافة الرد بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const toggleFavoriteMutation = useMutation({
+        mutationFn: toggleFavorite,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['services'] }),
+    });
 
     const { prevService, nextService } = useMemo(() => {
         if (!service) return { prevService: null, nextService: null };
@@ -69,15 +107,16 @@ const ServiceDetailPage: React.FC = () => {
     const handleOpenReplyModal = (review: Review) => { setSelectedReview(review); setReplyModalOpen(true); };
     const handleOpenEditModal = (review: Review) => { setSelectedReview(review); setEditModalOpen(true); };
     const confirmDeleteReview = (serviceId: number, reviewId: number) => {
-        if (window.confirm('هل أنت متأكد من حذف هذا التقييم؟')) { handleDeleteReview(serviceId, reviewId); showToast('تم حذف التقييم بنجاح!'); }
+        if (window.confirm('هل أنت متأكد من حذف هذا التقييم؟')) { deleteReviewMutation.mutate({ serviceId, reviewId }); }
     };
     const handleSaveReply = (reply: string) => {
-        if (selectedReview && service) { handleReplyToReview(service.id, selectedReview.id, reply); setReplyModalOpen(false); showToast('تم إضافة الرد بنجاح!'); }
+        if (selectedReview && service) { replyToReviewMutation.mutate({ serviceId: service.id, reviewId: selectedReview.id, reply }); }
     };
     const handleSaveReview = (comment: string) => {
-        if (selectedReview && service) { handleUpdateReview(service.id, selectedReview.id, comment); setEditModalOpen(false); showToast('تم تعديل التقييم بنجاح!'); }
+        if (selectedReview && service) { updateReviewMutation.mutate({ serviceId: service.id, reviewId: selectedReview.id, newComment: comment }); }
     };
-
+    
+    if (isLoading) return <div className="flex justify-center items-center h-64"><Spinner /></div>;
     if (!service) return <div className="text-center p-8">لم يتم العثور على الخدمة.</div>;
     
     return (
@@ -98,7 +137,7 @@ const ServiceDetailPage: React.FC = () => {
                                 <h1 className="text-3xl font-bold text-white">{service.name}</h1>
                                 <p className="text-gray-200">{service.address}</p>
                             </div>
-                            <button onClick={() => handleToggleFavorite(service.id)} className="p-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:text-yellow-300" title="إضافة للمفضلة">
+                            <button onClick={() => toggleFavoriteMutation.mutate(service.id)} className="p-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:text-yellow-300" title="إضافة للمفضلة">
                                 {service.isFavorite ? <StarIcon className="w-6 h-6 text-yellow-400"/> : <StarIconOutline className="w-6 h-6"/>}
                             </button>
                         </div>
@@ -147,13 +186,13 @@ const ServiceDetailPage: React.FC = () => {
                          {/* Navigation between services */}
                         <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-200 dark:border-slate-700">
                             {prevService ? (
-                                <Link to={`/services/detail/${prevService.id}`} className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-cyan-500">
+                                <Link to={`/dashboard/services/detail/${prevService.id}`} className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-cyan-500">
                                     <ChevronRightIcon className="w-5 h-5" />
                                     <span>{prevService.name}</span>
                                 </Link>
                             ) : <div></div>}
                             {nextService ? (
-                                <Link to={`/services/detail/${nextService.id}`} className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-cyan-500">
+                                <Link to={`/dashboard/services/detail/${nextService.id}`} className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-cyan-500">
                                     <span>{nextService.name}</span>
                                     <ChevronLeftIcon className="w-5 h-5" />
                                 </Link>

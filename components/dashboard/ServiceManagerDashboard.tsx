@@ -1,27 +1,33 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
-import { useServicesContext } from '../../context/ServicesContext';
+import { useQuery } from '@tanstack/react-query';
+import { getServices, getCategories } from '../../api/servicesApi';
 import KpiCard from '../common/KpiCard';
 import { WrenchScrewdriverIcon, StarIcon, ChatBubbleOvalLeftIcon, ShieldExclamationIcon, RectangleGroupIcon, DocumentDuplicateIcon, EyeIcon, ChartPieIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useUIContext } from '../../context/UIContext';
+import Spinner from '../common/Spinner';
 
 const ServiceManagerDashboard: React.FC = () => {
     const { emergencyContacts } = useAppContext();
-    const { services, categories } = useServicesContext();
+    const { data: services = [], isLoading: isLoadingServices } = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const { data: categories = [], isLoading: isLoadingCategories } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
     const { isDarkMode } = useUIContext();
     const allReviews = useMemo(() => services.flatMap(s => s.reviews.map(r => ({...r, serviceName: s.name}))), [services]);
 
     const stats = useMemo(() => {
         const totalServices = services.length;
         const totalReviews = allReviews.length;
-        const averageRating = totalReviews > 0 ? (services.reduce((sum, s) => {
-            if (s.reviews.length > 0) {
-                 return sum + s.reviews.reduce((rSum, r) => rSum + r.rating, 0);
-            }
-            return sum;
-        }, 0) / totalReviews).toFixed(1) : '0.0';
+        const averageRatingValue = totalReviews > 0
+            ? services.reduce((sum, s) => {
+                if (s.reviews.length > 0) {
+                    return sum + s.reviews.reduce((rSum, r) => rSum + r.rating, 0);
+                }
+                return sum;
+            }, 0) / totalReviews
+            : 0;
+        const averageRating = averageRatingValue.toFixed(1);
         const totalEmergency = emergencyContacts.length;
 
         const topViewedServices = [...services].sort((a,b) => b.views - a.views).slice(0, 5);
@@ -47,6 +53,10 @@ const ServiceManagerDashboard: React.FC = () => {
     const tooltipStyle = isDarkMode 
         ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
         : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
+
+    if (isLoadingServices || isLoadingCategories) {
+        return <div className="flex justify-center items-center h-full"><Spinner /></div>;
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -90,7 +100,7 @@ const ServiceManagerDashboard: React.FC = () => {
                 <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-semibold text-gray-700 dark:text-gray-300">أحدث التقييمات</h3>
-                         <Link to="/reviews" className="text-sm text-cyan-500 hover:underline">عرض الكل</Link>
+                         <Link to="/dashboard/reviews" className="text-sm text-cyan-500 hover:underline">عرض الكل</Link>
                     </div>
                     <ul className="space-y-3">
                         {stats.latestReviews.map(review => (
@@ -106,15 +116,15 @@ const ServiceManagerDashboard: React.FC = () => {
                 </div>
                  <div className="space-y-4">
                     <h3 className="font-semibold text-gray-700 dark:text-gray-300">إجراءات سريعة</h3>
-                    <Link to="/services-overview" className="block p-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow flex items-center gap-4">
+                    <Link to="/dashboard/services-overview" className="block p-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow flex items-center gap-4">
                         <RectangleGroupIcon className="w-8 h-8 text-cyan-500" />
                         <div><p className="font-bold">إدارة هيكل الخدمات</p><p className="text-sm text-gray-500 dark:text-gray-400">إدارة الفئات الرئيسية والفرعية.</p></div>
                     </Link>
-                     <Link to="/city-services-guide" className="block p-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow flex items-center gap-4">
+                     <Link to="/dashboard/city-services-guide" className="block p-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow flex items-center gap-4">
                         <DocumentDuplicateIcon className="w-8 h-8 text-purple-500" />
                         <div><p className="font-bold">دليل خدمات الجهاز</p><p className="text-sm text-gray-500 dark:text-gray-400">إدارة الإجراءات والأوراق المطلوبة.</p></div>
                     </Link>
-                     <Link to="/emergency" className="block p-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow flex items-center gap-4">
+                     <Link to="/dashboard/emergency" className="block p-4 bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow flex items-center gap-4">
                         <ShieldExclamationIcon className="w-8 h-8 text-rose-500" />
                         <div><p className="font-bold">أرقام الطوارئ</p><p className="text-sm text-gray-500 dark:text-gray-400">تحديث أرقام الطوارئ بالمدينة.</p></div>
                     </Link>

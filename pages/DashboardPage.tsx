@@ -6,6 +6,7 @@ import PropertyManagerDashboard from '../components/dashboard/PropertyManagerDas
 import NewsManagerDashboard from '../components/dashboard/NewsManagerDashboard';
 import TransportationManagerDashboard from '../components/dashboard/TransportationManagerDashboard';
 import CommunityManagerDashboard from '../components/dashboard/CommunityManagerDashboard';
+import { AdminRoles } from '../types';
 
 const DashboardPage: React.FC = () => {
     const { currentUser } = useAuthContext();
@@ -15,24 +16,24 @@ const DashboardPage: React.FC = () => {
     }
 
     // A super admin sees the general dashboard
-    if (currentUser.roles.includes('مدير عام')) {
+    if (currentUser.roles.includes(AdminRoles.SUPER_ADMIN)) {
         return <GeneralDashboard />;
     }
     
     // Role-specific dashboards with priority
-    if (currentUser.roles.includes('مسؤول ادارة الخدمات')) {
+    if (currentUser.roles.includes(AdminRoles.SERVICES_ADMIN)) {
         return <ServiceManagerDashboard />;
     }
-    if (currentUser.roles.includes('مسؤول العقارات')) {
+    if (currentUser.roles.includes(AdminRoles.PROPERTY_ADMIN)) {
         return <PropertyManagerDashboard />;
     }
-    if (currentUser.roles.includes('مسؤول المحتوى')) {
+    if (currentUser.roles.includes(AdminRoles.CONTENT_ADMIN)) {
         return <NewsManagerDashboard />;
     }
-    if (currentUser.roles.includes('مسؤول النقل')) {
+    if (currentUser.roles.includes(AdminRoles.TRANSPORT_ADMIN)) {
         return <TransportationManagerDashboard />;
     }
-    if (currentUser.roles.includes('مسؤول المجتمع')) {
+    if (currentUser.roles.includes(AdminRoles.COMMUNITY_ADMIN)) {
         return <CommunityManagerDashboard />;
     }
     

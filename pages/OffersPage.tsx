@@ -7,8 +7,9 @@ import {
 } from '../components/common/Icons';
 import type { Offer, OfferCode, AppUser, Service } from '../types';
 import { useOffersContext } from '../context/OffersContext';
-import { useUserManagementContext } from '../context/UserManagementContext';
-import { useServicesContext } from '../context/ServicesContext';
+import { useQuery } from '@tanstack/react-query';
+import { getServices } from '../api/servicesApi';
+import { getUsers } from '../api/usersApi';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
@@ -17,6 +18,7 @@ import EmptyState from '../components/common/EmptyState';
 import { ContentStatusBadge } from '../components/common/StatusBadge';
 import { InputField, TextareaField } from '../components/common/FormControls';
 import Pagination from '../components/common/Pagination';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -91,7 +93,7 @@ const CodesModal: React.FC<{
     onClose: () => void;
 }> = ({ offer, isOpen, onClose }) => {
     const { offerCodes, handleDeleteCode, handleToggleCodeRedemption } = useOffersContext();
-    const { users } = useUserManagementContext();
+    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
     
     if (!isOpen || !offer) return null;
 
@@ -136,8 +138,12 @@ const CodesModal: React.FC<{
 const OffersPage: React.FC = () => {
     const navigate = useNavigate();
     const { offers, handleSaveOffer, handleDeleteOffer } = useOffersContext();
-    const { services } = useServicesContext();
-    const { users } = useUserManagementContext();
+    const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const usersQuery = useQuery({ queryKey: ['users'], queryFn: getUsers });
+
+    const { data: services = [] } = servicesQuery;
+    const { data: users = [] } = usersQuery;
+
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول المحتوى', 'مدير عام', 'مسؤول ادارة الخدمات']);
 
@@ -210,50 +216,52 @@ const OffersPage: React.FC = () => {
                     </div>
                 </div>
                 
-                <div className="overflow-x-auto">
-                    {filteredOffers.length > 0 ? (
-                        <>
-                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                                <tr>
-                                    <th scope="col" className="px-6 py-3">العرض</th>
-                                    <th scope="col" className="px-6 py-3">مقدم الخدمة (صاحب العرض)</th>
-                                    <th scope="col" className="px-6 py-3">الحالة</th>
-                                    <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
-                                    {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {paginatedOffers.map(offer => (
-                                    <tr key={offer.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                        <td className="px-6 py-4">
-                                            <p className="font-semibold text-gray-900 dark:text-white">{offer.title}</p>
-                                            <p className="text-xs text-gray-500">للخدمة: {offer.serviceName}</p>
-                                        </td>
-                                        <td className="px-6 py-4">{offer.providerName}</td>
-                                        <td className="px-6 py-4"><ContentStatusBadge startDate={offer.startDate} endDate={offer.endDate} /></td>
-                                        <td className="px-6 py-4 text-xs font-mono">{offer.startDate} <br/> {offer.endDate}</td>
-                                        {canManage && (
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <button onClick={() => handleViewCodesClick(offer)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="متابعة الأكواد"><KeyIcon className="w-5 h-5" /></button>
-                                                    <button onClick={() => handleEditClick(offer)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                    <button onClick={() => confirmDelete(offer.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
-                                                </div>
-                                            </td>
-                                        )}
+                <QueryStateWrapper queries={[servicesQuery, usersQuery]}>
+                    <div className="overflow-x-auto">
+                        {filteredOffers.length > 0 ? (
+                            <>
+                            <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3">العرض</th>
+                                        <th scope="col" className="px-6 py-3">مقدم الخدمة (صاحب العرض)</th>
+                                        <th scope="col" className="px-6 py-3">الحالة</th>
+                                        <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
+                                        {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-                        </>
-                    ) : (
-                       <EmptyState icon={<TagIcon className="w-16 h-16 text-slate-400" />} title="لا توجد عروض حالياً" message="أضف عرضاً جديداً لجذب المزيد من المستخدمين.">
-                          {canManage && <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600"><PlusIcon className="w-5 h-5" /><span>إضافة عرض جديد</span></button>}
-                       </EmptyState>
-                    )}
-                </div>
+                                </thead>
+                                <tbody>
+                                    {paginatedOffers.map(offer => (
+                                        <tr key={offer.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                            <td className="px-6 py-4">
+                                                <p className="font-semibold text-gray-900 dark:text-white">{offer.title}</p>
+                                                <p className="text-xs text-gray-500">للخدمة: {offer.serviceName}</p>
+                                            </td>
+                                            <td className="px-6 py-4">{offer.providerName}</td>
+                                            <td className="px-6 py-4"><ContentStatusBadge startDate={offer.startDate} endDate={offer.endDate} /></td>
+                                            <td className="px-6 py-4 text-xs font-mono">{offer.startDate} <br/> {offer.endDate}</td>
+                                            {canManage && (
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => handleViewCodesClick(offer)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="متابعة الأكواد"><KeyIcon className="w-5 h-5" /></button>
+                                                        <button onClick={() => handleEditClick(offer)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                        <button onClick={() => confirmDelete(offer.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
+                                                    </div>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                            </>
+                        ) : (
+                        <EmptyState icon={<TagIcon className="w-16 h-16 text-slate-400" />} title="لا توجد عروض حالياً" message="أضف عرضاً جديداً لجذب المزيد من المستخدمين.">
+                            {canManage && <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600"><PlusIcon className="w-5 h-5" /><span>إضافة عرض جديد</span></button>}
+                        </EmptyState>
+                        )}
+                    </div>
+                </QueryStateWrapper>
             </div>
             
             <Modal isOpen={isFormModalOpen} onClose={() => setFormModalOpen(false)} title={selectedOffer ? 'تعديل العرض' : 'إضافة عرض جديد'}>

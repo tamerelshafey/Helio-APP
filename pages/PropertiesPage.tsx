@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getProperties, saveProperty, deleteProperty } from '../api/propertiesApi';
 import { 
     ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, 
     MagnifyingGlassIcon, HomeModernIcon, MapPinIcon, PhoneIcon,
     ShareIcon, ArrowUpIcon, ArrowDownIcon
 } from '../components/common/Icons';
 import type { Property, SortDirection } from '../types';
-import { usePropertiesContext } from '../context/PropertiesContext';
 import { useUIContext } from '../context/UIContext';
 import { useHasPermission } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
@@ -16,6 +17,7 @@ import { InputField, TextareaField } from '../components/common/FormControls';
 import { PropertyCardSkeleton } from '../components/common/SkeletonLoader';
 import Pagination from '../components/common/Pagination';
 import { PropertyStatusBadge } from '../components/common/StatusBadge';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -104,7 +106,10 @@ const PropertyForm: React.FC<{
 
 const PropertiesPage: React.FC = () => {
     const navigate = useNavigate();
-    const { properties, handleSaveProperty, handleDeleteProperty, loading, sortConfig, handleSortProperties } = usePropertiesContext();
+    const queryClient = useQueryClient();
+    const propertiesQuery = useQuery({ queryKey: ['properties'], queryFn: getProperties });
+    const { data: properties = [] } = propertiesQuery;
+    
     const { showToast } = useUIContext();
     const canManage = useHasPermission(['مسؤول العقارات']);
 
@@ -114,7 +119,27 @@ const PropertiesPage: React.FC = () => {
     const [typeFilter, setTypeFilter] = useState<'all' | 'sale' | 'rent'>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
-    
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Property; direction: SortDirection } | null>(null);
+
+    const savePropertyMutation = useMutation({
+        mutationFn: saveProperty,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['properties'] });
+            setIsModalOpen(false);
+            showToast(editingProperty ? 'تم حفظ التعديلات بنجاح!' : 'تم إضافة العقار بنجاح!');
+        },
+        onError: (error) => showToast(`حدث خطأ: ${error.message}`, 'error'),
+    });
+
+    const deletePropertyMutation = useMutation({
+        mutationFn: deleteProperty,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['properties'] });
+            showToast('تم حذف العقار بنجاح!');
+        },
+        onError: (error) => showToast(`حدث خطأ: ${error.message}`, 'error'),
+    });
+
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, typeFilter, sortConfig]);
@@ -128,19 +153,20 @@ const PropertiesPage: React.FC = () => {
         setEditingProperty(property);
         setIsModalOpen(true);
     };
-
-    const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => {
-        const isNew = !propertyData.id;
-        handleSaveProperty(propertyData);
-        setIsModalOpen(false);
-        showToast(isNew ? 'تم إضافة العقار بنجاح!' : 'تم حفظ التعديلات بنجاح!');
-    };
     
     const confirmDelete = (id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا العقار؟')) {
-            handleDeleteProperty(id);
-            showToast('تم حذف العقار بنجاح!');
+            deletePropertyMutation.mutate(id);
         }
+    };
+
+    const handleSortProperties = (key: keyof Property) => {
+        setSortConfig(prevConfig => {
+            if (prevConfig && prevConfig.key === key) {
+                return { ...prevConfig, direction: prevConfig.direction === 'ascending' ? 'descending' : 'ascending' };
+            }
+            return { key, direction: 'ascending' };
+        });
     };
     
     const SortIndicator: React.FC<{ direction?: SortDirection }> = ({ direction }) => {
@@ -259,41 +285,13 @@ const PropertiesPage: React.FC = () => {
         </div>
     );
     
-    const renderContent = () => {
-        if (loading) {
-            return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
-                        <PropertyCardSkeleton key={index} />
-                    ))}
-                </div>
-            );
-        }
-
-        if (filteredProperties.length > 0) {
-            return (
-                <>
-                    {viewMode === 'grid' ? renderGridView() : renderTableView()}
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-                </>
-            );
-        }
-
-        return (
-            <EmptyState
-                icon={<HomeModernIcon className="w-16 h-16 text-slate-400" />}
-                title="لا توجد عقارات"
-                message="لا توجد عقارات تطابق بحثك. حاول تغيير الفلاتر أو أضف عقاراً جديداً."
-            >
-                {canManage && (
-                     <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
-                        <PlusIcon className="w-5 h-5" />
-                        <span>إضافة عقار جديد</span>
-                    </button>
-                )}
-            </EmptyState>
-        );
-    };
+    const skeletonLoader = (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
+                <PropertyCardSkeleton key={index} />
+            ))}
+        </div>
+    );
 
     return (
         <div className="animate-fade-in">
@@ -335,7 +333,27 @@ const PropertiesPage: React.FC = () => {
                     </div>
                 </div>
                 
-                {renderContent()}
+                <QueryStateWrapper queries={propertiesQuery} loader={skeletonLoader}>
+                     {filteredProperties.length > 0 ? (
+                        <>
+                            {viewMode === 'grid' ? renderGridView() : renderTableView()}
+                            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                        </>
+                    ) : (
+                        <EmptyState
+                            icon={<HomeModernIcon className="w-16 h-16 text-slate-400" />}
+                            title="لا توجد عقارات"
+                            message="لا توجد عقارات تطابق بحثك. حاول تغيير الفلاتر أو أضف عقاراً جديداً."
+                        >
+                            {canManage && (
+                                <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600 transition-colors">
+                                    <PlusIcon className="w-5 h-5" />
+                                    <span>إضافة عقار جديد</span>
+                                </button>
+                            )}
+                        </EmptyState>
+                    )}
+                </QueryStateWrapper>
             </div>
             
             <Modal 
@@ -344,7 +362,7 @@ const PropertiesPage: React.FC = () => {
               title={editingProperty ? 'تعديل العقار' : 'إضافة عقار جديد'}
             >
                 <PropertyForm 
-                  onSave={handleSaveAndClose}
+                  onSave={(data) => savePropertyMutation.mutate(data)}
                   onClose={() => setIsModalOpen(false)}
                   property={editingProperty}
                 />

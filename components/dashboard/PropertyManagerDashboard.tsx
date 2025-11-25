@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { usePropertiesContext } from '../../context/PropertiesContext';
+import { useQuery } from '@tanstack/react-query';
+import { getProperties } from '../../api/propertiesApi';
 import KpiCard from '../common/KpiCard';
 import { HomeModernIcon, ChartPieIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useUIContext } from '../../context/UIContext';
+import Spinner from '../common/Spinner';
 
 const PropertyManagerDashboard: React.FC = () => {
-    const { properties } = usePropertiesContext();
+    const { data: properties = [], isLoading } = useQuery({ queryKey: ['properties'], queryFn: getProperties });
     const { isDarkMode } = useUIContext();
 
     const stats = useMemo(() => {
@@ -36,6 +38,10 @@ const PropertyManagerDashboard: React.FC = () => {
     const tooltipStyle = isDarkMode 
         ? { backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', borderRadius: '0.5rem', color: '#fff' }
         : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
+        
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-full"><Spinner /></div>;
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -109,7 +115,7 @@ const PropertyManagerDashboard: React.FC = () => {
                 </div>
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center items-center">
                     <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300">إجراءات سريعة</h3>
-                    <Link to="/properties" className="flex flex-col items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-8 py-4 rounded-lg hover:bg-cyan-600 transition-colors">
+                    <Link to="/dashboard/properties" className="flex flex-col items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-8 py-4 rounded-lg hover:bg-cyan-600 transition-colors">
                         <PlusIcon className="w-8 h-8"/>
                         <span>إضافة عقار جديد</span>
                     </Link>

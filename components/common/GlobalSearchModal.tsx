@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUserManagementContext } from '../../context/UserManagementContext';
-import { useServicesContext } from '../../context/ServicesContext';
-import { usePropertiesContext } from '../../context/PropertiesContext';
-import { useContentContext } from '../../context/ContentContext';
+import { useQuery } from '@tanstack/react-query';
+import { getUsers } from '../../api/usersApi';
+import { getServices } from '../../api/servicesApi';
+import { getProperties } from '../../api/propertiesApi';
+import { getNews } from '../../api/contentApi';
 import type { SearchResult } from '../../types';
 import { MagnifyingGlassIcon, XMarkIcon, WrenchScrewdriverIcon, HomeModernIcon, NewspaperIcon, UserGroupIcon } from './Icons';
 
@@ -13,10 +14,10 @@ interface GlobalSearchModalProps {
 }
 
 const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }) => {
-    const { users } = useUserManagementContext();
-    const { services } = useServicesContext();
-    const { properties } = usePropertiesContext();
-    const { news } = useContentContext();
+    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers, enabled: isOpen });
+    const { data: services = [] } = useQuery({ queryKey: ['services'], queryFn: getServices, enabled: isOpen });
+    const { data: properties = [] } = useQuery({ queryKey: ['properties'], queryFn: getProperties, enabled: isOpen });
+    const { data: news = [] } = useQuery({ queryKey: ['news'], queryFn: getNews, enabled: isOpen });
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
@@ -51,7 +52,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                 type: 'خدمة',
                 title: s.name,
                 subtitle: s.address,
-                link: `/services/detail/${s.id}`,
+                link: `/dashboard/services/detail/${s.id}`,
                 icon: <WrenchScrewdriverIcon className="w-5 h-5 text-cyan-500" />
             }));
 
@@ -62,7 +63,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                 type: 'عقار',
                 title: p.title,
                 subtitle: p.location.address,
-                link: '/properties',
+                link: '/dashboard/properties',
                 icon: <HomeModernIcon className="w-5 h-5 text-amber-500" />
             }));
         
@@ -73,7 +74,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                 type: 'خبر',
                 title: n.title,
                 subtitle: `بواسطة ${n.author}`,
-                link: '/news',
+                link: '/dashboard/news',
                 icon: <NewspaperIcon className="w-5 h-5 text-purple-500" />
             }));
             
@@ -84,7 +85,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                 type: 'مستخدم',
                 title: u.name,
                 subtitle: u.email,
-                link: '/users',
+                link: `/dashboard/users/${u.id}`,
                 icon: <UserGroupIcon className="w-5 h-5 text-lime-500" />
             }));
 

@@ -19,6 +19,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [publicPagesContent, setPublicPagesContent] = useState<PublicPagesContent>(mockPublicPagesContent);
     const [lostAndFoundItems, setLostAndFoundItems] = useState<LostAndFoundItem[]>(mockLostAndFoundItems);
+    const [googlePlayUrl, setGooglePlayUrl] = useState('https://play.google.com/store/apps/details?id=com.helio.company');
+    const [appleAppStoreUrl, setAppleAppStoreUrl] = useState('');
 
     
     const logActivity = useCallback((action: string, details: string) => {
@@ -31,6 +33,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         };
         setAuditLogs(prevLogs => [newLog, ...prevLogs]);
     }, [currentUser]);
+
+    const handleUpdateAppLinks = useCallback((links: { googlePlayUrl: string; appleAppStoreUrl: string; }) => {
+        setGooglePlayUrl(links.googlePlayUrl);
+        setAppleAppStoreUrl(links.appleAppStoreUrl);
+        logActivity('تحديث روابط التطبيق', `تم تحديث روابط متاجر التطبيقات.`);
+    }, [logActivity]);
     
     const handleSaveEmergencyContact = useCallback((contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }, newContactType: 'city' | 'national' = 'city') => {
         const isNew = !contactData.id;
@@ -92,11 +100,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         logActivity('تحديث محتوى الموقع العام', `تم تحديث محتوى صفحة "${String(page)}"`);
     }, [logActivity]);
 
-    const handleSaveLostAndFoundItem = useCallback((itemData: Omit<LostAndFoundItem, 'id'> & { id?: number }) => {
+    const handleSaveLostAndFoundItem = useCallback((itemData: Omit<LostAndFoundItem, 'id' | 'moderationStatus'> & { id?: number }) => {
         const isNew = !itemData.id;
         setLostAndFoundItems(prev => {
             if (itemData.id) {
-                return prev.map(item => item.id === itemData.id ? { ...item, ...itemData, id: item.id } : item);
+                return prev.map(item => item.id === itemData.id ? { ...item, ...itemData, moderationStatus: item.moderationStatus, id: item.id } : item);
             } else {
                 const newItem: LostAndFoundItem = {
                     ...itemData,
@@ -137,6 +145,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         publicPagesContent, handleUpdatePublicPageContent,
         lostAndFoundItems, handleSaveLostAndFoundItem, handleDeleteLostAndFoundItem,
         handleApproveLostAndFoundItem, handleRejectLostAndFoundItem,
+        googlePlayUrl, appleAppStoreUrl, handleUpdateAppLinks,
     }), [
         emergencyContacts, serviceGuides,
         auditLogs, logActivity,
@@ -145,6 +154,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         publicPagesContent, handleUpdatePublicPageContent,
         lostAndFoundItems, handleSaveLostAndFoundItem, handleDeleteLostAndFoundItem,
         handleApproveLostAndFoundItem, handleRejectLostAndFoundItem,
+        googlePlayUrl, appleAppStoreUrl, handleUpdateAppLinks,
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

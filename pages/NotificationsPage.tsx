@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getNotifications, saveNotification, deleteNotification } from '../api/contentApi';
+import { getServices } from '../api/servicesApi';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, BellAlertIcon } from '../components/common/Icons';
 import type { Notification, Service } from '../types';
-import { useServicesContext } from '../context/ServicesContext';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import { useContentContext } from '../context/ContentContext';
 import { useHasPermission } from '../context/AuthContext';
 import { useUIContext } from '../context/UIContext';
 import { ContentStatusBadge } from '../components/common/StatusBadge';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
 
 const NotificationForm: React.FC<{
     onSave: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
@@ -57,7 +59,6 @@ const NotificationForm: React.FC<{
             startDate, 
             endDate 
         });
-        onClose();
     };
 
     return (
@@ -107,13 +108,37 @@ const NotificationForm: React.FC<{
 
 const NotificationsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { notifications, handleSaveNotification, handleDeleteNotification } = useContentContext();
-    const { services } = useServicesContext();
+    const queryClient = useQueryClient();
+    const notificationsQuery = useQuery({ queryKey: ['notifications'], queryFn: getNotifications });
+    const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
+    
+    const { data: notifications = [] } = notificationsQuery;
+    const { data: services = [] } = servicesQuery;
+
     const canManage = useHasPermission(['مسؤول المحتوى']);
     const { showToast } = useUIContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
 
+    const saveNotificationMutation = useMutation({
+        mutationFn: saveNotification,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            setIsModalOpen(false);
+            showToast(editingNotification ? 'تم تعديل الإشعار بنجاح!' : 'تم إضافة الإشعار بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const deleteNotificationMutation = useMutation({
+        mutationFn: deleteNotification,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            showToast('تم حذف الإشعار بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+    
     const handleAddClick = () => {
         setEditingNotification(null);
         setIsModalOpen(true);
@@ -123,17 +148,10 @@ const NotificationsPage: React.FC = () => {
         setEditingNotification(notification);
         setIsModalOpen(true);
     };
-    
-    const handleSaveAndClose = (data: Omit<Notification, 'id'> & { id?: number }) => {
-        handleSaveNotification(data);
-        setIsModalOpen(false);
-        showToast(data.id ? 'تم تعديل الإشعار بنجاح!' : 'تم إضافة الإشعار بنجاح!');
-    };
 
     const confirmDelete = (id: number) => {
         if(window.confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
-            handleDeleteNotification(id);
-            showToast('تم حذف الإشعار بنجاح!');
+            deleteNotificationMutation.mutate(id);
         }
     };
 
@@ -157,45 +175,47 @@ const NotificationsPage: React.FC = () => {
                     )}
                 </div>
                 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">الإشعار</th>
-                                <th scope="col" className="px-6 py-3">الحالة</th>
-                                <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
-                                <th scope="col" className="px-6 py-3">الخدمة المرتبطة</th>
-                                {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {notifications.map(notification => (
-                                <tr key={notification.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-6 py-4 max-w-sm">
-                                        <div className="font-semibold text-gray-900 dark:text-white truncate">{notification.title}</div>
-                                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{notification.content}</div>
-                                    </td>
-                                    <td className="px-6 py-4"><ContentStatusBadge startDate={notification.startDate} endDate={notification.endDate} /></td>
-                                    <td className="px-6 py-4 text-xs font-mono">{notification.startDate} <br/> {notification.endDate}</td>
-                                    <td className="px-6 py-4">{notification.serviceId ? services.find(s => s.id === notification.serviceId)?.name : 'لا يوجد'}</td>
-                                    {canManage && (
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                <button onClick={() => confirmDelete(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
-                                            </div>
-                                        </td>
-                                    )}
+                <QueryStateWrapper queries={[notificationsQuery, servicesQuery]}>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">الإشعار</th>
+                                    <th scope="col" className="px-6 py-3">الحالة</th>
+                                    <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
+                                    <th scope="col" className="px-6 py-3">الخدمة المرتبطة</th>
+                                    {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                     {notifications.length === 0 && (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            لا توجد إشعارات مضافة حتى الآن.
-                        </div>
-                    )}
-                </div>
+                            </thead>
+                            <tbody>
+                                {notifications.map(notification => (
+                                    <tr key={notification.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="px-6 py-4 max-w-sm">
+                                            <div className="font-semibold text-gray-900 dark:text-white truncate">{notification.title}</div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{notification.content}</div>
+                                        </td>
+                                        <td className="px-6 py-4"><ContentStatusBadge startDate={notification.startDate} endDate={notification.endDate} /></td>
+                                        <td className="px-6 py-4 text-xs font-mono">{notification.startDate} <br/> {notification.endDate}</td>
+                                        <td className="px-6 py-4">{notification.serviceId ? services.find(s => s.id === notification.serviceId)?.name : 'لا يوجد'}</td>
+                                        {canManage && (
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <button onClick={() => handleEditClick(notification)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                    <button onClick={() => confirmDelete(notification.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5" /></button>
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {notifications.length === 0 && (
+                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                لا توجد إشعارات مضافة حتى الآن.
+                            </div>
+                        )}
+                    </div>
+                </QueryStateWrapper>
             </div>
 
             <Modal 
@@ -204,7 +224,7 @@ const NotificationsPage: React.FC = () => {
                 title={editingNotification ? 'تعديل الإشعار' : 'إضافة إشعار جديد'}
             >
                 <NotificationForm 
-                    onSave={handleSaveAndClose}
+                    onSave={(data) => saveNotificationMutation.mutate(data)}
                     onClose={() => setIsModalOpen(false)}
                     notification={editingNotification}
                     services={services}

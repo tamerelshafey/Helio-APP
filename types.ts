@@ -14,6 +14,15 @@ export type AlertType = 'new_inquiry' | 'user_registered' | 'property_listed';
 export type AdPlacement = 'الرئيسية' | 'المجتمع' | 'الخدمات' | 'العقارات' | 'الأخبار';
 export type DiscussionCircleCategory = 'عام' | 'أحياء سكنية' | 'كمبوندات';
 
+export const AdminRoles = {
+  SUPER_ADMIN: 'مدير عام',
+  SERVICES_ADMIN: 'مسؤول ادارة الخدمات',
+  PROPERTY_ADMIN: 'مسؤول العقارات',
+  CONTENT_ADMIN: 'مسؤول المحتوى',
+  TRANSPORT_ADMIN: 'مسؤول النقل',
+  COMMUNITY_ADMIN: 'مسؤول المجتمع',
+} as const;
+
 // =========
 // Basic Data Models
 // =========
@@ -421,64 +430,12 @@ export interface AppContextType {
     handleDeleteLostAndFoundItem: (id: number) => void;
     handleApproveLostAndFoundItem: (id: number) => void;
     handleRejectLostAndFoundItem: (id: number) => void;
+    googlePlayUrl: string;
+    appleAppStoreUrl: string;
+    handleUpdateAppLinks: (links: { googlePlayUrl: string; appleAppStoreUrl: string; }) => void;
 }
 
-export interface ServicesContextType {
-    categories: Category[];
-    services: Service[];
-    loading: boolean;
-    sortConfig: SortConfig<Service>;
-    handleSortServices: (key: keyof Service) => void;
-    handleUpdateReview: (serviceId: number, reviewId: number, newComment: string) => void;
-    handleDeleteReview: (serviceId: number, reviewId: number) => void;
-    handleReplyToReview: (serviceId: number, reviewId: number, reply: string) => void;
-    handleSaveService: (serviceData: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => void;
-    handleDeleteService: (id: number) => void;
-    handleToggleFavorite: (serviceId: number) => void;
-    handleSaveCategory: (categoryData: Omit<Category, 'id' | 'subCategories'> & { id?: number }) => void;
-    handleDeleteCategory: (categoryId: number) => void;
-    handleSaveSubCategory: (categoryId: number, subCategoryData: Omit<SubCategory, 'id'> & { id?: number }) => void;
-    handleDeleteSubCategory: (categoryId: number, subCategoryId: number) => void;
-    handleReorderCategories: (reorderedCategories: Category[]) => void;
-    handleReorderSubCategories: (categoryId: number, reorderedSubCategories: SubCategory[]) => void;
-}
-
-export interface PropertiesContextType {
-    properties: Property[];
-    loading: boolean;
-    sortConfig: SortConfig<Property>;
-    handleSortProperties: (key: keyof Property) => void;
-    handleSaveProperty: (property: Omit<Property, 'id' | 'views' | 'creationDate'> & { id?: number }) => void;
-    handleDeleteProperty: (id: number) => void;
-}
-
-export interface ContentContextType {
-    news: News[];
-    notifications: Notification[];
-    ads: Ad[];
-    loading: boolean;
-    handleSaveNews: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
-    handleDeleteNews: (id: number) => void;
-    handleSaveNotification: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
-    handleDeleteNotification: (id: number) => void;
-    handleSaveAd: (ad: Omit<Ad, 'id'> & { id?: number }) => void;
-    handleDeleteAd: (id: number) => void;
-}
-
-export interface UserManagementContextType {
-    users: AppUser[];
-    admins: AdminUser[];
-    loading: boolean;
-    sortConfig: SortConfig<AppUser>;
-    handleSortUsers: (key: keyof AppUser) => void;
-    handleSaveUser: (userData: Omit<AppUser, 'id' | 'joinDate'> & { id?: number }) => void;
-    handleDeleteUser: (id: number) => void;
-    handleDeleteUsers: (ids: number[]) => void;
-    handleSetUserAccountType: (userId: number, accountType: UserAccountType) => void;
-    handleSaveAdmin: (adminData: Omit<AdminUser, 'id'> & { id?: number }) => void;
-    handleDeleteAdmin: (id: number) => void;
-}
-
+// FIX: Add missing context type definitions
 export interface TransportationContextType {
     transportation: {
         internalSupervisor: Supervisor;

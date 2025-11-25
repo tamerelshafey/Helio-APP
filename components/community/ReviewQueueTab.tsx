@@ -2,7 +2,9 @@ import React, { useState, useMemo, ReactNode } from 'react';
 import { useMarketplaceContext } from '../../context/MarketplaceContext';
 import { useAppContext } from '../../context/AppContext';
 import { useCommunityContext } from '../../context/CommunityContext';
-import { useUserManagementContext } from '../../context/UserManagementContext';
+// FIX: Replaced deprecated useUserManagementContext with useQuery to fetch users from the API.
+import { useQuery } from '@tanstack/react-query';
+import { getUsers } from '../../api/usersApi';
 import { useUIContext } from '../../context/UIContext';
 import { 
     CheckCircleIcon, XCircleIcon, TagIcon, BriefcaseIcon, ArchiveBoxIcon,
@@ -125,7 +127,7 @@ const ReviewQueueTab: React.FC = () => {
         communityPosts, handleDismissPostReports, handleDeletePost, 
         handleDismissCommentReports, handleDeleteComment 
     } = useCommunityContext();
-    const { users } = useUserManagementContext();
+    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
     const { showToast } = useUIContext();
 
     const getUser = (id: number): AppUser | undefined => users.find(u => u.id === id);

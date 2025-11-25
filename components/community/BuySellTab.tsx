@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import type { ForSaleItem, AppUser, MarketplaceItemStatus } from '../../types';
 import { useMarketplaceContext } from '../../context/MarketplaceContext';
-import { useUserManagementContext } from '../../context/UserManagementContext';
+// FIX: Replaced deprecated useUserManagementContext with useQuery to fetch users from the API.
+import { useQuery } from '@tanstack/react-query';
+import { getUsers } from '../../api/usersApi';
 import { useUIContext } from '../../context/UIContext';
 import KpiCard from '../common/KpiCard';
 import TabButton from '../common/TabButton';
@@ -11,7 +13,7 @@ import StatusBadge from '../common/StatusBadge';
 
 const BuySellTab: React.FC = () => {
     const { forSaleItems, handleDeleteItem } = useMarketplaceContext();
-    const { users } = useUserManagementContext();
+    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
     const { showToast } = useUIContext();
 
     const [activeSubTab, setActiveSubTab] = useState<MarketplaceItemStatus>('approved');

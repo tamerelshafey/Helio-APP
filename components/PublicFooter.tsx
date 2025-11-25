@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { GooglePlayIcon, AppleIcon } from './common/Icons';
+import { useAppContext } from '../context/AppContext';
 
 const PublicFooter: React.FC = () => {
+    const { googlePlayUrl, appleAppStoreUrl } = useAppContext();
     return (
         <footer className="bg-white border-t border-slate-200 dark:bg-slate-900 dark:border-slate-800" dir="rtl">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -11,7 +13,7 @@ const PublicFooter: React.FC = () => {
                         <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Helio APP</h2>
                         <p className="text-gray-500 mt-2 dark:text-gray-400">بوابتك الرقمية لمدينة هليوبوليس الجديدة.</p>
                          <div className="flex flex-col sm:flex-row gap-2 mt-4">
-                            <a href="https://play.google.com/store/apps/details?id=com.helio.company" target="_blank" rel="noopener noreferrer" className="bg-black text-white rounded-lg px-3 py-2 flex items-center gap-2 transition-transform hover:scale-105">
+                            <a href={googlePlayUrl} target="_blank" rel="noopener noreferrer" className="bg-black text-white rounded-lg px-3 py-2 flex items-center gap-2 transition-transform hover:scale-105">
                                 <GooglePlayIcon className="w-6 h-6" />
                                 <div className="text-right">
                                     <p className="text-xs leading-none">GET IT ON</p>

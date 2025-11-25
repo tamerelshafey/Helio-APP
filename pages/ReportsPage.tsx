@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useContentContext } from '../context/ContentContext';
-import { useServicesContext } from '../context/ServicesContext';
-import { usePropertiesContext } from '../context/PropertiesContext';
 import { useAuthContext } from '../context/AuthContext';
 import { useTransportationContext } from '../context/TransportationContext';
+import { useQuery } from '@tanstack/react-query';
+import { getServices, getCategories } from '../api/servicesApi';
+import { getProperties } from '../api/propertiesApi';
+import { getNews } from '../api/contentApi';
 import { 
     ArrowLeftIcon, StarIcon, EyeIcon, ChatBubbleOvalLeftIcon, WrenchScrewdriverIcon, ChartPieIcon, 
     ChartBarIcon, HomeModernIcon, NewspaperIcon, MagnifyingGlassIcon, StarIconOutline, DocumentChartBarIcon,
@@ -18,6 +19,7 @@ import { useUIContext } from '../context/UIContext';
 import EmptyState from '../components/common/EmptyState';
 import Rating from '../components/common/Rating';
 import { ReportPageSkeleton } from '../components/common/SkeletonLoader';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
 
 const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({ data, categories }) => {
     const { isDarkMode } = useUIContext();
@@ -444,11 +446,16 @@ const tabConfig: { key: ReportTab; label: string; icon: React.ReactNode; roles: 
 const ReportsPage: React.FC = () => {
     const navigate = useNavigate();
     const { currentUser } = useAuthContext();
-    const { news, loading: contentLoading } = useContentContext();
-    const { services, categories, loading: servicesLoading } = useServicesContext();
-    const { properties, loading: propertiesLoading } = usePropertiesContext();
+    
+    const newsQuery = useQuery({ queryKey: ['news'], queryFn: getNews });
+    const propertiesQuery = useQuery({ queryKey: ['properties'], queryFn: getProperties });
+    const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories });
 
-    const isLoading = contentLoading || servicesLoading || propertiesLoading;
+    const { data: news = [] } = newsQuery;
+    const { data: properties = [] } = propertiesQuery;
+    const { data: services = [] } = servicesQuery;
+    const { data: categories = [] } = categoriesQuery;
 
     const availableTabs = useMemo(() => {
         if (!currentUser) return [];
@@ -481,9 +488,6 @@ const ReportsPage: React.FC = () => {
     const filteredNews = useMemo(() => news.filter(n => n.date >= startDate && n.date <= endDate), [news, startDate, endDate]);
 
     const renderContent = () => {
-        if (isLoading) {
-            return <ReportPageSkeleton />;
-        }
         if (!activeTab) return null;
         switch (activeTab) {
             case 'services': return <ServiceReports data={filteredServices} categories={categories} />;
@@ -522,7 +526,12 @@ const ReportsPage: React.FC = () => {
                         </div>
                         
                         <div className="pt-6 border-t border-slate-200 dark:border-slate-700">
-                            {renderContent()}
+                           <QueryStateWrapper 
+                                queries={[newsQuery, propertiesQuery, servicesQuery, categoriesQuery]} 
+                                loader={<ReportPageSkeleton />}
+                            >
+                                {renderContent()}
+                           </QueryStateWrapper>
                         </div>
                     </>
                 ) : (
