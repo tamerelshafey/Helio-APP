@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import { CheckCircleIcon, XCircleIcon } from './Icons';
 import type { ToastMessage } from '../../types';
 
@@ -39,7 +39,8 @@ const Toast: React.FC<{ message: ToastMessage; onDismiss: (id: number) => void }
 };
 
 const ToastContainer: React.FC = () => {
-    const { toasts, dismissToast } = useUIContext();
+    const toasts = useStore((state) => state.toasts);
+    const dismissToast = useStore((state) => state.dismissToast);
 
     if (!toasts.length) return null;
 

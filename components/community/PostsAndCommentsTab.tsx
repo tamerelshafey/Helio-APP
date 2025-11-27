@@ -1,21 +1,20 @@
 import React, { useState, useMemo } from 'react';
-import type { CommunityPost, CommunityComment, AppUser } from '../../types';
-import { useCommunityContext } from '../../context/CommunityContext';
-// FIX: Replaced deprecated useUserManagementContext with useQuery to fetch users from the API.
-import { useQuery } from '@tanstack/react-query';
+import type { CommunityPost, CommunityComment, AppUser, DiscussionCircle } from '../../types';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getPosts, getCircles, savePost, deletePost, saveComment, deleteComment, dismissPostReports, dismissCommentReports } from '../../api/communityApi';
 import { getUsers } from '../../api/usersApi';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import KpiCard from '../common/KpiCard';
 import Modal from '../common/Modal';
 import EmptyState from '../common/EmptyState';
 import { 
     DocumentDuplicateIcon, ChatBubbleOvalLeftIcon, ShieldExclamationIcon,
-    MagnifyingGlassIcon, PencilSquareIcon, TrashIcon, ChatBubbleLeftRightIcon
+    MagnifyingGlassIcon, PencilSquareIcon, TrashIcon
 } from '../common/Icons';
 import ImageUploader from '../common/ImageUploader';
+import QueryStateWrapper from '../common/QueryStateWrapper';
 
-const PostForm: React.FC<{ post: CommunityPost | null; onSave: (data: any) => void; onClose: () => void; }> = ({ post, onSave, onClose }) => {
-    const { discussionCircles } = useCommunityContext();
+const PostForm: React.FC<{ post: CommunityPost | null; discussionCircles: DiscussionCircle[]; onSave: (data: any) => void; onClose: () => void; }> = ({ post, discussionCircles, onSave, onClose }) => {
     const [content, setContent] = useState(post?.content || '');
     const [images, setImages] = useState(post?.imageUrl ? [post.imageUrl] : []);
     const [circleId, setCircleId] = useState(post?.circleId || discussionCircles[0]?.id);
@@ -65,22 +64,74 @@ const CommentForm: React.FC<{ comment: CommunityComment | null; onSave: (content
 
 
 const PostsAndCommentsTab: React.FC = () => {
-    const { 
-        communityPosts, discussionCircles, handleDeletePost, handleUpdatePost,
-        handleDeleteComment, handleUpdateComment, handleDismissPostReports, handleDismissCommentReports
-    } = useCommunityContext();
-    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
-    const { showToast } = useUIContext();
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
 
-    const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
+    const postsQuery = useQuery({ queryKey: ['posts'], queryFn: getPosts });
+    const circlesQuery = useQuery({ queryKey: ['circles'], queryFn: getCircles });
+    const usersQuery = useQuery({ queryKey: ['users'], queryFn: getUsers });
+
+    const communityPosts = postsQuery.data || [];
+    const discussionCircles = circlesQuery.data || [];
+    const users = usersQuery.data || [];
+
+    const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [circleFilter, setCircleFilter] = useState<number>(0); // 0 for all
+    const [circleFilter, setCircleFilter] = useState<number>(0);
     const [reportFilter, setReportFilter] = useState<'all' | 'reported'>('all');
 
     const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
     const [editingComment, setEditingComment] = useState<CommunityComment | null>(null);
 
     const getUser = (id: number): AppUser | undefined => users.find(u => u.id === id);
+
+    // Mutations
+    const savePostMutation = useMutation({
+        mutationFn: savePost,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
+            setEditingPost(null);
+            showToast('تم حفظ المنشور بنجاح!');
+        }
+    });
+
+    const deletePostMutation = useMutation({
+        mutationFn: deletePost,
+        onSuccess: (_, id) => {
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
+            if (selectedPostId === id) setSelectedPostId(null);
+            showToast('تم حذف المنشور!');
+        }
+    });
+
+    const saveCommentMutation = useMutation({
+        mutationFn: saveComment,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
+            setEditingComment(null);
+            showToast('تم تعديل التعليق بنجاح!');
+        }
+    });
+
+    const deleteCommentMutation = useMutation({
+        mutationFn: deleteComment,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
+            showToast('تم حذف التعليق!');
+        }
+    });
+
+    const dismissPostReportsMutation = useMutation({
+        mutationFn: dismissPostReports,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] })
+    });
+
+    const dismissCommentReportsMutation = useMutation({
+        mutationFn: dismissCommentReports,
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['posts'] })
+    });
+
+    const selectedPost = useMemo(() => communityPosts.find(p => p.id === selectedPostId), [communityPosts, selectedPostId]);
 
     const stats = useMemo(() => {
       const reportedPosts = communityPosts.filter(p => p.reports && p.reports.length > 0).length;
@@ -104,101 +155,100 @@ const PostsAndCommentsTab: React.FC = () => {
             .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }, [communityPosts, circleFilter, reportFilter, searchTerm]);
 
-    const handleSavePost = (data: any) => { handleUpdatePost({ ...editingPost, ...data }); setEditingPost(null); showToast("تم تعديل المنشور بنجاح!"); };
+    const handleSavePost = (data: any) => savePostMutation.mutate(data);
     const handleSaveComment = (content: string) => { 
         if(editingComment && selectedPost) {
-            handleUpdateComment(selectedPost.id, editingComment.id, content);
-            setSelectedPost(prev => prev ? ({...prev, comments: prev.comments.map(c => c.id === editingComment.id ? {...c, content} : c)}) : null);
-            setEditingComment(null);
-            showToast("تم تعديل التعليق بنجاح!");
+            saveCommentMutation.mutate({ postId: selectedPost.id, commentId: editingComment.id, content });
         }
     };
-    const confirmDeletePost = (id: number) => { if(window.confirm("متأكد من حذف المنشور؟")) { handleDeletePost(id); if(selectedPost?.id === id) setSelectedPost(null); showToast("تم حذف المنشور"); } };
-    const confirmDeleteComment = (postId: number, commentId: number) => { if(window.confirm("متأكد من حذف التعليق؟")) { handleDeleteComment(postId, commentId); setSelectedPost(prev => prev ? ({...prev, comments: prev.comments.filter(c => c.id !== commentId)}) : null); showToast("تم حذف التعليق"); } };
+    const confirmDeletePost = (id: number) => { if(window.confirm("متأكد من حذف المنشور؟")) deletePostMutation.mutate(id); };
+    const confirmDeleteComment = (postId: number, commentId: number) => { if(window.confirm("متأكد من حذف التعليق؟")) deleteCommentMutation.mutate({ postId, commentId }); };
 
     return (
-        <div className="animate-fade-in space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KpiCard title="إجمالي المنشورات" value={stats.totalPosts.toString()} icon={<DocumentDuplicateIcon className="w-8 h-8 text-cyan-400"/>} />
-                <KpiCard title="إجمالي التعليقات" value={stats.totalComments.toString()} icon={<ChatBubbleOvalLeftIcon className="w-8 h-8 text-amber-400"/>} />
-                <KpiCard title="محتوى للمراجعة" value={stats.reportedContent.toString()} icon={<ShieldExclamationIcon className="w-8 h-8 text-rose-400"/>} />
-            </div>
-            
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-grow"><MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2" /><input type="text" placeholder="بحث في محتوى المنشورات..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-slate-100 dark:bg-slate-700 rounded-lg py-2 pr-10 pl-4"/></div>
-                <select value={circleFilter} onChange={e => setCircleFilter(Number(e.target.value))} className="w-full md:w-48 bg-slate-100 dark:bg-slate-700 rounded-lg py-2 px-4"><option value="0">كل الدوائر</option>{discussionCircles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-                <select value={reportFilter} onChange={e => setReportFilter(e.target.value as any)} className="w-full md:w-48 bg-slate-100 dark:bg-slate-700 rounded-lg py-2 px-4"><option value="all">كل الحالات</option><option value="reported">يحتوي على بلاغات</option></select>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[60vh]">
-                <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-lg h-full max-h-[70vh] overflow-y-auto">
-                    {filteredPosts.map(post => (
-                        <button key={post.id} onClick={() => setSelectedPost(post)} className={`w-full text-right p-3 rounded-lg mb-1 ${selectedPost?.id === post.id ? 'bg-cyan-100 dark:bg-cyan-900' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
-                            <p className="font-semibold text-sm line-clamp-2">{post.content}</p>
-                            <div className="flex justify-between items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                <span>{getUser(post.authorId)?.name || 'مستخدم'}</span>
-                                <div>{(post.reports?.length || 0) > 0 && <span className="text-red-500">بلاغات!</span>}</div>
-                            </div>
-                        </button>
-                    ))}
+        <QueryStateWrapper queries={[postsQuery, circlesQuery, usersQuery]}>
+            <div className="animate-fade-in space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <KpiCard title="إجمالي المنشورات" value={stats.totalPosts.toString()} icon={<DocumentDuplicateIcon className="w-8 h-8 text-cyan-400"/>} />
+                    <KpiCard title="إجمالي التعليقات" value={stats.totalComments.toString()} icon={<ChatBubbleOvalLeftIcon className="w-8 h-8 text-amber-400"/>} />
+                    <KpiCard title="محتوى للمراجعة" value={stats.reportedContent.toString()} icon={<ShieldExclamationIcon className="w-8 h-8 text-rose-400"/>} />
                 </div>
-                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg h-full max-h-[70vh] overflow-y-auto">
-                    {selectedPost ? (
-                        <div>
-                            {/* Post Details */}
-                            <div className="pb-4 border-b border-slate-200 dark:border-slate-700">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-bold text-lg">{getUser(selectedPost.authorId)?.name}</p>
-                                        <p className="text-xs text-gray-500">{new Date(selectedPost.timestamp).toLocaleString('ar-EG')}</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => setEditingPost(selectedPost)} className="p-2 text-blue-500 rounded-md hover:bg-slate-100"><PencilSquareIcon className="w-5 h-5" /></button>
-                                        <button onClick={() => confirmDeletePost(selectedPost.id)} className="p-2 text-red-500 rounded-md hover:bg-slate-100"><TrashIcon className="w-5 h-5" /></button>
-                                    </div>
+                
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-grow"><MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2" /><input type="text" placeholder="بحث في محتوى المنشورات..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-slate-100 dark:bg-slate-700 rounded-lg py-2 pr-10 pl-4"/></div>
+                    <select value={circleFilter} onChange={e => setCircleFilter(Number(e.target.value))} className="w-full md:w-48 bg-slate-100 dark:bg-slate-700 rounded-lg py-2 px-4"><option value="0">كل الدوائر</option>{discussionCircles.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+                    <select value={reportFilter} onChange={e => setReportFilter(e.target.value as any)} className="w-full md:w-48 bg-slate-100 dark:bg-slate-700 rounded-lg py-2 px-4"><option value="all">كل الحالات</option><option value="reported">يحتوي على بلاغات</option></select>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[60vh]">
+                    <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-2 rounded-xl shadow-lg h-full max-h-[70vh] overflow-y-auto">
+                        {filteredPosts.map(post => (
+                            <button key={post.id} onClick={() => setSelectedPostId(post.id)} className={`w-full text-right p-3 rounded-lg mb-1 ${selectedPostId === post.id ? 'bg-cyan-100 dark:bg-cyan-900' : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
+                                <p className="font-semibold text-sm line-clamp-2">{post.content}</p>
+                                <div className="flex justify-between items-center mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    <span>{getUser(post.authorId)?.name || 'مستخدم'}</span>
+                                    <div>{(post.reports?.length || 0) > 0 && <span className="text-red-500">بلاغات!</span>}</div>
                                 </div>
-                                <p className="mt-2 whitespace-pre-wrap">{selectedPost.content}</p>
-                                {selectedPost.imageUrl && <img src={selectedPost.imageUrl} alt="post content" className="mt-3 rounded-lg max-h-64 w-auto"/>}
-                                {(selectedPost.reports?.length || 0) > 0 && 
-                                    <div className="mt-3 p-2 bg-red-100 dark:bg-red-900/50 rounded-md text-sm">
-                                        <p className="font-bold text-red-700 dark:text-red-300">بلاغات على المنشور ({selectedPost.reports?.length})</p>
-                                        <button onClick={() => handleDismissPostReports(selectedPost.id)} className="text-xs text-blue-600 hover:underline">تجاهل البلاغات</button>
-                                    </div>
-                                }
-                            </div>
-                            {/* Comments */}
-                            <h4 className="font-bold mt-4 mb-2">التعليقات ({selectedPost.comments.length})</h4>
-                            <div className="space-y-4">
-                                {selectedPost.comments.map(comment => (
-                                    <div key={comment.id} className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-md">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-semibold text-sm">{getUser(comment.authorId)?.name}</p>
-                                                <p className="text-xs text-gray-500">{new Date(comment.timestamp).toLocaleString('ar-EG')}</p>
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <button onClick={() => setEditingComment(comment)} className="p-1 text-blue-500 rounded-md hover:bg-slate-200"><PencilSquareIcon className="w-4 h-4" /></button>
-                                                <button onClick={() => confirmDeleteComment(selectedPost.id, comment.id)} className="p-1 text-red-500 rounded-md hover:bg-slate-200"><TrashIcon className="w-4 h-4" /></button>
-                                            </div>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg h-full max-h-[70vh] overflow-y-auto">
+                        {selectedPost ? (
+                            <div>
+                                {/* Post Details */}
+                                <div className="pb-4 border-b border-slate-200 dark:border-slate-700">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="font-bold text-lg">{getUser(selectedPost.authorId)?.name}</p>
+                                            <p className="text-xs text-gray-500">{new Date(selectedPost.timestamp).toLocaleString('ar-EG')}</p>
                                         </div>
-                                        <p className="mt-1 text-sm">{comment.content}</p>
-                                         {(comment.reports?.length || 0) > 0 && 
-                                            <div className="mt-2 p-1.5 bg-red-100 dark:bg-red-900/50 rounded-md text-xs">
-                                                <p className="font-bold text-red-700 dark:text-red-300">بلاغات على التعليق ({comment.reports?.length})</p>
-                                                <button onClick={() => handleDismissCommentReports(selectedPost.id, comment.id)} className="text-xs text-blue-600 hover:underline">تجاهل البلاغات</button>
-                                            </div>
-                                        }
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setEditingPost(selectedPost)} className="p-2 text-blue-500 rounded-md hover:bg-slate-100"><PencilSquareIcon className="w-5 h-5" /></button>
+                                            <button onClick={() => confirmDeletePost(selectedPost.id)} className="p-2 text-red-500 rounded-md hover:bg-slate-100"><TrashIcon className="w-5 h-5" /></button>
+                                        </div>
                                     </div>
-                                ))}
+                                    <p className="mt-2 whitespace-pre-wrap">{selectedPost.content}</p>
+                                    {selectedPost.imageUrl && <img src={selectedPost.imageUrl} alt="post content" className="mt-3 rounded-lg max-h-64 w-auto"/>}
+                                    {(selectedPost.reports?.length || 0) > 0 && 
+                                        <div className="mt-3 p-2 bg-red-100 dark:bg-red-900/50 rounded-md text-sm">
+                                            <p className="font-bold text-red-700 dark:text-red-300">بلاغات على المنشور ({selectedPost.reports?.length})</p>
+                                            <button onClick={() => dismissPostReportsMutation.mutate(selectedPost.id)} className="text-xs text-blue-600 hover:underline">تجاهل البلاغات</button>
+                                        </div>
+                                    }
+                                </div>
+                                {/* Comments */}
+                                <h4 className="font-bold mt-4 mb-2">التعليقات ({selectedPost.comments.length})</h4>
+                                <div className="space-y-4">
+                                    {selectedPost.comments.map(comment => (
+                                        <div key={comment.id} className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-md">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-semibold text-sm">{getUser(comment.authorId)?.name}</p>
+                                                    <p className="text-xs text-gray-500">{new Date(comment.timestamp).toLocaleString('ar-EG')}</p>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <button onClick={() => setEditingComment(comment)} className="p-1 text-blue-500 rounded-md hover:bg-slate-200"><PencilSquareIcon className="w-4 h-4" /></button>
+                                                    <button onClick={() => confirmDeleteComment(selectedPost.id, comment.id)} className="p-1 text-red-500 rounded-md hover:bg-slate-200"><TrashIcon className="w-4 h-4" /></button>
+                                                </div>
+                                            </div>
+                                            <p className="mt-1 text-sm">{comment.content}</p>
+                                            {(comment.reports?.length || 0) > 0 && 
+                                                <div className="mt-2 p-1.5 bg-red-100 dark:bg-red-900/50 rounded-md text-xs">
+                                                    <p className="font-bold text-red-700 dark:text-red-300">بلاغات على التعليق ({comment.reports?.length})</p>
+                                                    <button onClick={() => dismissCommentReportsMutation.mutate({ postId: selectedPost.id, commentId: comment.id })} className="text-xs text-blue-600 hover:underline">تجاهل البلاغات</button>
+                                                </div>
+                                            }
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ) : <EmptyState icon={<DocumentDuplicateIcon className="w-16 h-16 text-slate-400"/>} title="اختر منشوراً" message="اختر منشوراً من القائمة لعرض تفاصيله وإدارته."/>}
+                        ) : <EmptyState icon={<DocumentDuplicateIcon className="w-16 h-16 text-slate-400"/>} title="اختر منشوراً" message="اختر منشوراً من القائمة لعرض تفاصيله وإدارته."/>}
+                    </div>
                 </div>
-            </div>
 
-            <Modal isOpen={!!editingPost} onClose={() => setEditingPost(null)} title="تعديل المنشور"><PostForm post={editingPost} onClose={() => setEditingPost(null)} onSave={handleSavePost} /></Modal>
-            <Modal isOpen={!!editingComment} onClose={() => setEditingComment(null)} title="تعديل التعليق"><CommentForm comment={editingComment} onClose={() => setEditingComment(null)} onSave={handleSaveComment} /></Modal>
-        </div>
+                <Modal isOpen={!!editingPost} onClose={() => setEditingPost(null)} title="تعديل المنشور"><PostForm post={editingPost} discussionCircles={discussionCircles} onClose={() => setEditingPost(null)} onSave={handleSavePost} /></Modal>
+                <Modal isOpen={!!editingComment} onClose={() => setEditingComment(null)} title="تعديل التعليق"><CommentForm comment={editingComment} onClose={() => setEditingComment(null)} onSave={handleSaveComment} /></Modal>
+            </div>
+        </QueryStateWrapper>
     );
 };
 

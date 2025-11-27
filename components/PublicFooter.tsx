@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { GooglePlayIcon, AppleIcon } from './common/Icons';
-import { useAppContext } from '../context/AppContext';
+import { useQuery } from '@tanstack/react-query';
+import { getAppLinks } from '../api/generalApi';
+import { GooglePlayIcon } from './common/Icons';
 
 const PublicFooter: React.FC = () => {
-    const { googlePlayUrl, appleAppStoreUrl } = useAppContext();
+    const { data: appLinks } = useQuery({ queryKey: ['appLinks'], queryFn: getAppLinks });
+    const googlePlayUrl = appLinks?.googlePlayUrl || '#';
+
     return (
         <footer className="bg-white border-t border-slate-200 dark:bg-slate-900 dark:border-slate-800" dir="rtl">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

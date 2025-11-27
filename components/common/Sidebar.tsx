@@ -3,8 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
     HomeIcon, UserGroupIcon, MagnifyingGlassIcon, Bars3Icon, XMarkIcon, 
     WrenchScrewdriverIcon, TruckIcon, ShieldExclamationIcon, NewspaperIcon, ChevronDownIcon, 
-    HomeModernIcon, BuildingLibraryIcon,
-    BellAlertIcon, DocumentChartBarIcon, DocumentDuplicateIcon, RectangleGroupIcon,
+    HomeModernIcon, DocumentDuplicateIcon, RectangleGroupIcon,
+    BellAlertIcon, DocumentChartBarIcon,
     ChatBubbleOvalLeftIcon,
     ClipboardDocumentListIcon,
     PencilSquareIcon,
@@ -13,7 +13,7 @@ import {
     TagIcon,
     Cog6ToothIcon,
 } from './Icons';
-import { useAuthContext } from '../../context/AuthContext';
+import { useStore } from '../../store';
 import type { AdminUserRole } from '../../types';
 import { AdminRoles } from '../../types';
 
@@ -43,7 +43,7 @@ const filterNavItemsBySearch = (items: NavItemData[], query: string): NavItemDat
 };
 
 const Sidebar: React.FC = () => {
-    const { currentUser } = useAuthContext();
+    const currentUser = useStore((state) => state.currentUser);
     const [isOpen, setIsOpen] = useState(false);
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
     const [searchQuery, setSearchQuery] = useState('');

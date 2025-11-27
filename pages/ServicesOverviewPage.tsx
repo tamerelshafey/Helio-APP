@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useUIContext } from '../context/UIContext';
+import { useStore } from '../store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
     getServices, getCategories, saveCategory, deleteCategory, saveSubCategory, 
@@ -16,6 +16,7 @@ import {
 import Modal from '../components/common/Modal';
 import { Category, SubCategory } from '../types';
 import Spinner from '../components/common/Spinner';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const allIconComponents: { [key: string]: React.FC<React.SVGProps<SVGSVGElement>> } = {
     HeartIcon, CakeIcon, AcademicCapIcon, ShoppingBagIcon, DevicePhoneMobileIcon, BoltIcon, SparklesIcon, WrenchScrewdriverIcon, 
@@ -94,8 +95,9 @@ const SubCategoryForm: React.FC<{
 
 
 const ServicesOverviewPage: React.FC = () => {
+    useDocumentTitle('هيكل الخدمات | Helio');
     const navigate = useNavigate();
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const queryClient = useQueryClient();
 
     const { data: services = [], isLoading: isLoadingServices } = useQuery({ queryKey: ['services'], queryFn: getServices });

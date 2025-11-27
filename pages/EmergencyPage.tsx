@@ -1,12 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getEmergencyContacts, saveEmergencyContact, deleteEmergencyContact } from '../api/generalApi';
 import { ArrowLeftIcon, PhoneIcon, PencilSquareIcon, TrashIcon, PlusIcon } from '../components/common/Icons';
 import type { EmergencyContact } from '../types';
-import { useAppContext } from '../context/AppContext';
-import { useUIContext } from '../context/UIContext';
-import { useHasPermission } from '../context/AuthContext';
+import { useStore } from '../store';
+import { useHasPermission } from '../hooks/usePermissions';
 import Modal from '../components/common/Modal';
 import TabButton from '../components/common/TabButton';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const EmergencyCard: React.FC<{ contact: EmergencyContact; onEdit: (contact: EmergencyContact) => void; onDelete: (id: number) => void; }> = ({ contact, onEdit, onDelete }) => {
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
@@ -99,14 +102,37 @@ const EmergencyForm: React.FC<{
 };
 
 const EmergencyPage: React.FC = () => {
+    useDocumentTitle('أرقام الطوارئ | Helio');
     const navigate = useNavigate();
-    const { emergencyContacts, handleSaveEmergencyContact, handleDeleteEmergencyContact } = useAppContext();
-    const { showToast } = useUIContext();
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     
+    const emergencyContactsQuery = useQuery({ queryKey: ['emergencyContacts'], queryFn: getEmergencyContacts });
+    const { data: emergencyContacts = [] } = emergencyContactsQuery;
+
     const [activeTab, setActiveTab] = useState<'city' | 'national'>('city');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
+
+    const saveContactMutation = useMutation({
+        mutationFn: (data: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }) => saveEmergencyContact(data, activeTab),
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['emergencyContacts'] });
+            setIsModalOpen(false);
+            showToast(data.id ? 'تم تعديل الرقم بنجاح' : 'تم إضافة الرقم بنجاح');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const deleteContactMutation = useMutation({
+        mutationFn: deleteEmergencyContact,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['emergencyContacts'] });
+            showToast('تم حذف الرقم بنجاح');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
 
     const displayedContacts = useMemo(() => 
         emergencyContacts.filter(c => c.type === activeTab), 
@@ -123,15 +149,12 @@ const EmergencyPage: React.FC = () => {
     };
 
     const handleSaveAndClose = (contactData: Omit<EmergencyContact, 'id' | 'type'> & { id?: number }) => {
-        handleSaveEmergencyContact(contactData, activeTab);
-        setIsModalOpen(false);
-        showToast(contactData.id ? 'تم تعديل الرقم بنجاح' : 'تم إضافة الرقم بنجاح');
+        saveContactMutation.mutate(contactData);
     };
 
     const confirmDelete = (id: number) => {
         if(window.confirm('هل أنت متأكد من حذف هذا الرقم؟')) {
-            handleDeleteEmergencyContact(id);
-            showToast('تم حذف الرقم بنجاح');
+            deleteContactMutation.mutate(id);
         }
     };
 
@@ -159,18 +182,20 @@ const EmergencyPage: React.FC = () => {
                     <TabButton active={activeTab === 'national'} onClick={() => setActiveTab('national')}>أرقام قومية</TabButton>
                 </div>
 
-                {displayedContacts.length > 0 ? (
-                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {displayedContacts.map((contact) => (
-                            <EmergencyCard key={contact.id} contact={contact} onEdit={handleEditClick} onDelete={confirmDelete} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                        <h3 className="text-xl font-semibold">لا توجد أرقام في هذا القسم</h3>
-                        <p className="mt-2">انقر على "إضافة رقم جديد" لإضافة أول رقم.</p>
-                    </div>
-                )}
+                <QueryStateWrapper queries={emergencyContactsQuery}>
+                    {displayedContacts.length > 0 ? (
+                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {displayedContacts.map((contact) => (
+                                <EmergencyCard key={contact.id} contact={contact} onEdit={handleEditClick} onDelete={confirmDelete} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                            <h3 className="text-xl font-semibold">لا توجد أرقام في هذا القسم</h3>
+                            <p className="mt-2">انقر على "إضافة رقم جديد" لإضافة أول رقم.</p>
+                        </div>
+                    )}
+                </QueryStateWrapper>
             </div>
             
             <Modal 

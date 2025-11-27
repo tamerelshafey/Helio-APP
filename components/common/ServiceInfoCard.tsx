@@ -4,10 +4,10 @@ import {
     ClockIcon, MapPinIcon, PhoneIcon, ShareIcon,
     FacebookIcon, InstagramIcon, WhatsappIcon
 } from './Icons';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 
 const ServiceInfoCard: React.FC<{ service: Service }> = ({ service }) => {
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
 
     const handleShare = async () => {
         const shareData = {

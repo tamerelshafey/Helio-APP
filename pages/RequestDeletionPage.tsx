@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, TrashIcon } from '../components/common/Icons';
-import { useUIContext } from '../context/UIContext';
+import { useStore } from '../store';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const RequestDeletionPage: React.FC = () => {
+    useDocumentTitle('طلب حذف الحساب | Helio');
     const navigate = useNavigate();
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const [email, setEmail] = useState('');
     const [reason, setReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);

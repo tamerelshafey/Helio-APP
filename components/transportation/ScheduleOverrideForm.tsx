@@ -1,29 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import type { ScheduleOverride, Driver, ScheduleDriver } from '../../types';
-import { useTransportationContext } from '../../context/TransportationContext';
 
 interface ScheduleOverrideFormProps {
     date: string;
     onSave: (override: ScheduleOverride) => void;
     onReset: (date: string) => void;
     onClose: () => void;
-    drivers: Driver[];
+    initialDrivers: ScheduleDriver[]; // Drivers already scheduled (from override or template)
+    allDrivers: Driver[]; // List of all possible drivers
 }
 
-const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({ date, onSave, onReset, onClose, drivers }) => {
-    const { transportation } = useTransportationContext();
+const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({ date, onSave, onReset, onClose, initialDrivers, allDrivers }) => {
     const [selectedDrivers, setSelectedDrivers] = useState<ScheduleDriver[]>([]);
     
     useEffect(() => {
-        const override = transportation.scheduleOverrides.find(o => o.date === date);
-        if (override) {
-            setSelectedDrivers(override.drivers);
-        } else {
-            const dayName = new Date(date).toLocaleString('ar-EG', { weekday: 'long' });
-            const templateDrivers = transportation.weeklySchedule.find(d => d.day === dayName)?.drivers || [];
-            setSelectedDrivers(templateDrivers);
-        }
-    }, [date, transportation]);
+        setSelectedDrivers(initialDrivers);
+    }, [initialDrivers]);
 
     const handleDriverToggle = (driver: Driver) => {
         setSelectedDrivers(prev => 
@@ -37,9 +29,9 @@ const ScheduleOverrideForm: React.FC<ScheduleOverrideFormProps> = ({ date, onSav
     
     return (
         <div className="space-y-4">
-            <p className="font-semibold">اختر السائقين المناوبين لهذا اليوم:</p>
+            <p className="font-semibold">اختر السائقين المناوبين لهذا اليوم ({date}):</p>
             <div className="max-h-60 overflow-y-auto space-y-2 p-2 bg-slate-100 dark:bg-slate-700 rounded-md">
-                {drivers.map(driver => (
+                {allDrivers.map(driver => (
                     <label key={driver.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 cursor-pointer">
                         <input
                             type="checkbox"

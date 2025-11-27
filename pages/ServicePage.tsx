@@ -6,14 +6,15 @@ import { getUsers } from '../api/usersApi';
 
 import { ArrowLeftIcon, PlusIcon, StarIcon, StarIconOutline, EyeIcon, PencilSquareIcon, TrashIcon, WrenchScrewdriverIcon, ArrowUpIcon, ArrowDownIcon } from '../components/common/Icons';
 import type { Service, Category, AppUser, SortDirection } from '../types';
-import { useUIContext } from '../context/UIContext';
-import { useHasPermission } from '../context/AuthContext';
+import { useStore } from '../store';
+import { useHasPermission } from '../hooks/usePermissions';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
 import Rating from '../components/common/Rating';
 import { InputField, TextareaField } from '../components/common/FormControls';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const ServiceForm: React.FC<{
     onSave: (service: Omit<Service, 'id' | 'rating' | 'reviews' | 'isFavorite' | 'views' | 'creationDate'> & { id?: number }) => void;
@@ -156,6 +157,7 @@ const ServiceForm: React.FC<{
 };
 
 const ServicePage: React.FC = () => {
+    useDocumentTitle('إدارة الخدمات | Helio');
     const navigate = useNavigate();
     const { subCategoryId: subCategoryIdStr } = useParams<{ subCategoryId: string }>();
     const subCategoryId = Number(subCategoryIdStr);
@@ -169,7 +171,7 @@ const ServicePage: React.FC = () => {
     const { data: categories = [] } = categoriesQuery;
     const { data: users = [] } = usersQuery;
     
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
 
     const [isModalOpen, setIsModalOpen] = useState(false);

@@ -5,7 +5,7 @@ import { getNews, getNotifications } from '../../api/contentApi';
 import KpiCard from '../common/KpiCard';
 import { NewspaperIcon, BellAlertIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon, ChartPieIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 
 const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDate, endDate }) => {
     const today = new Date();
@@ -25,7 +25,7 @@ const StatusBadge: React.FC<{ startDate: string, endDate: string }> = ({ startDa
 const NewsManagerDashboard: React.FC = () => {
     const { data: news = [] } = useQuery({ queryKey: ['news'], queryFn: getNews });
     const { data: notifications = [] } = useQuery({ queryKey: ['notifications'], queryFn: getNotifications });
-    const { isDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
 
     const stats = useMemo(() => {
         // News Stats

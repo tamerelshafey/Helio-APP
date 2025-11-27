@@ -1,6 +1,6 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 
 interface UserActivityData {
     name: string;
@@ -9,18 +9,18 @@ interface UserActivityData {
 }
 
 const UserActivityChart: React.FC<{ data: UserActivityData[] }> = ({ data }) => {
-  const { isDarkMode } = useUIContext();
+  const isDarkMode = useStore((state) => state.isDarkMode);
 
   const tooltipStyle = isDarkMode 
     ? { 
         backgroundColor: 'rgba(15, 23, 42, 0.9)', 
-        borderColor: '#334155',
+        borderColor: '#334155', 
         borderRadius: '0.5rem',
         color: '#fff'
       }
     : { 
         backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-        borderColor: '#e2e8f0',
+        borderColor: '#e2e8f0', 
         borderRadius: '0.5rem',
         color: '#0f172a'
       };

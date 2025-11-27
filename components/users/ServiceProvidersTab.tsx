@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUsers, setUserAccountType } from '../../api/usersApi';
 import { getServices } from '../../api/servicesApi';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import { ArrowTrendingDownIcon } from '../common/Icons';
 import { ServiceProviderTableSkeleton } from '../common/SkeletonLoader';
 import QueryStateWrapper from '../common/QueryStateWrapper';
 
 const ServiceProvidersTab: React.FC = () => {
     const queryClient = useQueryClient();
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const usersQuery = useQuery({ queryKey: ['users'], queryFn: getUsers });
     const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
     

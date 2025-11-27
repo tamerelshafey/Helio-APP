@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuthContext } from '../context/AuthContext';
+import { useStore } from '../store';
 import GeneralDashboard from '../components/dashboard/GeneralDashboard';
 import ServiceManagerDashboard from '../components/dashboard/ServiceManagerDashboard';
 import PropertyManagerDashboard from '../components/dashboard/PropertyManagerDashboard';
@@ -9,7 +9,7 @@ import CommunityManagerDashboard from '../components/dashboard/CommunityManagerD
 import { AdminRoles } from '../types';
 
 const DashboardPage: React.FC = () => {
-    const { currentUser } = useAuthContext();
+    const currentUser = useStore((state) => state.currentUser);
 
     if (!currentUser) {
         return <GeneralDashboard />; // Fallback or loading state

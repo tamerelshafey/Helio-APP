@@ -4,9 +4,10 @@ import { ArrowLeftIcon } from '../components/common/Icons';
 import type { Review } from '../types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getServices, updateReview, deleteReview, replyToReview } from '../api/servicesApi';
-import { useHasPermission } from '../context/AuthContext';
+import { useHasPermission } from '../hooks/usePermissions';
 import Modal from '../components/common/Modal';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 // Import refactored components
 import ReviewKpiSection from '../components/reviews/ReviewKpiSection';
@@ -15,6 +16,7 @@ import ReviewList from '../components/reviews/ReviewList';
 import { ReplyForm, EditReviewForm } from '../components/reviews/ReviewModals';
 
 const ReviewsPage: React.FC = () => {
+    useDocumentTitle('إدارة التقييمات | Helio');
     const navigate = useNavigate();
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const queryClient = useQueryClient();

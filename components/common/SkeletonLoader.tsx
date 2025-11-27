@@ -198,3 +198,19 @@ export const AdminTableSkeleton: React.FC<{ rows?: number }> = ({ rows = 3 }) =>
         </div>
     );
 };
+
+export const ChartSkeleton: React.FC = () => (
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg h-full flex flex-col">
+        <div className="flex items-center gap-2 mb-4">
+            <div className="w-6 h-6 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
+            <SkeletonLine height="h-6" width="w-48" />
+        </div>
+        <div className="flex-1 bg-slate-100 dark:bg-slate-700/50 rounded-lg animate-pulse relative overflow-hidden">
+             <div className="absolute bottom-0 left-0 w-full h-full flex items-end justify-around px-4 pb-4">
+                {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-12 bg-slate-200 dark:bg-slate-600 rounded-t-md" style={{ height: `${Math.random() * 60 + 20}%`}}></div>
+                ))}
+             </div>
+        </div>
+    </div>
+);

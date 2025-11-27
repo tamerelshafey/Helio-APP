@@ -1,14 +1,19 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getAuditLogs } from '../api/generalApi';
 import { ArrowLeftIcon, ClipboardDocumentListIcon, MagnifyingGlassIcon } from '../components/common/Icons';
-import { useAppContext } from '../context/AppContext';
 import Pagination from '../components/common/Pagination';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const ITEMS_PER_PAGE = 15;
 
 const AuditLogPage: React.FC = () => {
+    useDocumentTitle('سجل التدقيق | Helio');
     const navigate = useNavigate();
-    const { auditLogs } = useAppContext();
+    const logsQuery = useQuery({ queryKey: ['auditLogs'], queryFn: getAuditLogs });
+    const auditLogs = logsQuery.data || [];
 
     const [searchTerm, setSearchTerm] = useState('');
     const [actionFilter, setActionFilter] = useState('all');
@@ -82,45 +87,47 @@ const AuditLogPage: React.FC = () => {
                     </select>
                 </div>
 
-                {/* Log Table */}
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" className="px-6 py-3">التوقيت</th>
-                                <th scope="col" className="px-6 py-3">المستخدم</th>
-                                <th scope="col" className="px-6 py-3">الإجراء</th>
-                                <th scope="col" className="px-6 py-3">التفاصيل</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paginatedLogs.map(log => (
-                                <tr key={log.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                    <td className="px-6 py-4 font-mono whitespace-nowrap">{formatTimestamp(log.timestamp)}</td>
-                                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{log.user}</td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300">{log.action}</span>
-                                    </td>
-                                    <td className="px-6 py-4">{log.details}</td>
+                <QueryStateWrapper queries={logsQuery}>
+                    {/* Log Table */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
+                            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3">التوقيت</th>
+                                    <th scope="col" className="px-6 py-3">المستخدم</th>
+                                    <th scope="col" className="px-6 py-3">الإجراء</th>
+                                    <th scope="col" className="px-6 py-3">التفاصيل</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {filteredLogs.length === 0 && (
-                        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                            <h3 className="text-xl font-semibold">لا توجد سجلات تطابق بحثك</h3>
-                            <p className="mt-2">حاول تغيير الفلاتر أو قم ببعض التعديلات في لوحة التحكم.</p>
-                        </div>
-                    )}
-                </div>
+                            </thead>
+                            <tbody>
+                                {paginatedLogs.map(log => (
+                                    <tr key={log.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="px-6 py-4 font-mono whitespace-nowrap">{formatTimestamp(log.timestamp)}</td>
+                                        <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{log.user}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300">{log.action}</span>
+                                        </td>
+                                        <td className="px-6 py-4">{log.details}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {filteredLogs.length === 0 && (
+                            <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                                <h3 className="text-xl font-semibold">لا توجد سجلات تطابق بحثك</h3>
+                                <p className="mt-2">حاول تغيير الفلاتر أو قم ببعض التعديلات في لوحة التحكم.</p>
+                            </div>
+                        )}
+                    </div>
 
-                {filteredLogs.length > 0 && (
-                    <Pagination 
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                    />
-                )}
+                    {filteredLogs.length > 0 && (
+                        <Pagination 
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
+                </QueryStateWrapper>
             </div>
         </div>
     );

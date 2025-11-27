@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getAdmins } from '../api/usersApi';
-import { useAuthContext } from '../context/AuthContext';
-import { useUIContext } from '../context/UIContext';
+import { useStore } from '../store';
 import { KeyIcon, EnvelopeIcon } from '../components/common/Icons';
 import type { AdminUserRole } from '../types';
 import { AdminRoles } from '../types';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const LoginPage: React.FC = () => {
+    useDocumentTitle('تسجيل الدخول | Helio');
     const { data: admins = [], isLoading } = useQuery({ queryKey: ['admins'], queryFn: getAdmins });
-    const { login } = useAuthContext();
-    const { showToast } = useUIContext();
+    const login = useStore((state) => state.login);
+    const showToast = useStore((state) => state.showToast);
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');

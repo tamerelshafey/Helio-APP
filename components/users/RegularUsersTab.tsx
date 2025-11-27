@@ -2,10 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUsers, deleteUser, deleteUsers, setUserAccountType } from '../../api/usersApi';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import type { AppUser, UserStatus, SortDirection } from '../../types';
 import StatusBadge from '../common/StatusBadge';
-import TabButton from '../common/TabButton';
 import Pagination from '../common/Pagination';
 import {
     MagnifyingGlassIcon, UserPlusIcon, PencilSquareIcon, TrashIcon,
@@ -23,7 +22,7 @@ interface RegularUsersTabProps {
 
 const RegularUsersTab: React.FC<RegularUsersTabProps> = ({ onAdd, onEdit }) => {
     const queryClient = useQueryClient();
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const usersQuery = useQuery({ queryKey: ['users'], queryFn: getUsers });
     const { data: users = [] } = usersQuery;
 
@@ -188,7 +187,6 @@ const RegularUsersTab: React.FC<RegularUsersTabProps> = ({ onAdd, onEdit }) => {
                                                 className="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 dark:focus:ring-cyan-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                                 onChange={handleSelectAll}
                                                 checked={isAllSelected}
-                                                // FIX: ref callback should not return a value. Wrapped assignment in a block.
                                                 ref={el => {
                                                     if (el) {
                                                         el.indeterminate = isSomeSelected;

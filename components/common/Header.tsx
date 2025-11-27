@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuthContext } from '../../context/AuthContext';
-import { useUIContext } from '../../context/UIContext';
-import { SunIcon, MoonIcon, UserCircleIcon, ArrowRightOnRectangleIcon, MagnifyingGlassIcon, ArrowUturnLeftIcon } from './Icons';
+import { useStore } from '../../store';
+import { SunIcon, MoonIcon, ArrowRightOnRectangleIcon, MagnifyingGlassIcon, ArrowUturnLeftIcon } from './Icons';
 import GlobalSearchModal from './GlobalSearchModal';
+import useClickOutside from '../../hooks/useClickOutside';
 
 const Header: React.FC = () => {
-    const { currentUser, logout } = useAuthContext();
-    const { isDarkMode, toggleDarkMode } = useUIContext();
+    const currentUser = useStore((state) => state.currentUser);
+    const logout = useStore((state) => state.logout);
+    const isDarkMode = useStore((state) => state.isDarkMode);
+    const toggleDarkMode = useStore((state) => state.toggleDarkMode);
+    
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+    const userMenuRef = useRef<HTMLDivElement>(null);
+    useClickOutside(userMenuRef, () => setIsUserMenuOpen(false));
 
     return (
         <>
@@ -30,7 +36,7 @@ const Header: React.FC = () => {
                             {isDarkMode ? <SunIcon className="w-6 h-6"/> : <MoonIcon className="w-6 h-6"/>}
                         </button>
 
-                        <div className="relative">
+                        <div className="relative" ref={userMenuRef}>
                             <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="flex items-center space-x-2 rtl:space-x-reverse">
                                 <img className="h-10 w-10 rounded-full object-cover" src={currentUser?.avatar} alt={currentUser?.name} />
                                 <div className="hidden sm:block text-right">

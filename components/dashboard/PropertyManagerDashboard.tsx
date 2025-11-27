@@ -5,12 +5,12 @@ import { getProperties } from '../../api/propertiesApi';
 import KpiCard from '../common/KpiCard';
 import { HomeModernIcon, ChartPieIcon, EyeIcon, ArrowTrendingUpIcon, PlusIcon, ChartBarIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import Spinner from '../common/Spinner';
 
 const PropertyManagerDashboard: React.FC = () => {
     const { data: properties = [], isLoading } = useQuery({ queryKey: ['properties'], queryFn: getProperties });
-    const { isDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
 
     const stats = useMemo(() => {
         const thirtyDaysAgo = new Date();

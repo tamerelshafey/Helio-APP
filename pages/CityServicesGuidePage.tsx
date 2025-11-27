@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getServiceGuides, saveServiceGuide, deleteServiceGuide } from '../api/generalApi';
+import { useStore } from '../store';
 import { 
     ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, 
     ChevronDownIcon, DocumentDuplicateIcon 
 } from '../components/common/Icons';
 import type { ServiceGuide } from '../types';
-import { useAppContext } from '../context/AppContext';
 import Modal from '../components/common/Modal';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const GuideForm: React.FC<{
     onSave: (guide: Omit<ServiceGuide, 'id'> & { id?: number }) => void;
@@ -70,11 +74,36 @@ const GuideForm: React.FC<{
 
 
 const CityServicesGuidePage: React.FC = () => {
+    useDocumentTitle('دليل خدمات المدينة | Helio');
     const navigate = useNavigate();
-    const { serviceGuides, handleSaveServiceGuide, handleDeleteServiceGuide } = useAppContext();
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
+    
+    const guidesQuery = useQuery({ queryKey: ['serviceGuides'], queryFn: getServiceGuides });
+    const serviceGuides = guidesQuery.data || [];
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingGuide, setEditingGuide] = useState<ServiceGuide | null>(null);
     const [openGuideId, setOpenGuideId] = useState<number | null>(1);
+
+    const saveGuideMutation = useMutation({
+        mutationFn: saveServiceGuide,
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['serviceGuides'] });
+            setIsModalOpen(false);
+            showToast(data.id === editingGuide?.id ? 'تم تعديل الدليل بنجاح!' : 'تم إضافة الدليل بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const deleteGuideMutation = useMutation({
+        mutationFn: deleteServiceGuide,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['serviceGuides'] });
+            showToast('تم حذف الدليل بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
 
     const handleToggleGuide = (id: number) => {
         setOpenGuideId(openGuideId === id ? null : id);
@@ -90,6 +119,12 @@ const CityServicesGuidePage: React.FC = () => {
         setIsModalOpen(true);
     };
     
+    const handleDeleteClick = (id: number) => {
+        if(window.confirm('هل أنت متأكد من حذف هذا الدليل؟')) {
+            deleteGuideMutation.mutate(id);
+        }
+    };
+
     return (
         <div className="animate-fade-in">
              <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
@@ -109,36 +144,38 @@ const CityServicesGuidePage: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="space-y-4">
-                    {serviceGuides.map(guide => (
-                        <div key={guide.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-                            <button onClick={() => handleToggleGuide(guide.id)} className="w-full flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-right">
-                                <span className="font-semibold text-lg text-gray-800 dark:text-white">{guide.title}</span>
-                                <div className="flex items-center gap-2">
-                                     <button onClick={(e) => { e.stopPropagation(); handleEditClick(guide); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل الدليل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                     <button onClick={(e) => { e.stopPropagation(); handleDeleteServiceGuide(guide.id); }} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف الدليل"><TrashIcon className="w-5 h-5" /></button>
-                                    <ChevronDownIcon className={`w-6 h-6 transition-transform duration-300 ${openGuideId === guide.id ? 'rotate-180' : ''}`} />
-                                </div>
-                            </button>
-                            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${openGuideId === guide.id ? 'max-h-[1000px]' : 'max-h-0'}`}>
-                                <div className="p-6 bg-white dark:bg-slate-800 grid md:grid-cols-2 gap-8">
-                                    <div>
-                                        <h3 className="text-md font-bold mb-3 text-cyan-600 dark:text-cyan-400 border-b-2 border-cyan-500/30 pb-2">خطوات التقديم</h3>
-                                        <ul className="space-y-2 list-decimal list-inside text-gray-600 dark:text-gray-300">
-                                            {guide.steps.map((step, i) => <li key={i}>{step}</li>)}
-                                        </ul>
+                <QueryStateWrapper queries={guidesQuery}>
+                    <div className="space-y-4">
+                        {serviceGuides.map(guide => (
+                            <div key={guide.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                                <button onClick={() => handleToggleGuide(guide.id)} className="w-full flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-right">
+                                    <span className="font-semibold text-lg text-gray-800 dark:text-white">{guide.title}</span>
+                                    <div className="flex items-center gap-2">
+                                         <button onClick={(e) => { e.stopPropagation(); handleEditClick(guide); }} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل الدليل"><PencilSquareIcon className="w-5 h-5" /></button>
+                                         <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(guide.id); }} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف الدليل"><TrashIcon className="w-5 h-5" /></button>
+                                        <ChevronDownIcon className={`w-6 h-6 transition-transform duration-300 ${openGuideId === guide.id ? 'rotate-180' : ''}`} />
                                     </div>
-                                    <div>
-                                        <h3 className="text-md font-bold mb-3 text-cyan-600 dark:text-cyan-400 border-b-2 border-cyan-500/30 pb-2">الأوراق المطلوبة</h3>
-                                        <ul className="space-y-2 list-decimal list-inside text-gray-600 dark:text-gray-300">
-                                            {guide.documents.map((doc, i) => <li key={i}>{doc}</li>)}
-                                        </ul>
+                                </button>
+                                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${openGuideId === guide.id ? 'max-h-[1000px]' : 'max-h-0'}`}>
+                                    <div className="p-6 bg-white dark:bg-slate-800 grid md:grid-cols-2 gap-8">
+                                        <div>
+                                            <h3 className="text-md font-bold mb-3 text-cyan-600 dark:text-cyan-400 border-b-2 border-cyan-500/30 pb-2">خطوات التقديم</h3>
+                                            <ul className="space-y-2 list-decimal list-inside text-gray-600 dark:text-gray-300">
+                                                {guide.steps.map((step, i) => <li key={i}>{step}</li>)}
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-md font-bold mb-3 text-cyan-600 dark:text-cyan-400 border-b-2 border-cyan-500/30 pb-2">الأوراق المطلوبة</h3>
+                                            <ul className="space-y-2 list-decimal list-inside text-gray-600 dark:text-gray-300">
+                                                {guide.documents.map((doc, i) => <li key={i}>{doc}</li>)}
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                </QueryStateWrapper>
             </div>
 
             <Modal
@@ -147,7 +184,7 @@ const CityServicesGuidePage: React.FC = () => {
                 title={editingGuide ? 'تعديل الدليل' : 'إضافة دليل جديد'}
             >
                 <GuideForm 
-                    onSave={handleSaveServiceGuide}
+                    onSave={(data) => saveGuideMutation.mutate(data)}
                     onClose={() => setIsModalOpen(false)}
                     guide={editingGuide}
                 />

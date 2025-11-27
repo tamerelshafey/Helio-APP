@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { Service } from '../../types';
 import { EyeIcon } from '../common/Icons';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 
 const TopServicesChart: React.FC<{ services: Service[] }> = ({ services }) => {
-    const { isDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
 
     const topViewed = useMemo(() => 
         [...services]

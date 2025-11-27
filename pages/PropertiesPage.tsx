@@ -8,8 +8,8 @@ import {
     ShareIcon, ArrowUpIcon, ArrowDownIcon
 } from '../components/common/Icons';
 import type { Property, SortDirection } from '../types';
-import { useUIContext } from '../context/UIContext';
-import { useHasPermission } from '../context/AuthContext';
+import { useStore } from '../store';
+import { useHasPermission } from '../hooks/usePermissions';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
@@ -18,6 +18,7 @@ import { PropertyCardSkeleton } from '../components/common/SkeletonLoader';
 import Pagination from '../components/common/Pagination';
 import { PropertyStatusBadge } from '../components/common/StatusBadge';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -105,12 +106,13 @@ const PropertyForm: React.FC<{
 };
 
 const PropertiesPage: React.FC = () => {
+    useDocumentTitle('إدارة العقارات | Helio');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const propertiesQuery = useQuery({ queryKey: ['properties'], queryFn: getProperties });
     const { data: properties = [] } = propertiesQuery;
     
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const canManage = useHasPermission(['مسؤول العقارات']);
 
     const [isModalOpen, setIsModalOpen] = useState(false);

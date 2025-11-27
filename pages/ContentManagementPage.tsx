@@ -1,11 +1,14 @@
 import React, { useState, useCallback, ReactNode, useEffect } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { useUIContext } from '../context/UIContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getPublicContent, updatePublicContent } from '../api/generalApi';
+import { useStore } from '../store';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, HomeIcon, InformationCircleIcon, QuestionMarkCircleIcon, BookOpenIcon, PlusIcon, TrashIcon, ChevronDownIcon, ChevronUpIcon, PencilSquareIcon } from '../components/common/Icons';
 import type { HomePageContent, AboutPageContent, FaqPageContent, FaqCategory, FaqItem, PolicyPageContent, PolicySection, PublicPagesContent } from '../types';
 import { InputField, TextareaField } from '../components/common/FormControls';
 import RichTextEditor from '../components/common/RichTextEditor';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 // Reusable Components
 const SaveButton: React.FC<{ onClick: () => void; isSaving: boolean }> = ({ onClick, isSaving }) => (
@@ -18,7 +21,12 @@ const SaveButton: React.FC<{ onClick: () => void; isSaving: boolean }> = ({ onCl
 const HomePageForm: React.FC<{ content: HomePageContent; onSave: (data: HomePageContent) => void }> = ({ content, onSave }) => {
     const [data, setData] = useState(content);
     const [isSaving, setIsSaving] = useState(false);
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
+
+    // Update local state when content prop changes
+    useEffect(() => {
+        setData(content);
+    }, [content]);
 
     const handleChange = (field: keyof HomePageContent, value: string) => setData(prev => ({ ...prev, [field]: value }));
     const handleFeatureChange = (index: number, field: keyof typeof data.features[0], value: string) => {
@@ -66,8 +74,12 @@ const HomePageForm: React.FC<{ content: HomePageContent; onSave: (data: HomePage
 const AboutPageForm: React.FC<{ content: AboutPageContent; onSave: (data: AboutPageContent) => void }> = ({ content, onSave }) => {
     const [data, setData] = useState(content);
     const [isSaving, setIsSaving] = useState(false);
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     
+    useEffect(() => {
+        setData(content);
+    }, [content]);
+
     const handleSaveClick = () => {
         setIsSaving(true);
         onSave(data);
@@ -94,7 +106,11 @@ const AboutPageForm: React.FC<{ content: AboutPageContent; onSave: (data: AboutP
 const FaqPageForm: React.FC<{ content: FaqPageContent; onSave: (data: FaqPageContent) => void }> = ({ content, onSave }) => {
     const [data, setData] = useState(content);
     const [isSaving, setIsSaving] = useState(false);
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
+
+    useEffect(() => {
+        setData(content);
+    }, [content]);
 
     const handleCategoryChange = (catIndex: number, value: string) => {
         const newData = { ...data };
@@ -162,7 +178,11 @@ const FaqPageForm: React.FC<{ content: FaqPageContent; onSave: (data: FaqPageCon
 const PolicyPageForm: React.FC<{ content: PolicyPageContent; onSave: (data: PolicyPageContent) => void }> = ({ content, onSave }) => {
     const [data, setData] = useState(content);
     const [isSaving, setIsSaving] = useState(false);
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
+
+    useEffect(() => {
+        setData(content);
+    }, [content]);
 
     const handleSectionChange = (secIndex: number, field: 'title' | 'content', value: string) => {
         const newData = { ...data };
@@ -218,73 +238,14 @@ const PolicyPageForm: React.FC<{ content: PolicyPageContent; onSave: (data: Poli
 type Tab = 'home' | 'about' | 'faq' | 'privacy' | 'terms';
 
 const ContentManagementPage: React.FC = () => {
+    useDocumentTitle('إدارة المحتوى | Helio');
     const navigate = useNavigate();
-    const { publicPagesContent, handleUpdatePublicPageContent } = useAppContext();
+    const queryClient = useQueryClient();
     const [activeTab, setActiveTab] = useState<Tab>('home');
-    const [data, setData] = useState(publicPagesContent);
+    
+    const { data: publicPagesContent } = useQuery({ 
+        queryKey: ['publicContent'], 
+        queryFn: getPublicContent 
+    });
 
-    useEffect(() => {
-        setData(publicPagesContent);
-    }, [publicPagesContent]);
-
-    const handleSave = useCallback(<K extends keyof PublicPagesContent>(page: K, newContent: PublicPagesContent[K]) => {
-        handleUpdatePublicPageContent(page, newContent);
-    }, [handleUpdatePublicPageContent]);
-
-
-    const renderContent = () => {
-        switch (activeTab) {
-            case 'home':
-                return <HomePageForm content={data.home} onSave={(d) => handleSave('home', d)} />;
-            case 'about':
-                return <AboutPageForm content={data.about} onSave={(d) => handleSave('about', d)} />;
-            case 'faq':
-                return <FaqPageForm content={data.faq} onSave={(d) => handleSave('faq', d)} />;
-            case 'privacy':
-                return <PolicyPageForm content={data.privacy} onSave={(d) => handleSave('privacy', d)} />;
-            case 'terms':
-                return <PolicyPageForm content={data.terms} onSave={(d) => handleSave('terms', d)} />;
-            default:
-                return null;
-        }
-    };
-
-    const TabButton: React.FC<{ tab: Tab; label: string; icon: ReactNode }> = ({ tab, label, icon }) => (
-        <button onClick={() => setActiveTab(tab)} className={`flex items-center gap-3 px-4 py-3 text-right rounded-lg transition-colors w-full ${activeTab === tab ? 'bg-cyan-500 text-white shadow' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
-            {icon}
-            <span className="font-semibold">{label}</span>
-        </button>
-    );
-
-    return (
-        <div className="animate-fade-in">
-            <button onClick={() => navigate(-1)} className="flex items-center space-x-2 rtl:space-x-reverse text-cyan-500 dark:text-cyan-400 hover:underline mb-6">
-                <ArrowLeftIcon className="w-5 h-5" />
-                <span>العودة</span>
-            </button>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8 flex items-center gap-3">
-                <PencilSquareIcon className="w-8 h-8"/>
-                إدارة محتوى الموقع العام
-            </h1>
-            
-            <div className="flex flex-col lg:flex-row gap-8">
-                <div className="lg:w-1/4">
-                    <div className="space-y-2">
-                        <TabButton tab="home" label="الصفحة الرئيسية" icon={<HomeIcon className="w-6 h-6" />} />
-                        <TabButton tab="about" label="حول التطبيق" icon={<InformationCircleIcon className="w-6 h-6" />} />
-                        <TabButton tab="faq" label="الأسئلة الشائعة" icon={<QuestionMarkCircleIcon className="w-6 h-6" />} />
-                        <TabButton tab="privacy" label="سياسة الخصوصية" icon={<BookOpenIcon className="w-6 h-6" />} />
-                        <TabButton tab="terms" label="شروط الاستخدام" icon={<BookOpenIcon className="w-6 h-6" />} />
-                    </div>
-                </div>
-                <div className="lg:w-3/4">
-                    <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg min-h-[300px]">
-                        {renderContent()}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-export default ContentManagementPage;
+    const updateContentMutation = use

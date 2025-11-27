@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAdmins, deleteAdmin } from '../../api/usersApi';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import type { AdminUser } from '../../types';
 import { UserPlusIcon, PencilSquareIcon, TrashIcon } from '../common/Icons';
 import { AdminTableSkeleton } from '../common/SkeletonLoader';
@@ -14,7 +14,7 @@ interface AdminUsersTabProps {
 
 const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ onAdd, onEdit }) => {
     const queryClient = useQueryClient();
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const adminsQuery = useQuery({ queryKey: ['admins'], queryFn: getAdmins });
     const { data: admins = [] } = adminsQuery;
 

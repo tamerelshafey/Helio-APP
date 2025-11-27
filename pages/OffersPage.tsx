@@ -6,12 +6,12 @@ import {
     MagnifyingGlassIcon
 } from '../components/common/Icons';
 import type { Offer, OfferCode, AppUser, Service } from '../types';
-import { useOffersContext } from '../context/OffersContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getOffers, saveOffer, deleteOffer, getOfferCodes, generateOfferCode, deleteOfferCode, toggleCodeRedemption } from '../api/offersApi';
 import { getServices } from '../api/servicesApi';
 import { getUsers } from '../api/usersApi';
-import { useUIContext } from '../context/UIContext';
-import { useHasPermission } from '../context/AuthContext';
+import { useStore } from '../store';
+import { useHasPermission } from '../hooks/usePermissions';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
@@ -19,6 +19,7 @@ import { ContentStatusBadge } from '../components/common/StatusBadge';
 import { InputField, TextareaField } from '../components/common/FormControls';
 import Pagination from '../components/common/Pagination';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -92,8 +93,22 @@ const CodesModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
 }> = ({ offer, isOpen, onClose }) => {
-    const { offerCodes, handleDeleteCode, handleToggleCodeRedemption } = useOffersContext();
-    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
+    
+    const offerCodesQuery = useQuery({ queryKey: ['offerCodes'], queryFn: getOfferCodes, enabled: isOpen });
+    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers, enabled: isOpen });
+    const offerCodes = offerCodesQuery.data || [];
+
+    const deleteCodeMutation = useMutation({
+        mutationFn: deleteOfferCode,
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['offerCodes'] }); showToast('تم حذف الكود.'); }
+    });
+
+    const toggleRedemptionMutation = useMutation({
+        mutationFn: toggleCodeRedemption,
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['offerCodes'] }); }
+    });
     
     if (!isOpen || !offer) return null;
 
@@ -109,25 +124,27 @@ const CodesModal: React.FC<{
                 <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">الأكواد الصادرة ({codesForOffer.length})</h3>
 
                 <div className="max-h-72 overflow-y-auto space-y-2 p-1 border-t border-slate-200 dark:border-slate-700 pt-2">
-                    {codesForOffer.length > 0 ? codesForOffer.map(code => (
-                        <div key={code.id} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-900/50 rounded-md">
-                            <div>
-                                <p className="font-mono font-bold text-base">{code.code}</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">للمستخدم: {users.find(u=>u.id === code.userId)?.name || 'غير معروف'} | تاريخ الإصدار: {code.issueDate}</p>
-                                <p className={`text-xs font-semibold ${code.isRedeemed ? 'text-red-500' : 'text-green-500'}`}>{code.isRedeemed ? 'تم الاستخدام' : 'لم يستخدم'}</p>
+                    <QueryStateWrapper queries={[offerCodesQuery]}>
+                        {codesForOffer.length > 0 ? codesForOffer.map(code => (
+                            <div key={code.id} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-900/50 rounded-md">
+                                <div>
+                                    <p className="font-mono font-bold text-base">{code.code}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">للمستخدم: {users.find(u=>u.id === code.userId)?.name || 'غير معروف'} | تاريخ الإصدار: {code.issueDate}</p>
+                                    <p className={`text-xs font-semibold ${code.isRedeemed ? 'text-red-500' : 'text-green-500'}`}>{code.isRedeemed ? 'تم الاستخدام' : 'لم يستخدم'}</p>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <button onClick={() => toggleRedemptionMutation.mutate(code.id)} title={code.isRedeemed ? 'إلغاء الاستخدام' : 'تحديد كـ "مستخدم"'} className={`p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 ${code.isRedeemed ? 'text-orange-500' : 'text-green-500'}`}>
+                                        {code.isRedeemed ? <XCircleIcon className="w-5 h-5"/> : <CheckCircleIcon className="w-5 h-5"/>}
+                                    </button>
+                                    <button onClick={() => deleteCodeMutation.mutate(code.id)} className="p-2 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon className="w-5 h-5"/></button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                                <button onClick={() => handleToggleCodeRedemption(code.id)} title={code.isRedeemed ? 'إلغاء الاستخدام' : 'تحديد كـ "مستخدم"'} className={`p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 ${code.isRedeemed ? 'text-orange-500' : 'text-green-500'}`}>
-                                    {code.isRedeemed ? <XCircleIcon className="w-5 h-5"/> : <CheckCircleIcon className="w-5 h-5"/>}
-                                </button>
-                                <button onClick={() => handleDeleteCode(code.id)} className="p-2 text-red-500 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50"><TrashIcon className="w-5 h-5"/></button>
+                        )) : (
+                            <div className="text-center py-8">
+                                <p className="text-sm text-gray-500">لم يطلب أي مستخدم كوداً لهذا العرض بعد.</p>
                             </div>
-                        </div>
-                    )) : (
-                        <div className="text-center py-8">
-                             <p className="text-sm text-gray-500">لم يطلب أي مستخدم كوداً لهذا العرض بعد.</p>
-                        </div>
-                    )}
+                        )}
+                    </QueryStateWrapper>
                 </div>
             </div>
         </Modal>
@@ -136,16 +153,19 @@ const CodesModal: React.FC<{
 
 
 const OffersPage: React.FC = () => {
+    useDocumentTitle('إدارة العروض | Helio');
     const navigate = useNavigate();
-    const { offers, handleSaveOffer, handleDeleteOffer } = useOffersContext();
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
+    const canManage = useHasPermission(['مسؤول المحتوى', 'مدير عام', 'مسؤول ادارة الخدمات']);
+
+    const offersQuery = useQuery({ queryKey: ['offers'], queryFn: getOffers });
     const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
     const usersQuery = useQuery({ queryKey: ['users'], queryFn: getUsers });
 
-    const { data: services = [] } = servicesQuery;
-    const { data: users = [] } = usersQuery;
-
-    const { showToast } = useUIContext();
-    const canManage = useHasPermission(['مسؤول المحتوى', 'مدير عام', 'مسؤول ادارة الخدمات']);
+    const offers = offersQuery.data || [];
+    const services = servicesQuery.data || [];
+    const users = usersQuery.data || [];
 
     const [isFormModalOpen, setFormModalOpen] = useState(false);
     const [isCodesModalOpen, setCodesModalOpen] = useState(false);
@@ -153,6 +173,25 @@ const OffersPage: React.FC = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+
+    const saveOfferMutation = useMutation({
+        mutationFn: saveOffer,
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['offers'] });
+            setFormModalOpen(false);
+            showToast(data.id === selectedOffer?.id ? 'تم تعديل العرض بنجاح!' : 'تم إضافة العرض بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const deleteOfferMutation = useMutation({
+        mutationFn: deleteOffer,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['offers'] });
+            showToast('تم حذف العرض بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
 
     const serviceProviders = useMemo(() => users.filter(u => u.accountType === 'service_provider'), [users]);
     const offersWithDetails = useMemo(() => offers.map(offer => ({
@@ -182,15 +221,12 @@ const OffersPage: React.FC = () => {
     const handleViewCodesClick = (offer: Offer) => { setSelectedOffer(offer); setCodesModalOpen(true); };
 
     const handleSaveAndClose = (data: Omit<Offer, 'id'> & { id?: number }) => {
-        handleSaveOffer(data);
-        setFormModalOpen(false);
-        showToast(data.id ? 'تم تعديل العرض بنجاح!' : 'تم إضافة العرض بنجاح!');
+        saveOfferMutation.mutate(data);
     };
     
     const confirmDelete = (id: number) => {
         if (window.confirm('هل أنت متأكد من حذف هذا العرض وجميع أكواده؟')) {
-            handleDeleteOffer(id);
-            showToast('تم حذف العرض بنجاح!');
+            deleteOfferMutation.mutate(id);
         }
     };
 
@@ -215,61 +251,53 @@ const OffersPage: React.FC = () => {
                         />
                     </div>
                 </div>
-                
-                <QueryStateWrapper queries={[servicesQuery, usersQuery]}>
-                    <div className="overflow-x-auto">
-                        {filteredOffers.length > 0 ? (
-                            <>
-                            <table className="w-full text-sm text-right text-gray-500 dark:text-gray-400">
-                                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-slate-700 dark:text-gray-400">
-                                    <tr>
-                                        <th scope="col" className="px-6 py-3">العرض</th>
-                                        <th scope="col" className="px-6 py-3">مقدم الخدمة (صاحب العرض)</th>
-                                        <th scope="col" className="px-6 py-3">الحالة</th>
-                                        <th scope="col" className="px-6 py-3">فترة الصلاحية</th>
-                                        {canManage && <th scope="col" className="px-6 py-3">إجراءات</th>}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedOffers.map(offer => (
-                                        <tr key={offer.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                            <td className="px-6 py-4">
-                                                <p className="font-semibold text-gray-900 dark:text-white">{offer.title}</p>
-                                                <p className="text-xs text-gray-500">للخدمة: {offer.serviceName}</p>
-                                            </td>
-                                            <td className="px-6 py-4">{offer.providerName}</td>
-                                            <td className="px-6 py-4"><ContentStatusBadge startDate={offer.startDate} endDate={offer.endDate} /></td>
-                                            <td className="px-6 py-4 text-xs font-mono">{offer.startDate} <br/> {offer.endDate}</td>
-                                            {canManage && (
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <button onClick={() => handleViewCodesClick(offer)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-900/50 rounded-md" title="متابعة الأكواد"><KeyIcon className="w-5 h-5" /></button>
-                                                        <button onClick={() => handleEditClick(offer)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md" title="تعديل"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                        <button onClick={() => confirmDelete(offer.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md" title="حذف"><TrashIcon className="w-5 h-5" /></button>
-                                                    </div>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-                            </>
-                        ) : (
-                        <EmptyState icon={<TagIcon className="w-16 h-16 text-slate-400" />} title="لا توجد عروض حالياً" message="أضف عرضاً جديداً لجذب المزيد من المستخدمين.">
-                            {canManage && <button onClick={handleAddClick} className="flex items-center justify-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600"><PlusIcon className="w-5 h-5" /><span>إضافة عرض جديد</span></button>}
-                        </EmptyState>
-                        )}
+
+                <QueryStateWrapper queries={[offersQuery, servicesQuery, usersQuery]}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {paginatedOffers.map(offer => (
+                            <div key={offer.id} className="bg-slate-50 dark:bg-slate-900/50 rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
+                                <div className="relative h-48">
+                                    <img src={offer.imageUrl} alt={offer.title} className="w-full h-full object-cover" />
+                                    <div className="absolute top-2 right-2">
+                                        <ContentStatusBadge startDate={offer.startDate} endDate={offer.endDate} />
+                                    </div>
+                                </div>
+                                <div className="p-4 flex-grow flex flex-col">
+                                    <h3 className="font-bold text-lg text-gray-800 dark:text-white mb-1">{offer.title}</h3>
+                                    <p className="text-sm text-cyan-600 dark:text-cyan-400 font-semibold mb-2">{offer.serviceName}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{offer.description}</p>
+                                    
+                                    <div className="mt-auto pt-3 border-t border-slate-200 dark:border-slate-700 text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                                        <p className="flex justify-between"><span>مقدم الخدمة:</span> <span className="font-medium">{offer.providerName}</span></p>
+                                        <p className="flex justify-between"><span>الصلاحية:</span> <span className="font-mono">{offer.endDate}</span></p>
+                                    </div>
+                                </div>
+                                {canManage && (
+                                    <div className="p-3 bg-slate-100 dark:bg-slate-800 flex justify-between items-center gap-2">
+                                        <button onClick={() => handleViewCodesClick(offer)} className="flex-1 flex items-center justify-center gap-1 bg-white dark:bg-slate-700 py-2 rounded-md text-sm font-semibold hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors shadow-sm">
+                                            <KeyIcon className="w-4 h-4"/> الأكواد
+                                        </button>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleEditClick(offer)} className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-md"><PencilSquareIcon className="w-5 h-5"/></button>
+                                            <button onClick={() => confirmDelete(offer.id)} className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-md"><TrashIcon className="w-5 h-5"/></button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </div>
+                    {paginatedOffers.length === 0 && (
+                        <EmptyState icon={<TagIcon className="w-16 h-16 text-slate-400"/>} title="لا توجد عروض" message="لم يتم العثور على عروض مطابقة للبحث." />
+                    )}
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </QueryStateWrapper>
             </div>
-            
+
             <Modal isOpen={isFormModalOpen} onClose={() => setFormModalOpen(false)} title={selectedOffer ? 'تعديل العرض' : 'إضافة عرض جديد'}>
                 <OfferForm offer={selectedOffer} onSave={handleSaveAndClose} onClose={() => setFormModalOpen(false)} services={services} serviceProviders={serviceProviders} />
             </Modal>
 
-            <CodesModal offer={selectedOffer} isOpen={isCodesModalOpen} onClose={() => { setCodesModalOpen(false); setSelectedOffer(null); }} />
-
+            <CodesModal isOpen={isCodesModalOpen} onClose={() => setCodesModalOpen(false)} offer={selectedOffer} />
         </div>
     );
 };

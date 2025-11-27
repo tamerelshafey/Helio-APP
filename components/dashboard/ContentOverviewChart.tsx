@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ChartPieIcon } from '../common/Icons';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 
 interface ContentOverviewChartProps {
     stats: {
@@ -15,7 +15,7 @@ interface ContentOverviewChartProps {
 const COLORS = ['#06b6d4', '#f59e0b', '#8b5cf6', '#ec4899'];
 
 const ContentOverviewChart: React.FC<ContentOverviewChartProps> = ({ stats }) => {
-    const { isDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
 
     const data = [
         { name: 'الخدمات', value: stats.services.total },

@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { LostAndFoundItem, LostFoundStatus } from '../../types';
-import { useAppContext } from '../../context/AppContext';
-import { useUIContext } from '../../context/UIContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getLostAndFoundItems, saveLostAndFoundItem, deleteLostAndFoundItem } from '../../api/communityApi';
+import { useStore } from '../../store';
 import KpiCard from '../common/KpiCard';
 import Modal from '../common/Modal';
 import TabButton from '../common/TabButton';
@@ -9,10 +10,10 @@ import EmptyState from '../common/EmptyState';
 import ImageUploader from '../common/ImageUploader';
 import { ArchiveBoxIcon, PlusIcon, PencilSquareIcon, TrashIcon, CheckCircleIcon } from '../common/Icons';
 import StatusBadge from '../common/StatusBadge';
+import QueryStateWrapper from '../common/QueryStateWrapper';
 
 const LostFoundForm: React.FC<{
     item: LostAndFoundItem | null;
-    // FIX: Update onSave prop to match the expected type from AppContext, excluding moderationStatus.
     onSave: (data: Omit<LostAndFoundItem, 'id' | 'moderationStatus'> & { id?: number }) => void;
     onClose: () => void;
 }> = ({ item, onSave, onClose }) => {
@@ -67,11 +68,33 @@ const LostFoundForm: React.FC<{
 };
 
 const LostAndFoundTab: React.FC = () => {
-    const { lostAndFoundItems, handleSaveLostAndFoundItem, handleDeleteLostAndFoundItem } = useAppContext();
-    const { showToast } = useUIContext();
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
+    
+    const itemsQuery = useQuery({ queryKey: ['lostAndFound'], queryFn: getLostAndFoundItems });
+    const lostAndFoundItems = itemsQuery.data || [];
+
     const [activeSubTab, setActiveSubTab] = useState<LostFoundStatus>('lost');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<LostAndFoundItem | null>(null);
+
+    const saveItemMutation = useMutation({
+        mutationFn: saveLostAndFoundItem,
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['lostAndFound'] });
+            setIsModalOpen(false);
+            showToast(editingItem ? 'تم تعديل العنصر بنجاح!' : 'تم إضافة العنصر، وهو الآن بانتظار المراجعة.');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const deleteItemMutation = useMutation({
+        mutationFn: deleteLostAndFoundItem,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['lostAndFound'] });
+            showToast('تم حذف العنصر!');
+        }
+    });
 
     const approvedItems = useMemo(() => lostAndFoundItems.filter(item => item.moderationStatus === 'approved'), [lostAndFoundItems]);
 
@@ -85,17 +108,17 @@ const LostAndFoundTab: React.FC = () => {
 
     const handleAddItem = () => { setEditingItem(null); setIsModalOpen(true); };
     const handleEditItem = (item: LostAndFoundItem) => { setEditingItem(item); setIsModalOpen(true); };
-    // FIX: Align handler signature with the onSave prop and context function.
+    
     const handleSaveAndClose = (itemData: Omit<LostAndFoundItem, 'id' | 'moderationStatus'> & { id?: number }) => { 
-        handleSaveLostAndFoundItem(itemData); 
-        setIsModalOpen(false); 
-        showToast(itemData.id ? 'تم تعديل العنصر بنجاح!' : 'تم إضافة العنصر، وهو الآن بانتظار المراجعة.'); 
+        saveItemMutation.mutate(itemData);
     };
-    const confirmDelete = (id: number) => { if (window.confirm('هل أنت متأكد من حذف هذا العنصر؟')) { handleDeleteLostAndFoundItem(id); showToast('تم حذف العنصر!'); } };
-    // FIX: Destructure moderationStatus out of the item before saving to match the expected type.
+    
+    const confirmDelete = (id: number) => { if (window.confirm('هل أنت متأكد من حذف هذا العنصر؟')) { deleteItemMutation.mutate(id); } };
+    
     const markAsReturned = (item: LostAndFoundItem) => { 
-        const { moderationStatus, ...itemData } = item;
-        handleSaveLostAndFoundItem({ ...itemData, status: 'returned' }); 
+        // We need to keep moderation status as is, just update status to returned
+        const { id, moderationStatus, ...rest } = item;
+        saveItemMutation.mutate({ id, ...rest, status: 'returned' });
         showToast(`تم تحديث حالة "${item.itemName}" إلى "تم التسليم".`); 
     };
 
@@ -120,21 +143,23 @@ const LostAndFoundTab: React.FC = () => {
     );
 
     return (
-        <div className="animate-fade-in space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><KpiCard title="عناصر مفقودة" value={stats.lost.toString()} icon={<ArchiveBoxIcon className="w-8 h-8 text-red-400" />} /><KpiCard title="تم العثور عليها" value={stats.found.toString()} icon={<ArchiveBoxIcon className="w-8 h-8 text-yellow-400" />} /><KpiCard title="تم تسليمها" value={stats.returned.toString()} icon={<ArchiveBoxIcon className="w-8 h-8 text-green-400" />} /></div>
-            <div className="flex justify-between items-center">
-                <div className="flex flex-wrap gap-2"><TabButton active={activeSubTab === 'lost'} onClick={() => setActiveSubTab('lost')}>مفقود ({stats.lost})</TabButton><TabButton active={activeSubTab === 'found'} onClick={() => setActiveSubTab('found')}>تم العثور عليه ({stats.found})</TabButton><TabButton active={activeSubTab === 'returned'} onClick={() => setActiveSubTab('returned')}>تم التسليم</TabButton></div>
-                <button onClick={handleAddItem} className="flex items-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600"><PlusIcon className="w-5 h-5" /> إضافة عنصر</button>
-            </div>
-             {filteredItems.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredItems.map(item => <ItemCard key={item.id} item={item} />)}
+        <QueryStateWrapper queries={itemsQuery}>
+            <div className="animate-fade-in space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6"><KpiCard title="عناصر مفقودة" value={stats.lost.toString()} icon={<ArchiveBoxIcon className="w-8 h-8 text-red-400" />} /><KpiCard title="تم العثور عليها" value={stats.found.toString()} icon={<ArchiveBoxIcon className="w-8 h-8 text-yellow-400" />} /><KpiCard title="تم تسليمها" value={stats.returned.toString()} icon={<ArchiveBoxIcon className="w-8 h-8 text-green-400" />} /></div>
+                <div className="flex justify-between items-center">
+                    <div className="flex flex-wrap gap-2"><TabButton active={activeSubTab === 'lost'} onClick={() => setActiveSubTab('lost')}>مفقود ({stats.lost})</TabButton><TabButton active={activeSubTab === 'found'} onClick={() => setActiveSubTab('found')}>تم العثور عليه ({stats.found})</TabButton><TabButton active={activeSubTab === 'returned'} onClick={() => setActiveSubTab('returned')}>تم التسليم</TabButton></div>
+                    <button onClick={handleAddItem} className="flex items-center gap-2 bg-cyan-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-cyan-600"><PlusIcon className="w-5 h-5" /> إضافة عنصر</button>
                 </div>
-            ) : <EmptyState icon={<ArchiveBoxIcon className="w-16 h-16 text-slate-400" />} title="لا توجد عناصر" message="لا توجد عناصر لعرضها في هذا القسم حالياً."/>}
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingItem ? 'تعديل العنصر' : 'إضافة عنصر جديد'}>
-                <LostFoundForm item={editingItem} onSave={handleSaveAndClose} onClose={() => setIsModalOpen(false)} />
-            </Modal>
-        </div>
+                 {filteredItems.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredItems.map(item => <ItemCard key={item.id} item={item} />)}
+                    </div>
+                ) : <EmptyState icon={<ArchiveBoxIcon className="w-16 h-16 text-slate-400" />} title="لا توجد عناصر" message="لا توجد عناصر لعرضها في هذا القسم حالياً."/>}
+                <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingItem ? 'تعديل العنصر' : 'إضافة عنصر جديد'}>
+                    <LostFoundForm item={editingItem} onSave={handleSaveAndClose} onClose={() => setIsModalOpen(false)} />
+                </Modal>
+            </div>
+        </QueryStateWrapper>
     );
 };
 

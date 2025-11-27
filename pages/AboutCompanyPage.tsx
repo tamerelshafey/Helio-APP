@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, BuildingOffice2Icon } from '../components/common/Icons';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const AboutCompanyPage: React.FC = () => {
+    useDocumentTitle('عن الشركة | Helio');
     const navigate = useNavigate();
 
     return (

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { WeeklyScheduleItem, Driver, ScheduleDriver } from '../../types';
-import { useTransportationContext } from '../../context/TransportationContext';
 
 interface WeeklyTemplateFormProps {
+    initialSchedule: WeeklyScheduleItem[];
     onSave: (schedule: WeeklyScheduleItem[]) => void;
     onClose: () => void;
     drivers: Driver[];
@@ -44,9 +44,12 @@ const DayScheduleEditor: React.FC<{
 };
 
 
-const WeeklyTemplateForm: React.FC<WeeklyTemplateFormProps> = ({ onSave, onClose, drivers }) => {
-    const { transportation } = useTransportationContext();
-    const [schedule, setSchedule] = useState<WeeklyScheduleItem[]>(transportation.weeklySchedule);
+const WeeklyTemplateForm: React.FC<WeeklyTemplateFormProps> = ({ initialSchedule, onSave, onClose, drivers }) => {
+    const [schedule, setSchedule] = useState<WeeklyScheduleItem[]>([]);
+
+    useEffect(() => {
+        setSchedule(initialSchedule);
+    }, [initialSchedule]);
 
     const handleDayChange = (day: string, selectedDrivers: ScheduleDriver[]) => {
         setSchedule(prev => {
@@ -56,7 +59,6 @@ const WeeklyTemplateForm: React.FC<WeeklyTemplateFormProps> = ({ onSave, onClose
                 newSchedule[dayIndex] = { ...newSchedule[dayIndex], drivers: selectedDrivers };
                 return newSchedule;
             }
-            // Should not happen if initialized correctly
             return [...prev, { day, drivers: selectedDrivers }];
         });
     };

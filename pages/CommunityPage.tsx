@@ -1,9 +1,13 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getSaleItems, getJobs } from '../api/marketplaceApi';
+import { getLostAndFoundItems } from '../api/communityApi';
 import {
     ChatBubbleOvalLeftIcon, TagIcon, BriefcaseIcon, ArchiveBoxIcon, ChatBubbleBottomCenterTextIcon,
     ClipboardDocumentCheckIcon
 } from '../components/common/Icons';
 import TabButton from '../components/common/TabButton';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 // Import tab components
 import CirclesTab from '../components/community/CirclesTab';
@@ -12,15 +16,17 @@ import BuySellTab from '../components/community/BuySellTab';
 import JobsTab from '../components/community/JobsTab';
 import LostAndFoundTab from '../components/community/LostAndFoundTab';
 import ReviewQueueTab from '../components/community/ReviewQueueTab';
-import { useMarketplaceContext } from '../context/MarketplaceContext';
-import { useAppContext } from '../context/AppContext';
 
 type CommunityTab = 'circles' | 'posts' | 'buy-sell' | 'jobs' | 'lost-found' | 'review-queue';
 
 const CommunityPage: React.FC = () => {
+    useDocumentTitle('إدارة المجتمع | Helio');
     const [activeTab, setActiveTab] = useState<CommunityTab>('review-queue');
-    const { forSaleItems, jobs } = useMarketplaceContext();
-    const { lostAndFoundItems } = useAppContext();
+    
+    // Fetch data for counters
+    const { data: forSaleItems = [] } = useQuery({ queryKey: ['saleItems'], queryFn: getSaleItems });
+    const { data: jobs = [] } = useQuery({ queryKey: ['jobs'], queryFn: getJobs });
+    const { data: lostAndFoundItems = [] } = useQuery({ queryKey: ['lostAndFound'], queryFn: getLostAndFoundItems });
 
     const reviewQueueCount = useMemo(() => {
         const pendingSale = forSaleItems.filter(i => i.status === 'pending').length;

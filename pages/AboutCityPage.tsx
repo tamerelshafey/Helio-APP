@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, BuildingLibraryIcon } from '../components/common/Icons';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const AboutCityPage: React.FC = () => {
+    useDocumentTitle('عن المدينة | Helio');
     const navigate = useNavigate();
 
     return (

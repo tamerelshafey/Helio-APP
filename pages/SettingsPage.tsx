@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAppLinks, updateAppLinks } from '../api/generalApi';
 import { ArrowLeftIcon, BellIcon, UserCircleIcon, SunIcon, Cog6ToothIcon, CubeIcon } from '../components/common/Icons';
-import { useUIContext } from '../context/UIContext';
-import { useAppContext } from '../context/AppContext';
+import { useStore } from '../store';
+import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 type Tab = 'general' | 'notifications' | 'account' | 'appearance' | 'app-links';
 
 const SettingsPage: React.FC = () => {
+    useDocumentTitle('الإعدادات | Helio');
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<Tab>('general');
 
@@ -109,58 +113,76 @@ const GeneralSettings = () => (
 );
 
 const AppLinksSettings: React.FC = () => {
-    const { googlePlayUrl, appleAppStoreUrl, handleUpdateAppLinks } = useAppContext();
-    const { showToast } = useUIContext();
-    const [links, setLinks] = useState({ googlePlayUrl, appleAppStoreUrl });
-    const [isSaving, setIsSaving] = useState(false);
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
+    
+    const { data: links, isLoading } = useQuery({ 
+        queryKey: ['appLinks'], 
+        queryFn: getAppLinks 
+    });
+
+    const updateLinksMutation = useMutation({
+        mutationFn: updateAppLinks,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['appLinks'] });
+            showToast('تم حفظ روابط التطبيق بنجاح!');
+        },
+        onError: (error: Error) => showToast(error.message, 'error')
+    });
+
+    const [localLinks, setLocalLinks] = useState({ googlePlayUrl: '', appleAppStoreUrl: '' });
+
+    // Sync state when data is loaded
+    React.useEffect(() => {
+        if (links) {
+            setLocalLinks(links);
+        }
+    }, [links]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setLinks(prev => ({ ...prev, [name]: value }));
+        setLocalLinks(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSave = () => {
-        setIsSaving(true);
-        handleUpdateAppLinks(links);
-        setTimeout(() => {
-            setIsSaving(false);
-            showToast('تم حفظ روابط التطبيق بنجاح!');
-        }, 1000);
+        updateLinksMutation.mutate(localLinks);
     };
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold mb-6">روابط التطبيق</h2>
-            <FormRow label="رابط Google Play" description="رابط التطبيق على متجر Google Play.">
-                <input
-                    type="url"
-                    name="googlePlayUrl"
-                    value={links.googlePlayUrl}
-                    onChange={handleChange}
-                    className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                    placeholder="https://play.google.com/..."
-                />
-            </FormRow>
-            <FormRow label="رابط App Store" description="رابط التطبيق على متجر Apple App Store.">
-                <input
-                    type="url"
-                    name="appleAppStoreUrl"
-                    value={links.appleAppStoreUrl}
-                    onChange={handleChange}
-                    className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                    placeholder="https://apps.apple.com/..."
-                />
-            </FormRow>
-             <div className="flex justify-end mt-6">
-                <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="px-6 py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 disabled:bg-slate-400"
-                >
-                    {isSaving ? '...جاري الحفظ' : 'حفظ الروابط'}
-                </button>
+        <QueryStateWrapper queries={{ isLoading, isError: false, error: null, refetch: () => {} }}>
+            <div>
+                <h2 className="text-2xl font-bold mb-6">روابط التطبيق</h2>
+                <FormRow label="رابط Google Play" description="رابط التطبيق على متجر Google Play.">
+                    <input
+                        type="url"
+                        name="googlePlayUrl"
+                        value={localLinks.googlePlayUrl}
+                        onChange={handleChange}
+                        className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                        placeholder="https://play.google.com/..."
+                    />
+                </FormRow>
+                <FormRow label="رابط App Store" description="رابط التطبيق على متجر Apple App Store.">
+                    <input
+                        type="url"
+                        name="appleAppStoreUrl"
+                        value={localLinks.appleAppStoreUrl}
+                        onChange={handleChange}
+                        className="w-full max-w-md bg-slate-100 dark:bg-slate-700 rounded-md p-2 border border-transparent focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                        placeholder="https://apps.apple.com/..."
+                    />
+                </FormRow>
+                 <div className="flex justify-end mt-6">
+                    <button
+                        onClick={handleSave}
+                        disabled={updateLinksMutation.isPending}
+                        className="px-6 py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 disabled:bg-slate-400"
+                    >
+                        {updateLinksMutation.isPending ? '...جاري الحفظ' : 'حفظ الروابط'}
+                    </button>
+                </div>
             </div>
-        </div>
+        </QueryStateWrapper>
     );
 };
 
@@ -195,7 +217,8 @@ const AccountSettings = () => (
 );
 
 const AppearanceSettings = () => {
-    const { isDarkMode, toggleDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
+    const toggleDarkMode = useStore((state) => state.toggleDarkMode);
 
     return (
         <div>

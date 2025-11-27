@@ -1,17 +1,16 @@
 import React, { useState, useMemo, ReactNode } from 'react';
-import { useMarketplaceContext } from '../../context/MarketplaceContext';
-import { useAppContext } from '../../context/AppContext';
-import { useCommunityContext } from '../../context/CommunityContext';
-// FIX: Replaced deprecated useUserManagementContext with useQuery to fetch users from the API.
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getSaleItems, getJobs, approveSaleItem, rejectSaleItem, approveJob, rejectJob } from '../../api/marketplaceApi';
+import { getPosts, deletePost, deleteComment, dismissPostReports, dismissCommentReports, getLostAndFoundItems, approveLostAndFoundItem, rejectLostAndFoundItem } from '../../api/communityApi';
 import { getUsers } from '../../api/usersApi';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import { 
     CheckCircleIcon, XCircleIcon, TagIcon, BriefcaseIcon, ArchiveBoxIcon,
     DocumentDuplicateIcon, ChatBubbleOvalLeftIcon, TrashIcon, ShieldExclamationIcon, ChevronDownIcon
 } from '../common/Icons';
 import EmptyState from '../common/EmptyState';
-import { ForSaleItem, JobPosting, LostAndFoundItem, CommunityPost, CommunityComment, AppUser } from '../../types';
+import { ForSaleItem, JobPosting, LostAndFoundItem, AppUser } from '../../types';
+import QueryStateWrapper from '../common/QueryStateWrapper';
 
 // --- Reusable Section Component ---
 const CollapsibleSection: React.FC<{
@@ -121,14 +120,36 @@ const ReportedContentCard: React.FC<{
 
 
 const ReviewQueueTab: React.FC = () => {
-    const { forSaleItems, jobs, handleApproveItem, handleRejectItem } = useMarketplaceContext();
-    const { lostAndFoundItems, handleApproveLostAndFoundItem, handleRejectLostAndFoundItem } = useAppContext();
-    const { 
-        communityPosts, handleDismissPostReports, handleDeletePost, 
-        handleDismissCommentReports, handleDeleteComment 
-    } = useCommunityContext();
-    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
-    const { showToast } = useUIContext();
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
+
+    const saleItemsQuery = useQuery({ queryKey: ['saleItems'], queryFn: getSaleItems });
+    const jobsQuery = useQuery({ queryKey: ['jobs'], queryFn: getJobs });
+    const postsQuery = useQuery({ queryKey: ['posts'], queryFn: getPosts });
+    const usersQuery = useQuery({ queryKey: ['users'], queryFn: getUsers });
+    const lostAndFoundQuery = useQuery({ queryKey: ['lostAndFound'], queryFn: getLostAndFoundItems });
+
+    const forSaleItems = saleItemsQuery.data || [];
+    const jobs = jobsQuery.data || [];
+    const communityPosts = postsQuery.data || [];
+    const users = usersQuery.data || [];
+    const lostAndFoundItems = lostAndFoundQuery.data || [];
+
+    // Marketplace Mutations
+    const approveSaleMutation = useMutation({ mutationFn: approveSaleItem, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saleItems'] }); }});
+    const rejectSaleMutation = useMutation({ mutationFn: rejectSaleItem, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['saleItems'] }); }});
+    const approveJobMutation = useMutation({ mutationFn: approveJob, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['jobs'] }); }});
+    const rejectJobMutation = useMutation({ mutationFn: rejectJob, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['jobs'] }); }});
+
+    // Community Mutations
+    const dismissPostReportsMutation = useMutation({ mutationFn: dismissPostReports, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['posts'] }); showToast('تم تجاهل البلاغات.'); }});
+    const dismissCommentReportsMutation = useMutation({ mutationFn: dismissCommentReports, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['posts'] }); showToast('تم تجاهل البلاغات.'); }});
+    const deletePostMutation = useMutation({ mutationFn: deletePost, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['posts'] }); showToast('تم حذف المنشور.'); }});
+    const deleteCommentMutation = useMutation({ mutationFn: deleteComment, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['posts'] }); showToast('تم حذف التعليق.'); }});
+    
+    // Lost & Found Mutations
+    const approveLostFoundMutation = useMutation({ mutationFn: approveLostAndFoundItem, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['lostAndFound'] }); }});
+    const rejectLostFoundMutation = useMutation({ mutationFn: rejectLostAndFoundItem, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['lostAndFound'] }); }});
 
     const getUser = (id: number): AppUser | undefined => users.find(u => u.id === id);
 
@@ -148,58 +169,60 @@ const ReviewQueueTab: React.FC = () => {
 
     const handleApproval = (type: 'sale' | 'job' | 'lostfound', id: number, action: 'approve' | 'reject') => {
         if (type === 'sale') {
-            action === 'approve' ? handleApproveItem('sale', id) : handleRejectItem('sale', id);
+            action === 'approve' ? approveSaleMutation.mutate(id) : rejectSaleMutation.mutate(id);
         } else if (type === 'job') {
-            action === 'approve' ? handleApproveItem('job', id) : handleRejectItem('job', id);
+            action === 'approve' ? approveJobMutation.mutate(id) : rejectJobMutation.mutate(id);
         } else {
-            action === 'approve' ? handleApproveLostAndFoundItem(id) : handleRejectLostAndFoundItem(id);
+            action === 'approve' ? approveLostFoundMutation.mutate(id) : rejectLostFoundMutation.mutate(id);
         }
         showToast(`تم ${action === 'approve' ? 'الموافقة على' : 'رفض'} العنصر بنجاح!`);
     };
 
     return (
-        <div className="animate-fade-in space-y-6">
-            <h2 className="text-xl font-bold">عناصر بانتظار المراجعة ({totalPending})</h2>
-            {totalPending > 0 ? (
-                <div className="space-y-4">
-                    <CollapsibleSection title="المنشورات والتعليقات المبلغ عنها" icon={<ShieldExclamationIcon className="w-6 h-6 text-red-500" />} count={reportedPosts.length + reportedComments.length}>
-                        {reportedPosts.map(post => 
-                            <ReportedContentCard 
-                                key={`post-${post.id}`} 
-                                item={post} type="post" 
-                                author={getUser(post.authorId)}
-                                onDismiss={() => { handleDismissPostReports(post.id); showToast('تم تجاهل بلاغات المنشور.'); }} 
-                                onDelete={() => { handleDeletePost(post.id); showToast('تم حذف المنشور.'); }} 
-                            />
-                        )}
-                        {reportedComments.map(comment => 
-                            <ReportedContentCard 
-                                key={`comment-${comment.id}`} 
-                                item={comment} 
-                                type="comment" 
-                                author={getUser(comment.authorId)}
-                                onDismiss={() => { handleDismissCommentReports(comment.postId, comment.id); showToast('تم تجاهل بلاغات التعليق.'); }} 
-                                onDelete={() => { handleDeleteComment(comment.postId, comment.id); showToast('تم حذف التعليق.'); }} 
-                            />
-                        )}
-                    </CollapsibleSection>
+        <QueryStateWrapper queries={[saleItemsQuery, jobsQuery, postsQuery, usersQuery, lostAndFoundQuery]}>
+            <div className="animate-fade-in space-y-6">
+                <h2 className="text-xl font-bold">عناصر بانتظار المراجعة ({totalPending})</h2>
+                {totalPending > 0 ? (
+                    <div className="space-y-4">
+                        <CollapsibleSection title="المنشورات والتعليقات المبلغ عنها" icon={<ShieldExclamationIcon className="w-6 h-6 text-red-500" />} count={reportedPosts.length + reportedComments.length}>
+                            {reportedPosts.map(post => 
+                                <ReportedContentCard 
+                                    key={`post-${post.id}`} 
+                                    item={post} type="post" 
+                                    author={getUser(post.authorId)}
+                                    onDismiss={() => dismissPostReportsMutation.mutate(post.id)} 
+                                    onDelete={() => deletePostMutation.mutate(post.id)} 
+                                />
+                            )}
+                            {reportedComments.map(comment => 
+                                <ReportedContentCard 
+                                    key={`comment-${comment.id}`} 
+                                    item={comment} 
+                                    type="comment" 
+                                    author={getUser(comment.authorId)}
+                                    onDismiss={() => dismissCommentReportsMutation.mutate({ postId: comment.postId, commentId: comment.id })} 
+                                    onDelete={() => deleteCommentMutation.mutate({ postId: comment.postId, commentId: comment.id })} 
+                                />
+                            )}
+                        </CollapsibleSection>
 
-                    <CollapsibleSection title="طلبات البيع والشراء" icon={<TagIcon className="w-6 h-6 text-cyan-500" />} count={pendingSale.length}>
-                        {pendingSale.map(item => <PendingItemCard key={`sale-${item.id}`} item={item} type="sale" author={getUser(item.authorId)} onAction={handleApproval} />)}
-                    </CollapsibleSection>
+                        <CollapsibleSection title="طلبات البيع والشراء" icon={<TagIcon className="w-6 h-6 text-cyan-500" />} count={pendingSale.length}>
+                            {pendingSale.map(item => <PendingItemCard key={`sale-${item.id}`} item={item} type="sale" author={getUser(item.authorId)} onAction={handleApproval} />)}
+                        </CollapsibleSection>
 
-                    <CollapsibleSection title="الوظائف المعلقة" icon={<BriefcaseIcon className="w-6 h-6 text-purple-500" />} count={pendingJobs.length}>
-                        {pendingJobs.map(item => <PendingItemCard key={`job-${item.id}`} item={item} type="job" author={getUser(item.authorId)} onAction={handleApproval} />)}
-                    </CollapsibleSection>
+                        <CollapsibleSection title="الوظائف المعلقة" icon={<BriefcaseIcon className="w-6 h-6 text-purple-500" />} count={pendingJobs.length}>
+                            {pendingJobs.map(item => <PendingItemCard key={`job-${item.id}`} item={item} type="job" author={getUser(item.authorId)} onAction={handleApproval} />)}
+                        </CollapsibleSection>
 
-                    <CollapsibleSection title="المفقودات والمعثورات" icon={<ArchiveBoxIcon className="w-6 h-6 text-amber-500" />} count={pendingLostFound.length}>
-                        {pendingLostFound.map(item => <PendingItemCard key={`lf-${item.id}`} item={item} type="lostfound" onAction={handleApproval} />)}
-                    </CollapsibleSection>
-                </div>
-            ) : (
-                <EmptyState icon={<CheckCircleIcon className="w-16 h-16 text-slate-400" />} title="لا توجد طلبات للمراجعة" message="كل شيء على ما يرام! لا توجد عناصر جديدة بانتظار موافقتك." />
-            )}
-        </div>
+                        <CollapsibleSection title="المفقودات والمعثورات" icon={<ArchiveBoxIcon className="w-6 h-6 text-amber-500" />} count={pendingLostFound.length}>
+                            {pendingLostFound.map(item => <PendingItemCard key={`lf-${item.id}`} item={item} type="lostfound" onAction={handleApproval} />)}
+                        </CollapsibleSection>
+                    </div>
+                ) : (
+                    <EmptyState icon={<CheckCircleIcon className="w-16 h-16 text-slate-400" />} title="لا توجد طلبات للمراجعة" message="كل شيء على ما يرام! لا توجد عناصر جديدة بانتظار موافقتك." />
+                )}
+            </div>
+        </QueryStateWrapper>
     );
 };
 

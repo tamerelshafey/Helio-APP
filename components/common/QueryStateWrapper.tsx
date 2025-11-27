@@ -14,8 +14,20 @@ interface QueryStateWrapperProps {
 const QueryStateWrapper: React.FC<QueryStateWrapperProps> = ({ queries, loader = <Spinner />, children }) => {
     const queryArray = Array.isArray(queries) ? queries : [queries];
 
+    // If ANY query is loading, show the loader
     const isLoading = queryArray.some(q => q.isLoading);
+    
+    // If ANY query has an error, show the error state
     const firstErrorQuery = queryArray.find(q => q.isError);
+
+    // Smart Retry: Refetch ALL queries that are in an error state
+    const handleRetry = () => {
+        queryArray.forEach(q => {
+            if (q.isError) {
+                q.refetch();
+            }
+        });
+    };
 
     if (isLoading) {
         return <>{loader}</>;
@@ -23,10 +35,10 @@ const QueryStateWrapper: React.FC<QueryStateWrapperProps> = ({ queries, loader =
 
     if (firstErrorQuery) {
         return (
-            <div className="py-8">
+            <div className="w-full">
                 <ErrorState
-                    message={(firstErrorQuery.error as Error)?.message || 'فشل تحميل البيانات.'}
-                    onRetry={() => firstErrorQuery.refetch()}
+                    message={(firstErrorQuery.error as Error)?.message || 'فشل تحميل البيانات من الخادم.'}
+                    onRetry={handleRetry}
                 />
             </div>
         );

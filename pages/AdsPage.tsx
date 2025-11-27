@@ -6,14 +6,15 @@ import { getServices, getCategories } from '../api/servicesApi';
 import { getProperties } from '../api/propertiesApi';
 import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, NewspaperIcon, EyeIcon } from '../components/common/Icons';
 import type { Ad, Service, Category, Property, AdPlacement } from '../types';
-import { useUIContext } from '../context/UIContext';
-import { useHasPermission } from '../context/AuthContext';
+import { useStore } from '../store';
+import { useHasPermission } from '../hooks/usePermissions';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
 import EmptyState from '../components/common/EmptyState';
 import { ContentStatusBadge } from '../components/common/StatusBadge';
 import { InputField, TextareaField } from '../components/common/FormControls';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const AdDetailsModal: React.FC<{ ad: Ad | null; isOpen: boolean; onClose: () => void }> = ({ ad, isOpen, onClose }) => {
     if (!ad) return null;
@@ -214,6 +215,7 @@ const AdForm: React.FC<{
 };
 
 const AdsPage: React.FC = () => {
+    useDocumentTitle('إدارة الإعلانات | Helio');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const adsQuery = useQuery({ queryKey: ['ads'], queryFn: getAds });
@@ -226,7 +228,7 @@ const AdsPage: React.FC = () => {
     const { data: categories = [] } = categoriesQuery;
     const { data: properties = [] } = propertiesQuery;
 
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const canManage = useHasPermission(['مسؤول المحتوى']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAd, setEditingAd] = useState<Ad | null>(null);

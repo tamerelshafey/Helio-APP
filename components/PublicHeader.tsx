@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { ChevronDownIcon, Bars3Icon, XMarkIcon, DocumentDuplicateIcon } from './common/Icons';
-import { useAppContext } from '../context/AppContext';
+import { useQuery } from '@tanstack/react-query';
+import { getAppLinks } from '../api/generalApi';
+import { ChevronDownIcon, Bars3Icon, XMarkIcon } from './common/Icons';
 
 const PublicHeader: React.FC = () => {
-    const { googlePlayUrl } = useAppContext();
+    const { data: appLinks } = useQuery({ queryKey: ['appLinks'], queryFn: getAppLinks });
+    const googlePlayUrl = appLinks?.googlePlayUrl || '#';
+    
     const [isAboutOpen, setIsAboutOpen] = useState(false);
     const [isLegalOpen, setIsLegalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

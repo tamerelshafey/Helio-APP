@@ -1,19 +1,19 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
 import { useQuery } from '@tanstack/react-query';
 import { getServices, getCategories } from '../../api/servicesApi';
+import { getEmergencyContacts } from '../../api/generalApi';
 import KpiCard from '../common/KpiCard';
 import { WrenchScrewdriverIcon, StarIcon, ChatBubbleOvalLeftIcon, ShieldExclamationIcon, RectangleGroupIcon, DocumentDuplicateIcon, EyeIcon, ChartPieIcon } from '../common/Icons';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import Spinner from '../common/Spinner';
 
 const ServiceManagerDashboard: React.FC = () => {
-    const { emergencyContacts } = useAppContext();
+    const { data: emergencyContacts = [] } = useQuery({ queryKey: ['emergencyContacts'], queryFn: getEmergencyContacts });
     const { data: services = [], isLoading: isLoadingServices } = useQuery({ queryKey: ['services'], queryFn: getServices });
     const { data: categories = [], isLoading: isLoadingCategories } = useQuery({ queryKey: ['categories'], queryFn: getCategories });
-    const { isDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
     const allReviews = useMemo(() => services.flatMap(s => s.reviews.map(r => ({...r, serviceName: s.name}))), [services]);
 
     const stats = useMemo(() => {

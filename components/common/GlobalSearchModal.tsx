@@ -7,6 +7,7 @@ import { getProperties } from '../../api/propertiesApi';
 import { getNews } from '../../api/contentApi';
 import type { SearchResult } from '../../types';
 import { MagnifyingGlassIcon, XMarkIcon, WrenchScrewdriverIcon, HomeModernIcon, NewspaperIcon, UserGroupIcon } from './Icons';
+import useDebounce from '../../hooks/useDebounce';
 
 interface GlobalSearchModalProps {
     isOpen: boolean;
@@ -18,7 +19,9 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
     const { data: services = [] } = useQuery({ queryKey: ['services'], queryFn: getServices, enabled: isOpen });
     const { data: properties = [] } = useQuery({ queryKey: ['properties'], queryFn: getProperties, enabled: isOpen });
     const { data: news = [] } = useQuery({ queryKey: ['news'], queryFn: getNews, enabled: isOpen });
+    
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300); // Debounce search term by 300ms
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -40,10 +43,10 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
     }, [isOpen, onClose]);
 
     const searchResults = useMemo((): SearchResult[] => {
-        if (searchTerm.trim().length < 2) {
+        if (debouncedSearchTerm.trim().length < 2) {
             return [];
         }
-        const lowercasedTerm = searchTerm.toLowerCase();
+        const lowercasedTerm = debouncedSearchTerm.toLowerCase();
         
         const serviceResults: SearchResult[] = services
             .filter(s => s.name.toLowerCase().includes(lowercasedTerm))
@@ -90,7 +93,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
             }));
 
         return [...serviceResults, ...propertyResults, ...newsResults, ...userResults].slice(0, 15);
-    }, [searchTerm, services, properties, news, users]);
+    }, [debouncedSearchTerm, services, properties, news, users]);
 
     const groupedResults: Record<string, SearchResult[]> = useMemo(() => {
         return searchResults.reduce<Record<string, SearchResult[]>>((acc, result) => {
@@ -156,7 +159,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose }
                             ))}
                         </div>
                     ) : (
-                        <p className="text-center text-gray-500 p-8">لا توجد نتائج بحث لـ "{searchTerm}"</p>
+                        <p className="text-center text-gray-500 p-8">لا توجد نتائج بحث لـ "{debouncedSearchTerm}"</p>
                     )}
                 </div>
             </div>

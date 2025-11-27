@@ -1,12 +1,13 @@
 import React, { ReactNode, Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
-import { useAuthContext } from './context/AuthContext';
+import { useStore } from './store';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import Breadcrumbs from './components/common/Breadcrumbs';
 import ToastContainer from './components/common/Toast';
 import ScrollToTop from './components/common/ScrollToTop';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Lazy load all page components
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
@@ -78,7 +79,7 @@ const PublicRoutesWrapper: React.FC = () => {
 
 // Wrapper for protected routes that checks auth and renders the admin layout
 const ProtectedRoutesWrapper: React.FC = () => {
-    const { isAuthenticated } = useAuthContext();
+    const isAuthenticated = useStore((state) => state.isAuthenticated);
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
@@ -88,7 +89,7 @@ const ProtectedRoutesWrapper: React.FC = () => {
 
 // Wrapper for the login page to redirect if already authenticated
 const LoginPageWrapper: React.FC = () => {
-    const { isAuthenticated } = useAuthContext();
+    const isAuthenticated = useStore((state) => state.isAuthenticated);
     return isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />;
 };
 
@@ -100,6 +101,16 @@ const LoadingFallback = () => (
 
 
 const App: React.FC = () => {
+    const isDarkMode = useStore((state) => state.isDarkMode);
+
+    useEffect(() => {
+        // Initialize theme from store state
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [isDarkMode]);
     
     useEffect(() => {
         /**
@@ -132,7 +143,7 @@ const App: React.FC = () => {
     }, []);
 
     return (
-        <>
+        <ErrorBoundary>
             <ScrollToTop />
             <ToastContainer />
             <Suspense fallback={<LoadingFallback />}>
@@ -181,7 +192,7 @@ const App: React.FC = () => {
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Suspense>
-        </>
+        </ErrorBoundary>
     );
 };
 

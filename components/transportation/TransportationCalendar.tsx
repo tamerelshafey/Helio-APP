@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { useTransportationContext } from '../../context/TransportationContext';
 import { ChevronLeftIcon, ChevronRightIcon } from '../common/Icons';
+import type { WeeklyScheduleItem, ScheduleOverride } from '../../types';
 
 interface TransportationCalendarProps {
+    weeklySchedule: WeeklyScheduleItem[];
+    scheduleOverrides: ScheduleOverride[];
     onDayClick?: (date: string) => void;
 }
 
-const TransportationCalendar: React.FC<TransportationCalendarProps> = ({ onDayClick }) => {
-    const { transportation } = useTransportationContext();
-    const { weeklySchedule, scheduleOverrides } = transportation;
+const TransportationCalendar: React.FC<TransportationCalendarProps> = ({ weeklySchedule, scheduleOverrides, onDayClick }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const headerDaysOfWeek = ['الجمعة', 'السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];

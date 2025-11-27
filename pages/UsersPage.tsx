@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { saveUser, saveAdmin } from '../api/usersApi';
-import { useUIContext } from '../context/UIContext';
+import { useStore } from '../store';
 import type { AppUser, AdminUser } from '../types';
 import Modal from '../components/common/Modal';
 import TabButton from '../components/common/TabButton';
 import { ArrowLeftIcon, UserGroupIcon, WrenchScrewdriverIcon, UserCircleIcon } from '../components/common/Icons';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 // Import refactored components
 import RegularUsersTab from '../components/users/RegularUsersTab';
@@ -16,9 +17,10 @@ import UserForm from '../components/users/UserForm';
 import AdminForm from '../components/users/AdminForm';
 
 const UsersPage: React.FC = () => {
+    useDocumentTitle('إدارة المستخدمين | Helio');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const [activeTab, setActiveTab] = useState<'users' | 'providers' | 'admins'>('users');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AppUser | null>(null);

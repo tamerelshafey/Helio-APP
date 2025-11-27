@@ -3,11 +3,11 @@ import { UserCircleIcon, CheckCircleIcon } from '../common/Icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUsers, saveUser } from '../../api/usersApi';
 import type { AppUser } from '../../types';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 
 const UsersToVerify: React.FC<{ users: AppUser[] }> = ({ users: pendingUsers }) => {
     const queryClient = useQueryClient();
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const { data: allUsers = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
 
     const approveUserMutation = useMutation({

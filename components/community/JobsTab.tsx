@@ -1,21 +1,35 @@
 import React, { useState, useMemo } from 'react';
 import type { JobPosting, AppUser, MarketplaceItemStatus } from '../../types';
-import { useMarketplaceContext } from '../../context/MarketplaceContext';
-// FIX: Replaced deprecated useUserManagementContext with useQuery to fetch users from the API.
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getJobs, deleteJob } from '../../api/marketplaceApi';
 import { getUsers } from '../../api/usersApi';
-import { useUIContext } from '../../context/UIContext';
+import { useStore } from '../../store';
 import KpiCard from '../common/KpiCard';
 import TabButton from '../common/TabButton';
 import EmptyState from '../common/EmptyState';
 import { BriefcaseIcon, TrashIcon, MapPinIcon } from '../common/Icons';
 import StatusBadge from '../common/StatusBadge';
+import QueryStateWrapper from '../common/QueryStateWrapper';
 
 const JobsTab: React.FC = () => {
-    const { jobs, handleDeleteItem } = useMarketplaceContext();
-    const { data: users = [] } = useQuery({ queryKey: ['users'], queryFn: getUsers });
-    const { showToast } = useUIContext();
+    const queryClient = useQueryClient();
+    const showToast = useStore((state) => state.showToast);
+
+    const jobsQuery = useQuery({ queryKey: ['jobs'], queryFn: getJobs });
+    const usersQuery = useQuery({ queryKey: ['users'], queryFn: getUsers });
+
+    const jobs = jobsQuery.data || [];
+    const users = usersQuery.data || [];
+
     const [activeSubTab, setActiveSubTab] = useState<MarketplaceItemStatus>('approved');
+
+    const deleteJobMutation = useMutation({
+        mutationFn: deleteJob,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['jobs'] });
+            showToast('تم حذف إعلان الوظيفة بنجاح!');
+        }
+    });
 
     const getUserById = (id: number) => users.find(u => u.id === id);
     const filteredItems = useMemo(() => jobs.filter(item => item.status === activeSubTab), [jobs, activeSubTab]);
@@ -27,8 +41,7 @@ const JobsTab: React.FC = () => {
 
     const handleDeleteClick = (id: number) => { 
         if (window.confirm('هل أنت متأكد من حذف إعلان هذه الوظيفة نهائياً؟')) { 
-            handleDeleteItem('job', id); 
-            showToast('تم حذف إعلان الوظيفة بنجاح!'); 
+            deleteJobMutation.mutate(id);
         } 
     };
 
@@ -53,23 +66,25 @@ const JobsTab: React.FC = () => {
     );
 
     return (
-        <div className="animate-fade-in space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KpiCard title="إجمالي الوظائف" value={stats.total.toString()} icon={<BriefcaseIcon className="w-8 h-8 text-cyan-400" />} />
-                <KpiCard title="الوظائف الموافق عليها" value={stats.approved.toString()} icon={<BriefcaseIcon className="w-8 h-8 text-green-400" />} />
-                <KpiCard title="الوظائف المنتهية" value={stats.expired.toString()} icon={<BriefcaseIcon className="w-8 h-8 text-red-400" />} />
-            </div>
-            <div className="flex flex-wrap gap-2">
-                <TabButton active={activeSubTab === 'approved'} onClick={() => setActiveSubTab('approved')}>الموافق عليه</TabButton>
-                <TabButton active={activeSubTab === 'rejected'} onClick={() => setActiveSubTab('rejected')}>المرفوض</TabButton>
-                <TabButton active={activeSubTab === 'expired'} onClick={() => setActiveSubTab('expired')}>منتهي الصلاحية</TabButton>
-            </div>
-            {filteredItems.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredItems.map(item => <JobCard key={item.id} job={item} author={getUserById(item.authorId)} />)}
+        <QueryStateWrapper queries={[jobsQuery, usersQuery]}>
+            <div className="animate-fade-in space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <KpiCard title="إجمالي الوظائف" value={stats.total.toString()} icon={<BriefcaseIcon className="w-8 h-8 text-cyan-400" />} />
+                    <KpiCard title="الوظائف الموافق عليها" value={stats.approved.toString()} icon={<BriefcaseIcon className="w-8 h-8 text-green-400" />} />
+                    <KpiCard title="الوظائف المنتهية" value={stats.expired.toString()} icon={<BriefcaseIcon className="w-8 h-8 text-red-400" />} />
                 </div>
-            ) : <EmptyState icon={<BriefcaseIcon className="w-16 h-16 text-slate-400" />} title="لا توجد وظائف" message="لا توجد عناصر لعرضها في هذا القسم حالياً."/>}
-        </div>
+                <div className="flex flex-wrap gap-2">
+                    <TabButton active={activeSubTab === 'approved'} onClick={() => setActiveSubTab('approved')}>الموافق عليه</TabButton>
+                    <TabButton active={activeSubTab === 'rejected'} onClick={() => setActiveSubTab('rejected')}>المرفوض</TabButton>
+                    <TabButton active={activeSubTab === 'expired'} onClick={() => setActiveSubTab('expired')}>منتهي الصلاحية</TabButton>
+                </div>
+                {filteredItems.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredItems.map(item => <JobCard key={item.id} job={item} author={getUserById(item.authorId)} />)}
+                    </div>
+                ) : <EmptyState icon={<BriefcaseIcon className="w-16 h-16 text-slate-400" />} title="لا توجد وظائف" message="لا توجد عناصر لعرضها في هذا القسم حالياً."/>}
+            </div>
+        </QueryStateWrapper>
     );
 };
 

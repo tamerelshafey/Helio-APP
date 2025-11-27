@@ -7,10 +7,11 @@ import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon, BellAlertIcon } f
 import type { Notification, Service } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import { useHasPermission } from '../context/AuthContext';
-import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../hooks/usePermissions';
+import { useStore } from '../store';
 import { ContentStatusBadge } from '../components/common/StatusBadge';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const NotificationForm: React.FC<{
     onSave: (notification: Omit<Notification, 'id'> & { id?: number }) => void;
@@ -107,6 +108,7 @@ const NotificationForm: React.FC<{
 };
 
 const NotificationsPage: React.FC = () => {
+    useDocumentTitle('إدارة الإشعارات | Helio');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const notificationsQuery = useQuery({ queryKey: ['notifications'], queryFn: getNotifications });
@@ -116,7 +118,7 @@ const NotificationsPage: React.FC = () => {
     const { data: services = [] } = servicesQuery;
 
     const canManage = useHasPermission(['مسؤول المحتوى']);
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNotification, setEditingNotification] = useState<Notification | null>(null);
 

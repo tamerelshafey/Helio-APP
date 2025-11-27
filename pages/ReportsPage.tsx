@@ -1,11 +1,11 @@
 import React, { useMemo, useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../context/AuthContext';
-import { useTransportationContext } from '../context/TransportationContext';
+import { useStore } from '../store';
 import { useQuery } from '@tanstack/react-query';
 import { getServices, getCategories } from '../api/servicesApi';
 import { getProperties } from '../api/propertiesApi';
 import { getNews } from '../api/contentApi';
+import { getDrivers, getExternalRoutes, getScheduleOverrides, getWeeklySchedule } from '../api/transportationApi';
 import { 
     ArrowLeftIcon, StarIcon, EyeIcon, ChatBubbleOvalLeftIcon, WrenchScrewdriverIcon, ChartPieIcon, 
     ChartBarIcon, HomeModernIcon, NewspaperIcon, MagnifyingGlassIcon, StarIconOutline, DocumentChartBarIcon,
@@ -15,16 +15,16 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import type { Service, Property, News, Category, AdminUserRole, Driver, ExternalRoute } from '../types';
 import KpiCard from '../components/common/KpiCard';
 import TabButton from '../components/common/TabButton';
-import { useUIContext } from '../context/UIContext';
 import EmptyState from '../components/common/EmptyState';
 import Rating from '../components/common/Rating';
 import { ReportPageSkeleton } from '../components/common/SkeletonLoader';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const ServiceReports: React.FC<{ data: Service[]; categories: Category[] }> = ({ data, categories }) => {
-    const { isDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
     const [searchTerm, setSearchTerm] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState<number>(0); // 0 for 'All'
+    const [categoryFilter, setCategoryFilter] = useState<number>(0); 
     
     const filteredData = useMemo(() => {
         let servicesToFilter = data;
@@ -147,7 +147,7 @@ const PropertyTypeBadge: React.FC<{ type: 'sale' | 'rent' }> = memo(({ type }) =
 ));
 
 const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
-    const { isDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
     const [searchTerm, setSearchTerm] = useState('');
     
     const kpiData = useMemo(() => {
@@ -239,7 +239,7 @@ const PropertyReports: React.FC<{ data: Property[] }> = ({ data }) => {
 };
 
 const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
-    const { isDarkMode } = useUIContext();
+    const isDarkMode = useStore((state) => state.isDarkMode);
     const [searchTerm, setSearchTerm] = useState('');
     
     const kpiData = useMemo(() => {
@@ -325,9 +325,17 @@ const NewsReports: React.FC<{ data: News[] }> = ({ data }) => {
 };
 
 const TransportationReports: React.FC = () => {
-    const { transportation } = useTransportationContext();
-    const { internalDrivers, externalRoutes, weeklySchedule, scheduleOverrides } = transportation;
-    const { isDarkMode } = useUIContext();
+    const driversQuery = useQuery({ queryKey: ['drivers'], queryFn: getDrivers });
+    const externalRoutesQuery = useQuery({ queryKey: ['externalRoutes'], queryFn: getExternalRoutes });
+    const weeklyScheduleQuery = useQuery({ queryKey: ['weeklySchedule'], queryFn: getWeeklySchedule });
+    const overridesQuery = useQuery({ queryKey: ['scheduleOverrides'], queryFn: getScheduleOverrides });
+
+    const internalDrivers = driversQuery.data || [];
+    const externalRoutes = externalRoutesQuery.data || [];
+    const weeklySchedule = weeklyScheduleQuery.data || [];
+    const scheduleOverrides = overridesQuery.data || [];
+
+    const isDarkMode = useStore((state) => state.isDarkMode);
     const [driverSearch, setDriverSearch] = useState('');
 
     const kpiData = useMemo(() => {
@@ -359,78 +367,80 @@ const TransportationReports: React.FC = () => {
         : { backgroundColor: 'rgba(255, 255, 255, 0.9)', borderColor: '#e2e8f0', borderRadius: '0.5rem', color: '#0f172a' };
 
     return (
-        <div className="space-y-8 animate-fade-in">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <KpiCard title="إجمالي السائقين الداخليين" value={kpiData.totalDrivers.toString()} icon={<UserGroupIcon className="w-6 h-6 text-cyan-500"/>} />
-                <KpiCard title="إجمالي الخطوط الخارجية" value={kpiData.totalRoutes.toString()} icon={<MapPinIcon className="w-6 h-6 text-purple-500"/>} />
-                <KpiCard title="أيام الجداول المخصصة (آخر 30 يوم)" value={kpiData.recentOverrides.toString()} icon={<CalendarDaysIcon className="w-6 h-6 text-amber-500"/>} />
-            </div>
-            
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
-                <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300">توزيع السائقين على مدار الأسبوع (القالب)</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={weeklyDistribution} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
-                        <XAxis dataKey="name" stroke="#9ca3af" />
-                        <YAxis stroke="#9ca3af" allowDecimals={false} />
-                        <Tooltip contentStyle={tooltipStyle}/>
-                        <Legend />
-                        <Bar dataKey="عدد السائقين" fill="#16a34a" />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <QueryStateWrapper queries={[driversQuery, externalRoutesQuery, weeklyScheduleQuery, overridesQuery]}>
+            <div className="space-y-8 animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <KpiCard title="إجمالي السائقين الداخليين" value={kpiData.totalDrivers.toString()} icon={<UserGroupIcon className="w-6 h-6 text-cyan-500"/>} />
+                    <KpiCard title="إجمالي الخطوط الخارجية" value={kpiData.totalRoutes.toString()} icon={<MapPinIcon className="w-6 h-6 text-purple-500"/>} />
+                    <KpiCard title="أيام الجداول المخصصة (آخر 30 يوم)" value={kpiData.recentOverrides.toString()} icon={<CalendarDaysIcon className="w-6 h-6 text-amber-500"/>} />
+                </div>
+                
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-semibold text-gray-700 dark:text-gray-300">قائمة السائقين</h3>
-                        <div className="relative">
-                            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2" />
-                            <input type="text" placeholder="بحث..." value={driverSearch} onChange={(e) => setDriverSearch(e.target.value)} className="w-full sm:w-48 bg-slate-100 dark:bg-slate-700 rounded-lg py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
+                    <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300">توزيع السائقين على مدار الأسبوع (القالب)</h3>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={weeklyDistribution} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.1)" />
+                            <XAxis dataKey="name" stroke="#9ca3af" />
+                            <YAxis stroke="#9ca3af" allowDecimals={false} />
+                            <Tooltip contentStyle={tooltipStyle}/>
+                            <Legend />
+                            <Bar dataKey="عدد السائقين" fill="#16a34a" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="font-semibold text-gray-700 dark:text-gray-300">قائمة السائقين</h3>
+                            <div className="relative">
+                                <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute top-1/2 right-3 -translate-y-1/2" />
+                                <input type="text" placeholder="بحث..." value={driverSearch} onChange={(e) => setDriverSearch(e.target.value)} className="w-full sm:w-48 bg-slate-100 dark:bg-slate-700 rounded-lg py-2 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
+                            </div>
+                        </div>
+                        <div className="overflow-y-auto max-h-80">
+                            {filteredDrivers.length > 0 ? (
+                                <table className="w-full text-sm text-right">
+                                    <tbody>
+                                        {filteredDrivers.map(driver => (
+                                            <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
+                                                <td className="p-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <img src={driver.avatar} alt={driver.name} className="w-8 h-8 rounded-full" />
+                                                        <span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-3 text-left font-mono">{driver.phone}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <p className="text-center py-4 text-gray-500">لا يوجد سائقون.</p>
+                            )}
                         </div>
                     </div>
-                    <div className="overflow-y-auto max-h-80">
-                        {filteredDrivers.length > 0 ? (
-                            <table className="w-full text-sm text-right">
-                                <tbody>
-                                    {filteredDrivers.map(driver => (
-                                        <tr key={driver.id} className="border-t border-slate-200 dark:border-slate-700">
-                                            <td className="p-3">
-                                                <div className="flex items-center gap-3">
-                                                    <img src={driver.avatar} alt={driver.name} className="w-8 h-8 rounded-full" />
-                                                    <span className="font-semibold text-gray-800 dark:text-white">{driver.name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-3 text-left font-mono">{driver.phone}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        ) : (
-                            <p className="text-center py-4 text-gray-500">لا يوجد سائقون.</p>
-                        )}
-                    </div>
-                </div>
 
-                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
-                    <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300">قائمة الخطوط الخارجية</h3>
-                    <div className="overflow-y-auto max-h-80">
-                       {externalRoutes.length > 0 ? (
-                           <ul className="space-y-3">
-                             {externalRoutes.map(route => (
-                                <li key={route.id} className="p-3 rounded-md bg-slate-50 dark:bg-slate-700/50">
-                                    <p className="font-bold text-gray-800 dark:text-white">{route.name}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">المواعيد: {route.timings.join(' | ')}</p>
-                                </li>
-                             ))}
-                           </ul>
-                       ) : (
-                           <p className="text-center py-4 text-gray-500">لا توجد خطوط خارجية.</p>
-                       )}
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                        <h3 className="font-semibold mb-4 text-gray-700 dark:text-gray-300">قائمة الخطوط الخارجية</h3>
+                        <div className="overflow-y-auto max-h-80">
+                        {externalRoutes.length > 0 ? (
+                            <ul className="space-y-3">
+                                {externalRoutes.map(route => (
+                                    <li key={route.id} className="p-3 rounded-md bg-slate-50 dark:bg-slate-700/50">
+                                        <p className="font-bold text-gray-800 dark:text-white">{route.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">المواعيد: {route.timings.join(' | ')}</p>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-center py-4 text-gray-500">لا توجد خطوط خارجية.</p>
+                        )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </QueryStateWrapper>
     );
 };
 
@@ -444,8 +454,9 @@ const tabConfig: { key: ReportTab; label: string; icon: React.ReactNode; roles: 
 ];
 
 const ReportsPage: React.FC = () => {
+    useDocumentTitle('التقارير | Helio');
     const navigate = useNavigate();
-    const { currentUser } = useAuthContext();
+    const currentUser = useStore((state) => state.currentUser);
     
     const newsQuery = useQuery({ queryKey: ['news'], queryFn: getNews });
     const propertiesQuery = useQuery({ queryKey: ['properties'], queryFn: getProperties });

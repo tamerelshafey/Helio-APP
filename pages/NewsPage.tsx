@@ -6,11 +6,12 @@ import { ArrowLeftIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '../compone
 import type { News } from '../types';
 import Modal from '../components/common/Modal';
 import ImageUploader from '../components/common/ImageUploader';
-import { useHasPermission } from '../context/AuthContext';
-import { useUIContext } from '../context/UIContext';
+import { useHasPermission } from '../hooks/usePermissions';
+import { useStore } from '../store';
 import RichTextEditor from '../components/common/RichTextEditor';
 import { NewsCardSkeleton } from '../components/common/SkeletonLoader';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const NewsForm: React.FC<{
     onSave: (newsItem: Omit<News, 'id' | 'date' | 'author' | 'views'> & { id?: number }) => void;
@@ -108,13 +109,14 @@ const NewsCard: React.FC<{ newsItem: News; onEdit: () => void; onDelete: () => v
 
 
 const NewsPage: React.FC = () => {
+    useDocumentTitle('أخبار المدينة | Helio');
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const newsQuery = useQuery({ queryKey: ['news'], queryFn: getNews });
     const { data: news = [] } = newsQuery;
 
     const canManage = useHasPermission(['مسؤول المحتوى']);
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNews, setEditingNews] = useState<News | null>(null);
 

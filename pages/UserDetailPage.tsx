@@ -3,17 +3,19 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUserById, saveUser } from '../api/usersApi';
 import { getServices } from '../api/servicesApi';
-import { useCommunityContext } from '../context/CommunityContext';
-import { useMarketplaceContext } from '../context/MarketplaceContext';
-import { useOffersContext } from '../context/OffersContext';
+import { getPosts } from '../api/communityApi';
+import { getSaleItems, getJobs } from '../api/marketplaceApi';
+import { getOfferCodes } from '../api/offersApi';
 import { ArrowLeftIcon, CalendarDaysIcon, WrenchScrewdriverIcon, DocumentDuplicateIcon, TagIcon, ChatBubbleOvalLeftIcon } from '../components/common/Icons';
 import KpiCard from '../components/common/KpiCard';
 import TabButton from '../components/common/TabButton';
 import StatusBadge, { AccountTypeBadge } from '../components/common/StatusBadge';
 import EmptyState from '../components/common/EmptyState';
 import QueryStateWrapper from '../components/common/QueryStateWrapper';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const UserDetailPage: React.FC = () => {
+    useDocumentTitle('تفاصيل المستخدم | Helio');
     const navigate = useNavigate();
     const { userId } = useParams<{ userId: string }>();
     const numericUserId = Number(userId);
@@ -26,10 +28,16 @@ const UserDetailPage: React.FC = () => {
     const { data: user } = userQuery;
     
     const servicesQuery = useQuery({ queryKey: ['services'], queryFn: getServices });
+    const postsQuery = useQuery({ queryKey: ['posts'], queryFn: getPosts });
+    const saleItemsQuery = useQuery({ queryKey: ['saleItems'], queryFn: getSaleItems });
+    const jobsQuery = useQuery({ queryKey: ['jobs'], queryFn: getJobs });
+    const offerCodesQuery = useQuery({ queryKey: ['offerCodes'], queryFn: getOfferCodes });
+
     const { data: services = [] } = servicesQuery;
-    const { communityPosts } = useCommunityContext();
-    const { forSaleItems, jobs } = useMarketplaceContext();
-    const { offerCodes } = useOffersContext();
+    const { data: communityPosts = [] } = postsQuery;
+    const { data: forSaleItems = [] } = saleItemsQuery;
+    const { data: jobs = [] } = jobsQuery;
+    const { data: offerCodes = [] } = offerCodesQuery;
 
     const [activeTab, setActiveTab] = useState('overview');
 
@@ -101,7 +109,7 @@ const UserDetailPage: React.FC = () => {
                 <ArrowLeftIcon className="w-5 h-5" />
                 <span>العودة إلى قائمة المستخدمين</span>
             </button>
-            <QueryStateWrapper queries={[userQuery, servicesQuery]}>
+            <QueryStateWrapper queries={[userQuery, servicesQuery, postsQuery, saleItemsQuery, jobsQuery, offerCodesQuery]}>
                 {user && userStats ? (
                     <div className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl shadow-lg">
                         <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">

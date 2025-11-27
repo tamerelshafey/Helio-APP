@@ -7,12 +7,13 @@ import {
 } from '../components/common/Icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getServices, updateReview, deleteReview, replyToReview, toggleFavorite } from '../api/servicesApi';
-import { useUIContext } from '../context/UIContext';
-import { useHasPermission } from '../context/AuthContext';
+import { useStore } from '../store';
+import { useHasPermission } from '../hooks/usePermissions';
 import Modal from '../components/common/Modal';
 import ServiceInfoCard from '../components/common/ServiceInfoCard';
 import Rating from '../components/common/Rating';
 import Spinner from '../components/common/Spinner';
+import useDocumentTitle from '../hooks/useDocumentTitle';
 
 const ReplyForm: React.FC<{ review: Review; onSave: (reply: string) => void; onClose: () => void; }> = ({ review, onSave, onClose }) => {
     const [reply, setReply] = useState(review.adminReply || '');
@@ -44,11 +45,12 @@ const EditReviewForm: React.FC<{ review: Review; onSave: (comment: string) => vo
 };
 
 const ServiceDetailPage: React.FC = () => {
+    useDocumentTitle('تفاصيل الخدمة | Helio');
     const navigate = useNavigate();
     const { serviceId: serviceIdStr } = useParams<{ serviceId: string }>();
     const serviceId = Number(serviceIdStr);
     
-    const { showToast } = useUIContext();
+    const showToast = useStore((state) => state.showToast);
     const canManage = useHasPermission(['مسؤول ادارة الخدمات']);
     const queryClient = useQueryClient();
 
